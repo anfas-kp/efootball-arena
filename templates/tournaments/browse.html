@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Browse Tournaments - eFootball Arena{% endblock %}
+{% block content %}
+<div class="page-header" style="margin-top:60px;">
+    <div class="container d-flex justify-content-between align-items-center">
+        <h1><i class="fas fa-search me-2" style="color:var(--accent);"></i>Browse Tournaments</h1>
+        {% if not team_is_verified %}
+            <div class="badge-status badge-draft" style="font-size:0.85rem;"><i class="fas fa-info-circle me-1"></i>Requires Verified Team</div>
+        {% endif %}
+    </div>
+</div>
+<div class="container">
+    {% if tournament_data %}
+    <div class="row g-4">
+        {% for item in tournament_data %}
+        <div class="col-md-6 col-lg-4">
+            <div class="tournament-card h-100 {% if item.is_tournament_full or item.entry_gate_closed %}opacity-75{% endif %}">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title">{{ item.tournament.name }}</h5>
+                        {% if item.is_tournament_full %}
+                            <span class="badge-status badge-rejected">Full</span>
+                        {% elif item.entry_gate_closed %}
+                            <span class="badge-status badge-rejected">Closed</span>
+                        {% else %}
+                            <span class="badge-status badge-approved">Open</span>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="text-secondary small flex-grow-1">{{ item.tournament.description|truncatewords:20|default:"No description" }}</p>
+                    
+                    <div class="text-secondary small mb-3">
+                        <div><i class="fas fa-calendar me-1"></i>Starts: {{ item.tournament.start_date|date:"M d, Y" }}</div>
+                        <div><i class="fas fa-clock me-1"></i>Deadline: {{ item.tournament.registration_deadline|date:"M d, H:i" }}</div>
+                        <div><i class="fas fa-users me-1"></i>Teams: {{ item.tournament.accepted_count }}/{{ item.tournament.max_teams }}</div>
+                        {% if item.tournament.prize_pool %}<div><i class="fas fa-gift me-1" style="color:var(--accent-4);"></i>{{ item.tournament.prize_pool }}</div>{% endif %}
+                    </div>
+
+                    {% if not user.is_authenticated %}
+                        <a href="{% url 'accounts:login' %}" class="btn-outline-glow w-100 text-center" style="padding:0.5rem;">Login to Apply</a>
+                    {% elif not team_is_verified %}
+                        <button class="btn-outline-glow w-100 opacity-50" style="padding:0.5rem;" disabled>Verify Team to Apply</button>
+                    {% else %}
+                        {% if item.join_status == 'pending' %}
+                            <button class="btn-warning-glow w-100" style="padding:0.5rem;cursor:default;" disabled><i class="fas fa-clock me-1"></i>Application Pending</button>
+                        {% elif item.join_status == 'accepted' %}
+                            <button class="btn-glow w-100" style="padding:0.5rem;cursor:default;" disabled><i class="fas fa-check-circle me-1"></i>Accepted</button>
+                        {% elif item.join_status == 'rejected' %}
+                            <button class="btn-danger-glow w-100" style="padding:0.5rem;cursor:default;" disabled><i class="fas fa-times-circle me-1"></i>Rejected</button>
+                        {% elif item.is_tournament_full or item.entry_gate_closed %}
+                            <button class="btn-outline-glow w-100 opacity-50" style="padding:0.5rem;" disabled>Registration Closed</button>
+                        {% else %}
+                            <form method="post" action="{% url 'tournaments:apply' item.tournament.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-glow w-100" style="padding:0.5rem;"><i class="fas fa-paper-plane me-1"></i>Apply Now</button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <a href="{% url 'tournaments:tournament_detail' item.tournament.pk %}" class="text-secondary small text-center d-block mt-2 text-decoration-none hover-accent">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="glass-card text-center text-secondary">
+        <i class="fas fa-folder-open fa-3x mb-3" style="opacity:0.5;"></i>
+        <p class="mb-0">No open tournaments available for registration right now.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

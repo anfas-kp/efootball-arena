@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Verify Teams - Admin{% endblock %}
+{% block content %}
+<div class="page-header" style="margin-top:60px;"><div class="container"><h1><i class="fas fa-shield-halved me-2" style="color:var(--accent-4);"></i>Team Verification</h1></div></div>
+<div class="container">
+    <div class="d-flex gap-2 mb-4">
+        <a href="?status=pending" class="btn-{% if status_filter == 'pending' %}glow{% else %}outline-glow{% endif %}" style="padding:0.4rem 1rem;font-size:0.85rem;">Pending</a>
+        <a href="?status=approved" class="btn-{% if status_filter == 'approved' %}glow{% else %}outline-glow{% endif %}" style="padding:0.4rem 1rem;font-size:0.85rem;">Approved</a>
+        <a href="?status=rejected" class="btn-{% if status_filter == 'rejected' %}glow{% else %}outline-glow{% endif %}" style="padding:0.4rem 1rem;font-size:0.85rem;">Rejected</a>
+        <a href="?status=all" class="btn-{% if status_filter == 'all' %}glow{% else %}outline-glow{% endif %}" style="padding:0.4rem 1rem;font-size:0.85rem;">All</a>
+    </div>
+    {% for t in teams %}
+    <div class="glass-card mb-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                {% if t.logo %}<img src="{{ t.logo.url }}" class="team-logo-sm">{% else %}<div class="team-logo-sm team-logo-placeholder" style="font-size:0.7rem;">{{ t.name|first }}</div>{% endif %}
+                <div>
+                    <strong>{{ t.name }}</strong>
+                    <div class="text-secondary small">Captain: {{ t.captain.username }} · {{ t.player_count }} players · {{ t.created_at|date:"M d, Y" }}</div>
+                </div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                <span class="badge-status badge-{{ t.status }}">{{ t.get_status_display }}</span>
+                {% if t.status == 'pending' %}
+                <a href="{% url 'teams:admin_approve' t.pk %}" class="btn-glow" style="padding:0.35rem 1rem;font-size:0.8rem;"><i class="fas fa-check"></i> Approve</a>
+                <button class="btn-danger-glow" style="font-size:0.8rem;" data-bs-toggle="modal" data-bs-target="#reject{{ t.pk }}"><i class="fas fa-times"></i> Reject</button>
+                <!-- Reject Modal -->
+                <div class="modal fade" id="reject{{ t.pk }}" tabindex="-1"><div class="modal-dialog"><div class="modal-content" style="background:var(--bg-secondary);border:1px solid var(--border-color);">
+                    <div class="modal-header border-0"><h5 class="modal-title text-light">Reject {{ t.name }}</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                    <form method="post" action="{% url 'teams:admin_reject' t.pk %}">{% csrf_token %}
+                        <div class="modal-body"><textarea name="reason" class="form-control" rows="3" placeholder="Rejection reason..." required></textarea></div>
+                        <div class="modal-footer border-0"><button type="submit" class="btn-danger-glow">Reject Team</button></div>
+                    </form>
+                </div></div></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}<div class="glass-card text-center text-secondary">No teams found.</div>
+    {% endfor %}
+</div>
+{% endblock %}

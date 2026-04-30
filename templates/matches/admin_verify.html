@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Verify Results - Admin{% endblock %}
+{% block content %}
+<div class="page-header" style="margin-top:60px;"><div class="container"><h1><i class="fas fa-check-double me-2" style="color:var(--accent);"></i>Result Verification</h1></div></div>
+<div class="container">
+    <div class="d-flex gap-2 mb-4">
+        <a href="?status=pending" class="btn-{% if status_filter == 'pending' %}glow{% else %}outline-glow{% endif %}" style="padding:0.4rem 1rem;font-size:0.85rem;">Pending</a>
+        <a href="?status=approved" class="btn-{% if status_filter == 'approved' %}glow{% else %}outline-glow{% endif %}" style="padding:0.4rem 1rem;font-size:0.85rem;">Approved</a>
+        <a href="?status=all" class="btn-{% if status_filter == 'all' %}glow{% else %}outline-glow{% endif %}" style="padding:0.4rem 1rem;font-size:0.85rem;">All</a>
+    </div>
+    {% for r in results %}
+    <div class="glass-card mb-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <strong>{{ r.fixture.home_team.name }}</strong>
+                <span style="font-family:'Orbitron',sans-serif;color:var(--accent);margin:0 0.5rem;">{{ r.home_score }} - {{ r.away_score }}</span>
+                <strong>{{ r.fixture.away_team.name }}</strong>
+                <div class="text-secondary small">{{ r.fixture.league.name }} · Submitted {{ r.submitted_at|date:"M d, H:i" }}</div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                <span class="badge-status badge-{{ r.status }}">{{ r.get_status_display }}</span>
+                <a href="{% url 'matches:result_detail' r.pk %}" class="btn-outline-glow" style="padding:0.3rem 0.75rem;font-size:0.75rem;">View</a>
+                {% if r.status == 'pending' %}
+                <a href="{% url 'matches:admin_approve' r.pk %}" class="btn-glow" style="padding:0.3rem 0.75rem;font-size:0.75rem;"><i class="fas fa-check"></i></a>
+                <button class="btn-danger-glow" style="font-size:0.75rem;padding:0.3rem 0.75rem;" data-bs-toggle="modal" data-bs-target="#rejectR{{ r.pk }}"><i class="fas fa-times"></i></button>
+                <div class="modal fade" id="rejectR{{ r.pk }}" tabindex="-1"><div class="modal-dialog"><div class="modal-content" style="background:var(--bg-secondary);border:1px solid var(--border-color);">
+                    <div class="modal-header border-0"><h5 class="modal-title text-light">Reject Result</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                    <form method="post" action="{% url 'matches:admin_reject' r.pk %}">{% csrf_token %}
+                        <div class="modal-body"><textarea name="notes" class="form-control" rows="3" placeholder="Reason..." required></textarea></div>
+                        <div class="modal-footer border-0"><button type="submit" class="btn-danger-glow">Reject</button></div>
+                    </form>
+                </div></div></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}<div class="glass-card text-center text-secondary">No results found.</div>{% endfor %}
+</div>
+{% endblock %}

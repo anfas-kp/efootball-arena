@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ team.name }} - eFootball Arena{% endblock %}
+{% block content %}
+<div class="page-header" style="margin-top:60px;">
+    <div class="container d-flex align-items-center gap-3">
+        {% if team.logo %}<img src="{{ team.logo.url }}" class="team-logo-lg">{% else %}<div class="team-logo-lg team-logo-placeholder" style="font-size:2.5rem;">{{ team.name|first }}</div>{% endif %}
+        <div><h1>{{ team.name }}</h1><span class="badge-status badge-{{ team.status }}">{{ team.get_status_display }}</span></div>
+    </div>
+</div>
+<div class="container">
+    <div class="glass-card mb-4">
+        <div class="row">
+            <div class="col-md-4"><p><i class="fas fa-gamepad me-2" style="color:var(--accent);"></i>{{ team.get_game_display }}</p></div>
+            <div class="col-md-4"><p><i class="fas fa-desktop me-2" style="color:var(--accent-2);"></i>{{ team.get_platform_display }}</p></div>
+            <div class="col-md-4"><p><i class="fas fa-users me-2" style="color:var(--accent-4);"></i>{{ players|length }} Players</p></div>
+        </div>
+        {% if team.description %}<p class="text-secondary mt-2">{{ team.description }}</p>{% endif %}
+    </div>
+    <h3 class="section-title mb-3"><i class="fas fa-users me-2" style="color:var(--accent-2);"></i>Squad</h3>
+    {% if players %}
+    <table class="table-dark-custom">
+        <thead><tr><th>#</th><th>Player</th><th>Gaming ID</th><th>Position</th></tr></thead>
+        <tbody>
+            {% for p in players %}
+            <tr><td>{{ p.jersey_number|default:"-" }}</td><td><strong>{{ p.name }}</strong></td><td>{{ p.gaming_id }}</td><td>{{ p.get_position_display|default:"-" }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}<div class="glass-card text-center text-secondary">No players listed.</div>{% endif %}
+</div>
+{% endblock %}

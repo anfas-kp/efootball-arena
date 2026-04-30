@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Assign Teams - Admin{% endblock %}
+{% block content %}
+<div class="page-header" style="margin-top:60px;">
+    <div class="container">
+        <h1><i class="fas fa-users me-2" style="color:var(--accent-4);"></i>Assign Teams: {{ league.name }}</h1>
+        <a href="{% url 'tournaments:tournament_detail' tournament.pk %}" class="text-secondary text-decoration-none"><i class="fas fa-arrow-left me-1"></i>{{ tournament.name }}</a>
+    </div>
+</div>
+<div class="container">
+    <div class="row g-4">
+        <!-- Assigned -->
+        <div class="col-lg-6">
+            <h4 class="section-title mb-3" style="font-size:1rem;"><i class="fas fa-check-circle me-2" style="color:var(--accent);"></i>Assigned ({{ assigned_teams|length }}/{{ league.max_teams }})</h4>
+            {% for t in assigned_teams %}
+            <div class="glass-card mb-2 d-flex justify-content-between align-items-center" style="padding:0.75rem 1rem;">
+                <strong>{{ t.name }}</strong>
+                <a href="{% url 'tournaments:admin_remove_team' league.pk t.pk %}" class="btn-danger-glow" style="padding:0.25rem 0.75rem;font-size:0.75rem;"><i class="fas fa-minus"></i></a>
+            </div>
+            {% empty %}<div class="glass-card text-center text-secondary" style="padding:1rem;">No teams assigned</div>{% endfor %}
+        </div>
+        <!-- Available -->
+        <div class="col-lg-6">
+            <h4 class="section-title mb-3" style="font-size:1rem;"><i class="fas fa-list me-2" style="color:var(--accent-2);"></i>Available Teams</h4>
+            {% if available_teams %}
+            <form method="post">{% csrf_token %}
+                {% for t in available_teams %}
+                <div class="glass-card mb-2 d-flex justify-content-between align-items-center" style="padding:0.75rem 1rem;">
+                    <label class="d-flex align-items-center gap-2 mb-0" style="cursor:pointer;">
+                        <input type="checkbox" name="teams" value="{{ t.pk }}" style="accent-color:var(--accent);width:18px;height:18px;">
+                        <strong>{{ t.name }}</strong>
+                    </label>
+                    <span class="text-secondary small">{{ t.player_count }} players</span>
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn-glow mt-3"><i class="fas fa-plus me-2"></i>Assign Selected</button>
+            </form>
+            {% else %}<div class="glass-card text-center text-secondary" style="padding:1rem;">No available teams</div>{% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

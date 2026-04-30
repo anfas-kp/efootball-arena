@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}{{ result }} - eFootball Arena{% endblock %}
+{% block content %}
+<div class="page-header" style="margin-top:60px;">
+    <div class="container">
+        <h1><i class="fas fa-futbol me-2" style="color:var(--accent);"></i>Match Result</h1>
+        <span class="badge-status badge-{{ result.status }}">{{ result.get_status_display }}</span>
+    </div>
+</div>
+<div class="container">
+    <!-- Score Card -->
+    <div class="glass-card text-center mb-4">
+        <div class="score-display">
+            <span>{{ result.fixture.home_team.name }}</span>
+            <span class="score"> {{ result.home_score }} </span>
+            <span class="vs">-</span>
+            <span class="score"> {{ result.away_score }} </span>
+            <span>{{ result.fixture.away_team.name }}</span>
+        </div>
+        <p class="text-secondary small">{{ result.fixture.league.name }} · Matchday {{ result.fixture.matchday }}</p>
+        {% if result.screenshot %}<img src="{{ result.screenshot.url }}" class="img-fluid mt-3" style="max-height:300px;border-radius:var(--radius-sm);border:1px solid var(--border-color);">{% endif %}
+    </div>
+
+    <!-- Action Buttons (for teams/admins) -->
+    {% if user.is_authenticated and result.status != 'approved' %}
+    <div class="glass-card mb-4">
+        <h5 style="font-family:'Orbitron',sans-serif;font-size:0.85rem;color:var(--accent);margin-bottom:1rem;">ADD MATCH DETAILS</h5>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'matches:add_goal' result.pk %}" class="btn-glow" style="padding:0.5rem 1.25rem;font-size:0.85rem;"><i class="fas fa-futbol me-1"></i>Add Goal</a>
+            <a href="{% url 'matches:add_card' result.pk %}" class="btn-danger-glow" style="padding:0.5rem 1.25rem;font-size:0.85rem;"><i class="fas fa-square me-1"></i>Add Card</a>
+            <a href="{% url 'matches:add_rating' result.pk %}" class="btn-warning-glow" style="padding:0.5rem 1.25rem;font-size:0.85rem;"><i class="fas fa-star me-1"></i>Add Top Rated Player</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <!-- Goals -->
+            {% if goals %}
+            <h4 class="section-title mb-3" style="font-size:1rem;"><i class="fas fa-futbol me-2" style="color:var(--accent-4);"></i>Goals</h4>
+            {% for g in goals %}
+            <div class="glass-card mb-2 d-flex align-items-center gap-3" style="padding:0.75rem 1.25rem;">
+                <span style="color:var(--accent);font-family:'Orbitron',sans-serif;font-size:0.85rem;min-width:35px;">{{ g.minute }}'</span>
+                <div class="flex-grow-1">
+                    <strong>⚽ {{ g.scorer.name }}</strong>
+                    {% if g.assist %}<span class="text-secondary small">(assist: {{ g.assist.name }})</span>{% endif %}
+                    <span class="text-muted small ms-1">· {{ g.get_goal_type_display }}</span>
+                </div>
+                <span class="text-secondary small">{{ g.team.name }}</span>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Cards -->
+            {% if cards %}
+            <h4 class="section-title mb-3 mt-4" style="font-size:1rem;"><i class="fas fa-square me-2" style="color:var(--accent-3);"></i>Disciplinary</h4>
+            {% for c in cards %}
+            <div class="glass-card mb-2 d-flex align-items-center gap-3" style="padding:0.75rem 1.25rem;">
+                <span style="font-family:'Orbitron',sans-serif;font-size:0.85rem;min-width:35px;">{{ c.minute }}'</span>
+                <div class="flex-grow-1">
+                    <span>{{ c }}</span>
+                </div>
+                <span class="text-secondary small">{{ c.team.name }}</span>
+                {% if c.screenshot %}<a href="{{ c.screenshot.url }}" target="_blank" class="text-secondary"><i class="fas fa-image"></i></a>{% endif %}
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+
+        <!-- Top Rated Players Sidebar -->
+        <div class="col-lg-4">
+            {% if ratings %}
+            <h4 class="section-title mb-3" style="font-size:1rem;"><i class="fas fa-star me-2" style="color:var(--accent-4);"></i>Top Rated Players</h4>
+            {% for r in ratings %}
+            <div class="glass-card mb-2 d-flex align-items-center gap-3" style="padding:0.75rem 1.25rem;">
+                <div class="flex-grow-1">
+                    <strong>{{ r.player.name }}</strong>
+                    <div class="text-secondary" style="font-size:0.75rem;">{{ r.team.name }}</div>
+                </div>
+                <span style="font-family:'Orbitron',sans-serif;color:var(--accent-4);font-size:1.1rem;">{{ r.rating }}</span>
+                {% if r.screenshot %}<a href="{{ r.screenshot.url }}" target="_blank" class="text-secondary ms-1"><i class="fas fa-image"></i></a>{% endif %}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            {% if not goals and not cards and not ratings %}
+            <div class="glass-card text-center text-secondary">
+                <p class="mb-0">No match details added yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'tournaments:league_fixtures' result.fixture.league.pk %}" class="btn-outline-glow" style="padding:0.5rem 1.25rem;">
+            <i class="fas fa-arrow-left me-1"></i>Back to Fixtures
+        </a>
+    </div>
+</div>
+{% endblock %}

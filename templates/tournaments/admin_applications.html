@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Manage Applications - {{ tournament.name }}{% endblock %}
+{% block content %}
+<div class="page-header" style="margin-top:60px;">
+    <div class="container d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fas fa-inbox me-2" style="color:var(--accent-4);"></i>Applications</h1>
+            <p class="text-secondary mb-0">{{ tournament.name }}</p>
+        </div>
+        <a href="{% url 'tournaments:tournament_detail' tournament.pk %}" class="btn-outline-glow" style="padding:0.4rem 1rem;"><i class="fas fa-arrow-left me-1"></i>Back</a>
+    </div>
+</div>
+<div class="container">
+    <div class="d-flex gap-2 mb-4 flex-wrap">
+        <a href="?status=pending" class="btn-{% if status_filter == 'pending' %}glow{% else %}outline-glow{% endif %}" style="padding:0.4rem 1rem;font-size:0.85rem;">Pending</a>
+        <a href="?status=accepted" class="btn-{% if status_filter == 'accepted' %}glow{% else %}outline-glow{% endif %}" style="padding:0.4rem 1rem;font-size:0.85rem;">Accepted</a>
+        <a href="?status=rejected" class="btn-{% if status_filter == 'rejected' %}glow{% else %}outline-glow{% endif %}" style="padding:0.4rem 1rem;font-size:0.85rem;">Rejected</a>
+        <a href="?status=all" class="btn-{% if status_filter == 'all' %}glow{% else %}outline-glow{% endif %}" style="padding:0.4rem 1rem;font-size:0.85rem;">All</a>
+    </div>
+
+    <!-- Capacity Warning -->
+    {% if tournament.is_tournament_full %}
+    <div class="alert alert-custom alert-warning mb-4">
+        <i class="fas fa-exclamation-triangle me-2"></i><strong>Tournament Full:</strong> Maximum capacity ({{ tournament.max_teams }} teams) reached.
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        {% for app in applications %}
+        <div class="col-lg-6">
+            <div class="glass-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                        {% if app.team.logo %}<img src="{{ app.team.logo.url }}" class="team-logo-sm">{% else %}<div class="team-logo-sm team-logo-placeholder" style="font-size:0.7rem;">{{ app.team.name|first }}</div>{% endif %}
+                        <div>
+                            <strong style="font-size:1.1rem;">{{ app.team.name }}</strong>
+                            <div class="text-secondary small">{{ app.team.player_count }} players · Applied: {{ app.applied_at|date:"M d, H:i" }}</div>
+                        </div>
+                    </div>
+                    <span class="badge-status badge-{{ app.status }}">{{ app.get_status_display }}</span>
+                </div>
+
+                {% if app.status == 'pending' and not tournament.is_tournament_full %}
+                <div class="mt-3 pt-3 border-top" style="border-color:var(--border-color)!important;">
+                    <form method="post" action="{% url 'tournaments:admin_accept_app' app.pk %}" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <select name="league" class="form-select form-select-sm" required style="background-color:rgba(255,255,255,0.05);color:#fff;border-color:var(--border-color);">
+                            <option value="">-- Assign to League --</option>
+                            {% for league in leagues %}
+                            <option value="{{ league.pk }}" {% if league.is_full %}disabled{% endif %}>
+                                {{ league.name }} ({% if league.is_full %}Full{% else %}{{ league.team_count }}/{{ league.max_teams }}{% endif %})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn-glow text-nowrap" style="padding:0.25rem 0.75rem;"><i class="fas fa-check me-1"></i>Accept</button>
+                    </form>
+                    <div class="mt-2 text-end">
+                        <button type="button" class="btn-danger-glow" style="padding:0.25rem 0.75rem;" data-bs-toggle="modal" data-bs-target="#rejectModal{{ app.pk }}"><i class="fas fa-times me-1"></i>Reject</button>
+                    </div>
+                </div>
+
+                <!-- Reject Modal -->
+                <div class="modal fade" id="rejectModal{{ app.pk }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content" style="background:var(--bg-secondary);border:1px solid var(--border-color);">
+                            <div class="modal-header border-0">
+                                <h5 class="modal-title text-light">Reject {{ app.team.name }}</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form method="post" action="{% url 'tournaments:admin_reject_app' app.pk %}">
+                                {% csrf_token %}
+                                <div class="modal-body">
+                                    <textarea name="notes" class="form-control" rows="3" placeholder="Reason for rejection (optional)..."></textarea>
+                                </div>
+                                <div class="modal-footer border-0">
+                                    <button type="submit" class="btn-danger-glow">Confirm Rejection</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% elif app.status == 'accepted' %}
+                <div class="mt-2 pt-2 border-top" style="border-color:var(--border-color)!important;">
+                    <span class="text-secondary small"><i class="fas fa-layer-group me-1" style="color:var(--accent);"></i>Assigned to: <strong>{{ app.assigned_league.name }}</strong></span>
+                </div>
+                {% elif app.status == 'rejected' and app.admin_notes %}
+                <div class="mt-2 pt-2 border-top" style="border-color:var(--border-color)!important;">
+                    <span class="text-secondary small"><i class="fas fa-info-circle me-1" style="color:var(--accent-3);"></i>Reason: {{ app.admin_notes }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center text-secondary py-4">
+            <p class="mb-0">No {{ status_filter }} applications found.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

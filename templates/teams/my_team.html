@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ team.name }} - eFootball Arena{% endblock %}
+{% block content %}
+<div class="page-header" style="margin-top:60px;">
+    <div class="container">
+        <div class="d-flex align-items-center gap-3">
+            {% if team.logo %}<img src="{{ team.logo.url }}" class="team-logo-lg">{% else %}<div class="team-logo-lg team-logo-placeholder" style="width:80px;height:80px;font-size:2rem;border-radius:var(--radius);">{{ team.name|first }}</div>{% endif %}
+            <div>
+                <h1 class="mb-1">{{ team.name }}</h1>
+                <span class="badge-status badge-{{ team.status }}">{{ team.get_status_display }}</span>
+                <span class="badge-status badge-draft ms-2">{{ team.get_platform_display }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container">
+    {% if team.status == 'rejected' %}
+    <div class="alert alert-custom alert-danger mb-4"><strong>Rejection Reason:</strong> {{ team.rejection_reason }}</div>
+    {% endif %}
+    <!-- Team Info -->
+    <div class="glass-card mb-4">
+        <div class="row">
+            <div class="col-md-6">
+                <p><i class="fas fa-gamepad me-2 text-secondary"></i><strong>Game:</strong> {{ team.get_game_display }}</p>
+                <p><i class="fas fa-user me-2 text-secondary"></i><strong>Captain:</strong> {{ team.captain.username }}</p>
+            </div>
+            <div class="col-md-6">
+                {% if team.description %}<p><i class="fas fa-info-circle me-2 text-secondary"></i>{{ team.description }}</p>{% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Active Applications -->
+    {% if applications %}
+    <div class="glass-card mb-4" style="border-color:var(--accent);">
+        <h3 class="section-title mb-3" style="font-size:1.1rem;"><i class="fas fa-trophy me-2" style="color:var(--accent);"></i>Tournament Applications</h3>
+        <div class="d-flex flex-column gap-2">
+            {% for app in applications %}
+            <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:var(--border-color)!important;">
+                <div>
+                    <strong>{{ app.tournament.name }}</strong>
+                    {% if app.assigned_league %}<span class="text-secondary small ms-2">({{ app.assigned_league.name }})</span>{% endif %}
+                </div>
+                <span class="badge-status badge-{{ app.status }}">{{ app.get_status_display }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if team.is_roster_locked %}
+    <div class="alert alert-custom alert-warning mb-4">
+        <i class="fas fa-lock me-2"></i><strong>Roster Locked:</strong> You are currently participating in an active tournament. You cannot add, edit, or remove players at this time.
+    </div>
+    {% endif %}
+
+    <!-- Players -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="section-title"><i class="fas fa-users me-2" style="color:var(--accent-2);"></i>Roster ({{ players|length }}/20)</h3>
+        {% if team.player_count < 20 and not team.is_roster_locked %}
+        <a href="{% url 'teams:add_player' %}" class="btn-glow" style="padding:0.5rem 1.25rem;"><i class="fas fa-plus me-1"></i>Add Player</a>
+        {% endif %}
+    </div>
+    {% if players %}
+    <div class="row g-3">
+        {% for p in players %}
+        <div class="col-md-6 col-lg-4">
+            <div class="glass-card d-flex align-items-center gap-3" style="padding:1rem 1.25rem;">
+                {% if p.photo %}<img src="{{ p.photo.url }}" class="team-logo-sm">{% else %}<div class="team-logo-sm team-logo-placeholder" style="font-size:0.8rem;">{{ p.name|first }}</div>{% endif %}
+                <div class="flex-grow-1">
+                    <strong>{{ p.name }}</strong>
+                    <div class="text-secondary small">{{ p.gaming_id }} {% if p.position %}· {{ p.get_position_display }}{% endif %} {% if p.jersey_number %}· #{{ p.jersey_number }}{% endif %}</div>
+                </div>
+                <div class="d-flex gap-1">
+                    {% if not team.is_roster_locked %}
+                    <a href="{% url 'teams:edit_player' p.pk %}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-edit"></i></a>
+                    <form method="post" action="{% url 'teams:delete_player' p.pk %}" style="display:inline;">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove?')"><i class="fas fa-trash"></i></button></form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="glass-card text-center text-secondary"><p class="mb-0">No players yet. Add players to your roster!</p></div>
+    {% endif %}
+</div>
+{% endblock %}

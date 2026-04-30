@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Register Team - eFootball Arena{% endblock %}
+{% block content %}
+<div class="page-header" style="margin-top:60px;"><div class="container"><h1><i class="fas fa-shield-halved me-2" style="color:var(--accent);"></i>Register Your Team</h1></div></div>
+<div class="container">
+    <div class="row justify-content-center"><div class="col-lg-8">
+        <div class="glass-card">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn-glow mt-2"><i class="fas fa-paper-plane me-2"></i>Register Team</button>
+            </form>
+        </div>
+    </div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Admin Dashboard - eFootball Arena{% endblock %}
+{% block content %}
+<div class="page-header" style="margin-top:60px;"><div class="container"><h1><i class="fas fa-chart-line me-2" style="color:var(--accent);"></i>Admin Dashboard</h1></div></div>
+<div class="container">
+    <!-- Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-number">{{ total_tournaments }}</div><div class="stat-label">Tournaments</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-number">{{ approved_teams }}</div><div class="stat-label">Teams</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card" style="cursor:pointer;" onclick="location.href='{% url 'teams:admin_verify' %}'"><div class="stat-number" style="background:var(--gradient-2);-webkit-background-clip:text;">{{ pending_teams }}</div><div class="stat-label">Pending Teams</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card" style="cursor:pointer;" onclick="location.href='{% url 'matches:admin_verify' %}'"><div class="stat-number" style="background:var(--gradient-2);-webkit-background-clip:text;">{{ pending_results }}</div><div class="stat-label">Pending Results</div></div></div>
+    </div>
+    <!-- Quick Actions -->
+    <div class="glass-card mb-4">
+        <h5 style="font-family:'Orbitron',sans-serif;font-size:0.9rem;color:var(--accent);margin-bottom:1rem;">QUICK ACTIONS</h5>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'tournaments:admin_create' %}" class="btn-glow" style="padding:0.5rem 1rem;font-size:0.85rem;"><i class="fas fa-plus me-1"></i>New Tournament</a>
+            <a href="{% url 'teams:admin_verify' %}" class="btn-warning-glow" style="padding:0.5rem 1rem;font-size:0.85rem;"><i class="fas fa-shield-halved me-1"></i>Verify Teams</a>
+            <a href="{% url 'matches:admin_verify' %}" class="btn-outline-glow" style="padding:0.5rem 1rem;font-size:0.85rem;"><i class="fas fa-check-double me-1"></i>Verify Results</a>
+        </div>
+    </div>
+    <div class="row g-4">
+        <!-- Pending Teams -->
+        <div class="col-lg-4">
+            <div class="glass-card h-100">
+                <h5 style="font-family:'Orbitron',sans-serif;font-size:0.9rem;color:var(--accent-4);">PENDING TEAMS</h5>
+                {% for t in recent_pending_teams %}<div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="border-color:var(--border-color)!important;"><span>{{ t.name }}</span><span class="text-secondary small">{{ t.created_at|date:"M d" }}</span></div>{% empty %}<p class="text-secondary mb-0">All clear ✅</p>{% endfor %}
+            </div>
+        </div>
+        <!-- Pending Results -->
+        <div class="col-lg-4">
+            <div class="glass-card h-100">
+                <h5 style="font-family:'Orbitron',sans-serif;font-size:0.9rem;color:var(--accent-3);">PENDING RESULTS</h5>
+                {% for r in recent_pending_results %}<div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="border-color:var(--border-color)!important;"><span>{{ r }}</span><span class="text-secondary small">{{ r.submitted_at|date:"M d" }}</span></div>{% empty %}<p class="text-secondary mb-0">All clear ✅</p>{% endfor %}
+            </div>
+        </div>
+        <!-- Pending Applications -->
+        <div class="col-lg-4">
+            <div class="glass-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 style="font-family:'Orbitron',sans-serif;font-size:0.9rem;color:var(--accent);margin:0;">NEW APPLICATIONS</h5>
+                    {% if pending_applications > 0 %}<span class="badge bg-danger rounded-pill">{{ pending_applications }}</span>{% endif %}
+                </div>
+                {% for app in recent_applications %}
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="border-color:var(--border-color)!important;">
+                    <div>
+                        <div class="small fw-bold">{{ app.team.name }}</div>
+                        <a href="{% url 'tournaments:admin_applications' app.tournament.pk %}" class="text-secondary" style="font-size:0.75rem;">{{ app.tournament.name }}</a>
+                    </div>
+                </div>
+                {% empty %}<p class="text-secondary mb-0">No new applications ✅</p>{% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

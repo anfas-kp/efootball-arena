@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Login - eFootball Arena{% endblock %}
+{% block content %}
+<div style="margin-top:100px;" class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="glass-card">
+                <h2 class="section-title text-center mb-4"><i class="fas fa-sign-in-alt me-2" style="color:var(--accent);"></i>Login</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn-glow w-100 mt-2">Login</button>
+                </form>
+                <p class="text-center mt-3 text-secondary">Don't have an account? <a href="{% url 'accounts:register' %}" style="color:var(--accent);">Register</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

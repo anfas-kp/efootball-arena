@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Submit Result - eFootball Arena{% endblock %}
+{% block content %}
+<div class="page-header" style="margin-top:60px;"><div class="container"><h1><i class="fas fa-upload me-2" style="color:var(--accent);"></i>Submit Match Result</h1></div></div>
+<div class="container"><div class="row justify-content-center"><div class="col-lg-7">
+    <div class="glass-card mb-4 text-center">
+        <div class="score-display">
+            <span>{{ fixture.home_team.name }}</span>
+            <span class="vs">VS</span>
+            <span>{{ fixture.away_team.name }}</span>
+        </div>
+        <p class="text-secondary small">Matchday {{ fixture.matchday }} · {{ fixture.league.name }}</p>
+    </div>
+    <div class="glass-card">
+        <form method="post" enctype="multipart/form-data">{% csrf_token %}
+            <div class="row mb-4 justify-content-center align-items-center">
+                <div class="col-4 text-center">
+                    <label class="form-label">{{ fixture.home_team.name }}</label>
+                    {{ form.home_score }}
+                </div>
+                <div class="col-1 text-center"><span class="text-muted fs-4">-</span></div>
+                <div class="col-4 text-center">
+                    <label class="form-label">{{ fixture.away_team.name }}</label>
+                    {{ form.away_score }}
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label"><i class="fas fa-camera me-1"></i>Scoreline Screenshot (Required)</label>
+                {{ form.screenshot }}
+                <small class="text-muted d-block mt-1">Upload a clear screenshot showing the final score</small>
+            </div>
+            <button type="submit" class="btn-glow w-100"><i class="fas fa-paper-plane me-2"></i>Submit Result</button>
+        </form>
+    </div>
+</div></div></div>
+{% endblock %}

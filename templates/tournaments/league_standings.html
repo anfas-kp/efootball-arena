@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ league.name }} Standings{% endblock %}
+{% block content %}
+<div class="page-header" style="margin-top:60px;">
+    <div class="container">
+        <h1><i class="fas fa-table me-2" style="color:var(--accent);"></i>{{ league.name }} - Standings</h1>
+        <a href="{% url 'tournaments:tournament_detail' tournament.pk %}" class="text-secondary text-decoration-none"><i class="fas fa-arrow-left me-1"></i>{{ tournament.name }}</a>
+    </div>
+</div>
+<div class="container">
+    {% if standings %}
+    <div class="glass-card p-0" style="overflow-x:auto;">
+        <table class="table-dark-custom" style="border-spacing:0 2px;">
+            <thead><tr><th>Pos</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead>
+            <tbody>
+                {% for s in standings %}
+                <tr>
+                    <td><span class="position-badge {% if forloop.counter == 1 %}pos-1{% elif forloop.counter == 2 %}pos-2{% elif forloop.counter == 3 %}pos-3{% else %}pos-default{% endif %}">{{ forloop.counter }}</span></td>
+                    <td><strong>{{ s.team.name }}</strong></td>
+                    <td>{{ s.played }}</td><td>{{ s.won }}</td><td>{{ s.drawn }}</td><td>{{ s.lost }}</td>
+                    <td>{{ s.gf }}</td><td>{{ s.ga }}</td>
+                    <td>{% if s.gd > 0 %}<span style="color:var(--accent);">+{{ s.gd }}</span>{% elif s.gd < 0 %}<span style="color:var(--accent-3);">{{ s.gd }}</span>{% else %}0{% endif %}</td>
+                    <td><strong style="color:var(--accent);font-family:'Orbitron',sans-serif;">{{ s.points }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}<div class="glass-card text-center text-secondary">No teams in this league yet.</div>{% endif %}
+</div>
+{% endblock %}

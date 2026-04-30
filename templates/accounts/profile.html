@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Profile - eFootball Arena{% endblock %}
+{% block content %}
+<div class="page-header" style="margin-top:60px;"><div class="container"><h1><i class="fas fa-user me-2"></i>Profile</h1></div></div>
+<div class="container">
+    <div class="glass-card">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong class="text-secondary">Username:</strong> {{ user.username }}</p>
+                <p><strong class="text-secondary">Email:</strong> {{ user.email }}</p>
+                <p><strong class="text-secondary">Role:</strong> {{ user.get_role_display }}</p>
+                <p><strong class="text-secondary">Phone:</strong> {{ user.phone|default:"Not set" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

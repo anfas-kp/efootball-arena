@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard - eFootball Arena{% endblock %}
+{% block content %}
+<div class="page-header" style="margin-top:60px;"><div class="container"><h1><i class="fas fa-ranking-star me-2" style="color:var(--accent-4);"></i>Leaderboard</h1></div></div>
+<div class="container">
+    <div class="row g-4">
+        <!-- Top Scorers -->
+        <div class="col-lg-6">
+            <div class="glass-card">
+                <h5 style="font-family:'Orbitron',sans-serif;font-size:0.9rem;color:var(--accent);margin-bottom:1rem;"><i class="fas fa-futbol me-2"></i>TOP SCORERS</h5>
+                {% for p in top_scorers %}
+                <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:var(--border-color)!important;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="position-badge {% if forloop.counter == 1 %}pos-1{% elif forloop.counter == 2 %}pos-2{% elif forloop.counter == 3 %}pos-3{% else %}pos-default{% endif %}" style="width:28px;height:28px;font-size:0.75rem;">{{ forloop.counter }}</span>
+                        <div>
+                            <strong>{{ p.name }}</strong>
+                            <div class="text-secondary" style="font-size:0.75rem;">{{ p.team.name }}</div>
+                        </div>
+                    </div>
+                    <span style="font-family:'Orbitron',sans-serif;color:var(--accent);font-size:1.1rem;">{{ p.total_goals }}</span>
+                </div>
+                {% empty %}<p class="text-secondary mb-0">No goals recorded yet.</p>{% endfor %}
+            </div>
+        </div>
+        <!-- Top Assists -->
+        <div class="col-lg-6">
+            <div class="glass-card">
+                <h5 style="font-family:'Orbitron',sans-serif;font-size:0.9rem;color:var(--accent-2);margin-bottom:1rem;"><i class="fas fa-handshake me-2"></i>TOP ASSISTS</h5>
+                {% for p in top_assists %}
+                <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:var(--border-color)!important;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="position-badge {% if forloop.counter == 1 %}pos-1{% elif forloop.counter == 2 %}pos-2{% elif forloop.counter == 3 %}pos-3{% else %}pos-default{% endif %}" style="width:28px;height:28px;font-size:0.75rem;">{{ forloop.counter }}</span>
+                        <div>
+                            <strong>{{ p.name }}</strong>
+                            <div class="text-secondary" style="font-size:0.75rem;">{{ p.team.name }}</div>
+                        </div>
+                    </div>
+                    <span style="font-family:'Orbitron',sans-serif;color:var(--accent-2);font-size:1.1rem;">{{ p.total_assists }}</span>
+                </div>
+                {% empty %}<p class="text-secondary mb-0">No assists recorded yet.</p>{% endfor %}
+            </div>
+        </div>
+        <!-- Top Rated -->
+        <div class="col-lg-6">
+            <div class="glass-card">
+                <h5 style="font-family:'Orbitron',sans-serif;font-size:0.9rem;color:var(--accent-4);margin-bottom:1rem;"><i class="fas fa-star me-2"></i>HIGHEST RATED</h5>
+                {% for p in top_rated %}
+                <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:var(--border-color)!important;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="position-badge {% if forloop.counter == 1 %}pos-1{% elif forloop.counter == 2 %}pos-2{% elif forloop.counter == 3 %}pos-3{% else %}pos-default{% endif %}" style="width:28px;height:28px;font-size:0.75rem;">{{ forloop.counter }}</span>
+                        <div>
+                            <strong>{{ p.name }}</strong>
+                            <div class="text-secondary" style="font-size:0.75rem;">{{ p.team.name }}</div>
+                        </div>
+                    </div>
+                    <span style="font-family:'Orbitron',sans-serif;color:var(--accent-4);font-size:1.1rem;">{{ p.avg_rating }}</span>
+                </div>
+                {% empty %}<p class="text-secondary mb-0">No ratings recorded yet.</p>{% endfor %}
+            </div>
+        </div>
+        <!-- Discipline -->
+        <div class="col-lg-6">
+            <div class="glass-card">
+                <h5 style="font-family:'Orbitron',sans-serif;font-size:0.9rem;color:var(--accent-3);margin-bottom:1rem;"><i class="fas fa-square me-2"></i>DISCIPLINARY RECORD</h5>
+                {% for p in most_cards %}
+                <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:var(--border-color)!important;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="position-badge pos-default" style="width:28px;height:28px;font-size:0.75rem;">{{ forloop.counter }}</span>
+                        <div>
+                            <strong>{{ p.name }}</strong>
+                            <div class="text-secondary" style="font-size:0.75rem;">{{ p.team.name }}</div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        {% if p.total_yellow_cards %}<span style="color:#ffd166;">🟨 {{ p.total_yellow_cards }}</span>{% endif %}
+                        {% if p.total_red_cards %}<span style="color:var(--accent-3);">🟥 {{ p.total_red_cards }}</span>{% endif %}
+                    </div>
+                </div>
+                {% empty %}<p class="text-secondary mb-0">No cards recorded yet.</p>{% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
