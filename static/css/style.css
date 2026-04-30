@@ -59,6 +59,7 @@ body {
   font-size: 1.4rem;
   background: var(--gradient-1);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: 1px;
 }
@@ -124,7 +125,7 @@ body {
   line-height: 1.1;
   margin-bottom: 1.5rem;
 }
-.hero-title .accent { background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.hero-title .accent { background: var(--gradient-1); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .hero-subtitle { font-size: 1.15rem; color: var(--text-secondary); line-height: 1.7; max-width: 540px; margin-bottom: 2rem; }
 
 /* ===== Buttons ===== */
@@ -202,6 +203,7 @@ body {
   font-weight: 900;
   background: var(--gradient-1);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .stat-label { color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 0.5rem; }
@@ -303,7 +305,7 @@ body {
   font-size: 2.5rem; font-weight: 900;
   text-align: center; padding: 1.5rem;
 }
-.score-display .score { background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.score-display .score { background: var(--gradient-1); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .score-display .vs { color: var(--text-muted); font-size: 1rem; margin: 0 1rem; }
 .score-input { font-family: 'Orbitron', sans-serif !important; font-size: 2rem !important; text-align: center !important; max-width: 100px; }
 
