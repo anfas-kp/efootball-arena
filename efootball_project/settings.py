@@ -14,6 +14,8 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-efootball-dev-key-change-in-production-!@#$%')
 DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
+# ADD THIS: Tells Django to trust Render's HTTPS proxy for form uploads
+CSRF_TRUSTED_ORIGINS = ['https://efootball-arena-zno9.onrender.com']
 
 INSTALLED_APPS = [
     'django.contrib.admin',

@@ -27,13 +27,14 @@ Before you can host the website, the code needs to be on GitHub.
 
 ---
 
-### Step 2: Get your Cloudinary URL (For Image Storage)
+### Step 2: Get your Cloudinary Credentials (For Image Storage)
 Because free hosts delete files every time the server sleeps, we need Cloudinary to store images permanently.
 1. Go to [Cloudinary.com](https://cloudinary.com/) and create a free account.
 2. Go to your **Dashboard**.
-3. Under "Product Environment Credentials", copy your **API Environment variable**. It will look something like this:
-   `CLOUDINARY_URL=cloudinary://123456789:abcdefg@yourcloudname`
-   *(Save this URL for Step 4).*
+3. Locate your **Product Environment Credentials**. You will need to copy three separate values for Step 4:
+   - **Cloud Name** (e.g., `dabcdefgh`)
+   - **API Key** (e.g., `123456789012345`)
+   - **API Secret** (e.g., `AbCdEfGhIjKlMnOpQrStUvWxYz`)
 
 ---
 
@@ -66,7 +67,9 @@ Because free hosts delete files every time the server sleeps, we need Cloudinary
 | `SECRET_KEY` | *(Type any random long password here)* |
 | `ALLOWED_HOSTS` | `*` |
 | `DATABASE_URL` | *(Paste your Neon.tech URL from Step 3 here)* |
-| `CLOUDINARY_URL` | *(Paste your Cloudinary URL from Step 2 here)* |
+| `CLOUDINARY_CLOUD_NAME` | *(Paste your Cloud Name from Step 2)* |
+| `CLOUDINARY_API_KEY` | *(Paste your API Key from Step 2)* |
+| `CLOUDINARY_API_SECRET` | *(Paste your API Secret from Step 2)* |
 
 6. Click **Create Web Service**.
 
