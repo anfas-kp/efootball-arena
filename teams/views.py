@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import IntegrityError
 from .models import Team, Player
 from .forms import TeamForm, PlayerForm
 
@@ -8,19 +9,25 @@ from .forms import TeamForm, PlayerForm
 @login_required
 def register_team(request):
     """Register a new team."""
-    # Check if user already has a team
-    if hasattr(request.user, 'team'):
-        messages.warning(request, 'You already have a registered team.')
-        return redirect('teams:my_team')
+    # Check if user already has a team (Django 4.0+ safe)
+    try:
+        if request.user.team:
+            messages.warning(request, 'You already have a registered team.')
+            return redirect('teams:my_team')
+    except Team.DoesNotExist:
+        pass
 
     if request.method == 'POST':
         form = TeamForm(request.POST, request.FILES)
         if form.is_valid():
             team = form.save(commit=False)
             team.captain = request.user
-            team.save()
-            messages.success(request, '🎉 Team registered successfully! Awaiting admin verification.')
-            return redirect('teams:my_team')
+            try:
+                team.save()
+                messages.success(request, '🎉 Team registered successfully! Awaiting admin verification.')
+                return redirect('teams:my_team')
+            except IntegrityError:
+                form.add_error(None, 'A database error occurred. Ensure your team name is unique or that you do not already have a team.')
     else:
         form = TeamForm()
 

@@ -8,8 +8,8 @@
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-number">{{ total_tournaments }}</div><div class="stat-label">Tournaments</div></div></div>
         <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-number">{{ approved_teams }}</div><div class="stat-label">Teams</div></div></div>
-        <div class="col-6 col-md-3"><div class="stat-card" style="cursor:pointer;" onclick="location.href='{% url 'teams:admin_verify' %}'"><div class="stat-number" style="background:var(--gradient-2);-webkit-background-clip:text;">{{ pending_teams }}</div><div class="stat-label">Pending Teams</div></div></div>
-        <div class="col-6 col-md-3"><div class="stat-card" style="cursor:pointer;" onclick="location.href='{% url 'matches:admin_verify' %}'"><div class="stat-number" style="background:var(--gradient-2);-webkit-background-clip:text;">{{ pending_results }}</div><div class="stat-label">Pending Results</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card" style="cursor:pointer;" data-url="{% url 'teams:admin_verify' %}" onclick="location.href=this.dataset.url"><div class="stat-number" style="background:var(--gradient-2);-webkit-background-clip:text;background-clip:text;">{{ pending_teams }}</div><div class="stat-label">Pending Teams</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card" style="cursor:pointer;" data-url="{% url 'matches:admin_verify' %}" onclick="location.href=this.dataset.url"><div class="stat-number" style="background:var(--gradient-2);-webkit-background-clip:text;background-clip:text;">{{ pending_results }}</div><div class="stat-label">Pending Results</div></div></div>
     </div>
     <!-- Quick Actions -->
     <div class="glass-card mb-4">
