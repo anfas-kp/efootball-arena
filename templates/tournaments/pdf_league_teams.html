@@ -1,0 +1,37 @@
+{% extends "pdf_base.html" %}
+
+{% block title %}{{ league.name }} Teams{% endblock %}
+{% block header_title %}{{ tournament.name }}{% endblock %}
+{% block sub_title %}{{ league.name }} - Assigned Teams List{% endblock %}
+{% block filename %}{{ league.name|slugify }}_teams.pdf{% endblock %}
+
+{% block content %}
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Team Name</th>
+            <th>Captain</th>
+            <th>Contact Phone</th>
+            <th>Platform</th>
+            <th>Game</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for team in teams %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td><strong>{{ team.name }}</strong></td>
+            <td>{{ team.captain.username }}</td>
+            <td>{{ team.captain_phone }}</td>
+            <td>{{ team.get_platform_display }}</td>
+            <td>{{ team.get_game_display }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" style="text-align: center;">No teams assigned to this league yet.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

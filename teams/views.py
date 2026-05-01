@@ -1,8 +1,10 @@
+import csv
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import IntegrityError
 from django.utils.text import slugify
+from django.http import HttpResponse
 import random
 import string
 from .models import Team, Player
@@ -50,6 +52,21 @@ def my_team(request):
         return redirect('teams:register_team')
 
     players = team.players.all()
+    
+    # Calculate overall team stats
+    from django.db.models import Sum, Max
+    team_stats = players.aggregate(
+        total_goals=Sum('total_goals'),
+        total_assists=Sum('total_assists'),
+        total_yellow_cards=Sum('total_yellow_cards'),
+        total_red_cards=Sum('total_red_cards'),
+        max_matches=Max('matches_played')
+    )
+    
+    # Handle None values from aggregate
+    for key in team_stats:
+        if team_stats[key] is None:
+            team_stats[key] = 0
 
     # Get tournament applications for this team
     applications = team.tournament_applications.select_related('tournament', 'assigned_league').all()
@@ -57,8 +74,10 @@ def my_team(request):
     return render(request, 'teams/my_team.html', {
         'team': team,
         'players': players,
+        'team_stats': team_stats,
         'applications': applications,
     })
+
 
 
 @login_required
@@ -202,3 +221,19 @@ def admin_reject_team(request, pk):
         team.save()
         messages.success(request, f'❌ Team "{team.name}" rejected.')
     return redirect('teams:admin_verify')
+
+
+@login_required
+def download_team_roster_pdf(request, pk):
+    """Download team roster as PDF (Admin only)."""
+    if not request.user.is_admin_user:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    team = get_object_or_404(Team, pk=pk)
+    players = team.players.all()
+
+    return render(request, 'teams/pdf_team_roster.html', {
+        'team': team,
+        'players': players
+    })

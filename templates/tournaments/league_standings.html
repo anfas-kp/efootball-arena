@@ -2,9 +2,14 @@
 {% block title %}{{ league.name }} Standings{% endblock %}
 {% block content %}
 <div class="page-header" style="margin-top:60px;">
-    <div class="container">
-        <h1><i class="fas fa-table me-2" style="color:var(--accent);"></i>{{ league.name }} - Standings</h1>
-        <a href="{% url 'tournaments:tournament_detail' tournament.pk %}" class="text-secondary text-decoration-none"><i class="fas fa-arrow-left me-1"></i>{{ tournament.name }}</a>
+    <div class="container d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fas fa-table me-2" style="color:var(--accent);"></i>{{ league.name }} - Standings</h1>
+            <a href="{% url 'tournaments:tournament_detail' tournament.pk %}" class="text-secondary text-decoration-none"><i class="fas fa-arrow-left me-1"></i>{{ tournament.name }}</a>
+        </div>
+        {% if user.is_authenticated and user.is_admin_user %}
+        <a href="{% url 'tournaments:download_league_standings_pdf' league.pk %}" class="btn-glow"><i class="fas fa-file-pdf me-2"></i>Download PDF</a>
+        {% endif %}
     </div>
 </div>
 <div class="container">

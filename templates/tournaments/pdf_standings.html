@@ -1,0 +1,45 @@
+{% extends "pdf_base.html" %}
+
+{% block title %}{{ league.name }} Standings{% endblock %}
+{% block header_title %}{{ tournament.name }}{% endblock %}
+{% block sub_title %}{{ league.name }} - Official Standings{% endblock %}
+{% block filename %}{{ league.name|slugify }}_standings.pdf{% endblock %}
+
+{% block content %}
+<table>
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Team</th>
+            <th>Played</th>
+            <th>Won</th>
+            <th>Drawn</th>
+            <th>Lost</th>
+            <th>GF</th>
+            <th>GA</th>
+            <th>GD</th>
+            <th>Points</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in standings %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td><strong>{{ s.team.name }}</strong></td>
+            <td>{{ s.played }}</td>
+            <td>{{ s.won }}</td>
+            <td>{{ s.drawn }}</td>
+            <td>{{ s.lost }}</td>
+            <td>{{ s.gf }}</td>
+            <td>{{ s.ga }}</td>
+            <td>{{ s.gd }}</td>
+            <td><strong>{{ s.points }}</strong></td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="10" style="text-align: center;">No teams or matches in this league yet.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

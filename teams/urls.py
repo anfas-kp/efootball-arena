@@ -15,4 +15,5 @@ urlpatterns = [
     path('admin/verify/', views.admin_verify_teams, name='admin_verify'),
     path('admin/approve/<int:pk>/', views.admin_approve_team, name='admin_approve'),
     path('admin/reject/<int:pk>/', views.admin_reject_team, name='admin_reject'),
+    path('admin/<int:pk>/download-roster/', views.download_team_roster_pdf, name='download_team_roster_pdf'),
 ]

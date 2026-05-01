@@ -1,0 +1,41 @@
+{% extends "pdf_base.html" %}
+
+{% block title %}{{ team.name }} Roster{% endblock %}
+{% block header_title %}Official Team Roster{% endblock %}
+{% block sub_title %}{{ team.name }} (Captain: {{ team.captain.username }}){% endblock %}
+{% block filename %}{{ team.name|slugify }}_roster.pdf{% endblock %}
+
+{% block content %}
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Player Name</th>
+            <th>Gaming ID</th>
+            <th>Position</th>
+            <th>Matches</th>
+            <th>Goals</th>
+            <th>Assists</th>
+            <th>Avg Rating</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for player in players %}
+        <tr>
+            <td>{{ player.jersey_number|default:"-" }}</td>
+            <td><strong>{{ player.name }}</strong></td>
+            <td>{{ player.gaming_id }}</td>
+            <td>{{ player.get_position_display }}</td>
+            <td>{{ player.matches_played }}</td>
+            <td>{{ player.total_goals }}</td>
+            <td>{{ player.total_assists }}</td>
+            <td>{{ player.avg_rating }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="8" style="text-align: center;">No players in this roster.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

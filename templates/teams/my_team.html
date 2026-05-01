@@ -29,6 +29,38 @@
             </div>
         </div>
     </div>
+
+    <!-- Overall Team Stats -->
+    <div class="glass-card mb-4" style="border-color:var(--accent-2);">
+        <h3 class="section-title mb-3" style="font-size:1.1rem;"><i class="fas fa-chart-bar me-2" style="color:var(--accent-2);"></i>Overall Team Stats</h3>
+        <div class="row text-center">
+            <div class="col-6 col-md-3 mb-2">
+                <div class="p-3 rounded" style="background: rgba(255,255,255,0.05);">
+                    <div class="h4 mb-0">{{ team_stats.max_matches }}</div>
+                    <div class="small text-secondary">Matches Played</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-2">
+                <div class="p-3 rounded" style="background: rgba(255,255,255,0.05);">
+                    <div class="h4 mb-0 text-success">{{ team_stats.total_goals }}</div>
+                    <div class="small text-secondary">Total Goals</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-2">
+                <div class="p-3 rounded" style="background: rgba(255,255,255,0.05);">
+                    <div class="h4 mb-0 text-info">{{ team_stats.total_assists }}</div>
+                    <div class="small text-secondary">Total Assists</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-2">
+                <div class="p-3 rounded" style="background: rgba(255,255,255,0.05);">
+                    <div class="h4 mb-0 text-danger">{{ team_stats.total_yellow_cards }} <span class="text-secondary small">Y</span> / {{ team_stats.total_red_cards }} <span class="text-secondary small">R</span></div>
+                    <div class="small text-secondary">Cards</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Active Applications -->
     {% if applications %}
     <div class="glass-card mb-4" style="border-color:var(--accent);">
@@ -64,17 +96,72 @@
     <div class="row g-3">
         {% for p in players %}
         <div class="col-md-6 col-lg-4">
-            <div class="glass-card d-flex align-items-center gap-3" style="padding:1rem 1.25rem;">
+            <div class="glass-card d-flex align-items-center gap-3" style="padding:1rem 1.25rem; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#playerModal{{ p.id }}">
                 {% if p.photo %}<img src="{{ p.photo.url }}" class="team-logo-sm">{% else %}<div class="team-logo-sm team-logo-placeholder" style="font-size:0.8rem;">{{ p.name|first }}</div>{% endif %}
                 <div class="flex-grow-1">
                     <strong>{{ p.name }}</strong>
                     <div class="text-secondary small">{{ p.gaming_id }} {% if p.position %}· {{ p.get_position_display }}{% endif %} {% if p.jersey_number %}· #{{ p.jersey_number }}{% endif %}</div>
                 </div>
-                <div class="d-flex gap-1">
+                <div class="d-flex gap-1" onclick="event.stopPropagation();">
                     {% if not team.is_roster_locked %}
                     <a href="{% url 'teams:edit_player' p.pk %}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-edit"></i></a>
                     <form method="post" action="{% url 'teams:delete_player' p.pk %}" style="display:inline;">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove?')"><i class="fas fa-trash"></i></button></form>
                     {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Details Modal -->
+        <div class="modal fade" id="playerModal{{ p.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content glass-card border-0">
+                    <div class="modal-header border-0 pb-0">
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center pt-0">
+                        {% if p.photo %}<img src="{{ p.photo.url }}" class="rounded-circle mb-3" style="width:100px; height:100px; object-fit:cover; border:2px solid var(--accent);">{% else %}<div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:100px; height:100px; background:var(--surface); border:2px solid var(--accent); font-size:2.5rem; font-weight:bold;">{{ p.name|first }}</div>{% endif %}
+                        <h4 class="mb-1">{{ p.name }}</h4>
+                        <p class="text-secondary mb-4">{{ p.gaming_id }} {% if p.position %}· {{ p.get_position_display }}{% endif %} {% if p.jersey_number %}· #{{ p.jersey_number }}{% endif %}</p>
+                        
+                        <div class="row g-2 text-start">
+                            <div class="col-6">
+                                <div class="p-2 rounded" style="background: rgba(255,255,255,0.05);">
+                                    <small class="text-secondary d-block">Matches Played</small>
+                                    <span class="fs-5">{{ p.matches_played }}</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 rounded" style="background: rgba(255,255,255,0.05);">
+                                    <small class="text-secondary d-block">Avg Rating</small>
+                                    <span class="fs-5 text-warning">{{ p.avg_rating }} <i class="fas fa-star" style="font-size:0.8rem;"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 rounded" style="background: rgba(255,255,255,0.05);">
+                                    <small class="text-secondary d-block">Goals</small>
+                                    <span class="fs-5 text-success">{{ p.total_goals }} <i class="fas fa-futbol" style="font-size:0.8rem;"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 rounded" style="background: rgba(255,255,255,0.05);">
+                                    <small class="text-secondary d-block">Assists</small>
+                                    <span class="fs-5 text-info">{{ p.total_assists }} <i class="fas fa-hands-helping" style="font-size:0.8rem;"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 rounded" style="background: rgba(255,255,255,0.05);">
+                                    <small class="text-secondary d-block">Yellow Cards</small>
+                                    <span class="fs-5 text-warning">{{ p.total_yellow_cards }} <i class="fas fa-square" style="font-size:0.8rem;"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 rounded" style="background: rgba(255,255,255,0.05);">
+                                    <small class="text-secondary d-block">Red Cards</small>
+                                    <span class="fs-5 text-danger">{{ p.total_red_cards }} <i class="fas fa-square" style="font-size:0.8rem;"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,11 +1,14 @@
 from itertools import combinations
+import csv
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Count
 from django.utils import timezone
+from django.http import HttpResponse
 from .models import Tournament, TournamentApplication, League, Fixture
 from .forms import TournamentForm, LeagueForm
+from .utils import get_league_standings
 from teams.models import Team
 
 
@@ -122,75 +125,46 @@ def apply_tournament(request, pk):
 def league_standings(request, pk):
     """View league standings."""
     league = get_object_or_404(League, pk=pk)
-    fixtures = league.fixtures.filter(status='completed')
-    tournament = league.tournament
-
-    # Calculate standings
-    standings = {}
-    for team in league.teams.all():
-        standings[team.id] = {
-            'team': team,
-            'played': 0,
-            'won': 0,
-            'drawn': 0,
-            'lost': 0,
-            'gf': 0,
-            'ga': 0,
-            'gd': 0,
-            'points': 0,
-        }
-
-    for fixture in fixtures:
-        if not hasattr(fixture, 'result'):
-            continue
-        result = fixture.result
-        home_id = fixture.home_team_id
-        away_id = fixture.away_team_id
-
-        if home_id in standings:
-            standings[home_id]['played'] += 1
-            standings[home_id]['gf'] += result.home_score
-            standings[home_id]['ga'] += result.away_score
-
-        if away_id in standings:
-            standings[away_id]['played'] += 1
-            standings[away_id]['gf'] += result.away_score
-            standings[away_id]['ga'] += result.home_score
-
-        if result.home_score > result.away_score:
-            if home_id in standings:
-                standings[home_id]['won'] += 1
-                standings[home_id]['points'] += tournament.points_win
-            if away_id in standings:
-                standings[away_id]['lost'] += 1
-                standings[away_id]['points'] += tournament.points_loss
-        elif result.home_score < result.away_score:
-            if away_id in standings:
-                standings[away_id]['won'] += 1
-                standings[away_id]['points'] += tournament.points_win
-            if home_id in standings:
-                standings[home_id]['lost'] += 1
-                standings[home_id]['points'] += tournament.points_loss
-        else:
-            if home_id in standings:
-                standings[home_id]['drawn'] += 1
-                standings[home_id]['points'] += tournament.points_draw
-            if away_id in standings:
-                standings[away_id]['drawn'] += 1
-                standings[away_id]['points'] += tournament.points_draw
-
-    for s in standings.values():
-        s['gd'] = s['gf'] - s['ga']
-
-    sorted_standings = sorted(
-        standings.values(),
-        key=lambda x: (-x['points'], -x['gd'], -x['gf'])
-    )
+    sorted_standings = get_league_standings(league)
 
     return render(request, 'tournaments/league_standings.html', {
         'league': league,
         'standings': sorted_standings,
-        'tournament': tournament,
+        'tournament': league.tournament,
+    })
+
+
+@login_required
+def download_league_standings_pdf(request, pk):
+    """Download league standings as PDF (Admin only)."""
+    if not request.user.is_admin_user:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    league = get_object_or_404(League, pk=pk)
+    sorted_standings = get_league_standings(league)
+
+    return render(request, 'tournaments/pdf_standings.html', {
+        'league': league,
+        'tournament': league.tournament,
+        'standings': sorted_standings
+    })
+
+
+@login_required
+def download_league_teams_pdf(request, pk):
+    """Download list of teams in a league as PDF (Admin only)."""
+    if not request.user.is_admin_user:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    league = get_object_or_404(League, pk=pk)
+    teams = league.teams.all()
+
+    return render(request, 'tournaments/pdf_league_teams.html', {
+        'league': league,
+        'tournament': league.tournament,
+        'teams': teams
     })
 
 

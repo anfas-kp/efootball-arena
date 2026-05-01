@@ -1,8 +1,10 @@
+import csv
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Sum, Avg, Count, Q
+from django.http import HttpResponse
 from tournaments.models import Fixture
 from teams.models import Player
 from .models import MatchResult, Goal, Card, PlayerRating
@@ -205,6 +207,20 @@ def leaderboard(request):
         'top_assists': top_assists,
         'top_rated': top_rated,
         'most_cards': most_cards,
+    })
+
+
+@login_required
+def download_top_scorers_pdf(request):
+    """Download top scorers as PDF (Admin only)."""
+    if not request.user.is_admin_user:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    top_scorers = Player.objects.filter(total_goals__gt=0).order_by('-total_goals')
+
+    return render(request, 'matches/pdf_top_scorers.html', {
+        'top_scorers': top_scorers
     })
 
 
