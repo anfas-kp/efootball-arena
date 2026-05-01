@@ -73,7 +73,7 @@ class Player(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
     name = models.CharField(max_length=100)
     photo = models.ImageField(upload_to='player_photos/', blank=True, null=True)
-    gaming_id = models.CharField(max_length=100, unique=True, help_text='PSN ID / Xbox Gamertag / Steam ID')
+    gaming_id = models.CharField(max_length=100, unique=True, blank=True, help_text='PSN ID / Xbox Gamertag / Steam ID')
     jersey_number = models.PositiveIntegerField(null=True, blank=True)
     position = models.CharField(max_length=3, choices=POSITION_CHOICES, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)

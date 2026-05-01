@@ -19,13 +19,14 @@ class TeamForm(forms.ModelForm):
 
 
 class PlayerForm(forms.ModelForm):
+    gaming_id = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Leave blank to auto-generate'}))
+
     class Meta:
         model = Player
         fields = ['name', 'photo', 'gaming_id', 'jersey_number', 'position', 'date_of_birth']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Player name'}),
             'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'gaming_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'PSN ID / Gamertag'}),
             'jersey_number': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '#', 'min': 1, 'max': 99}),
             'position': forms.Select(attrs={'class': 'form-select'}),
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),

@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import IntegrityError
+from django.utils.text import slugify
+import random
+import string
 from .models import Team, Player
 from .forms import TeamForm, PlayerForm
 
@@ -72,8 +75,8 @@ def add_player(request):
         messages.warning(request, '🔒 Roster is locked — your team has been accepted into an active tournament.')
         return redirect('teams:my_team')
 
-    if team.player_count >= 20:
-        messages.warning(request, 'Maximum roster size (20 players) reached.')
+    if team.player_count >= 30:
+        messages.warning(request, 'Maximum roster size (30 players) reached.')
         return redirect('teams:my_team')
 
     if request.method == 'POST':
@@ -81,6 +84,16 @@ def add_player(request):
         if form.is_valid():
             player = form.save(commit=False)
             player.team = team
+            
+            # Auto-generate gaming ID if blank
+            if not player.gaming_id:
+                base_id = slugify(f"{team.name}_{player.name}").replace('-', '_')
+                unique_id = base_id
+                while Player.objects.filter(gaming_id=unique_id).exists():
+                    suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
+                    unique_id = f"{base_id}_{suffix}"
+                player.gaming_id = unique_id
+                
             player.save()
             messages.success(request, f'✅ {player.name} added to the roster!')
             return redirect('teams:my_team')

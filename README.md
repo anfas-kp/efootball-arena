@@ -8,7 +8,7 @@ A comprehensive Django web application for organizing and managing e-football to
 
 ### For Team Captains
 - **Team Registration** — Register your team with logo, platform, and game preference
-- **Roster Management** — Add up to 20 players with gaming IDs, positions, and jersey numbers (locked during active tournaments)
+- **Roster Management** — Add up to 30 players with gaming IDs, positions, and jersey numbers (locked during active tournaments)
 - **Open Enrollment** — Browse open tournaments and self-apply with a verified team
 - **Match Result Submission** — Submit scores with mandatory screenshot proof
 - **Match Details** — Log goals, assists, disciplinary cards (with SS proof), and top 3 rated players per team

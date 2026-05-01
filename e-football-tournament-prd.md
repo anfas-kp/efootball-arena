@@ -192,7 +192,7 @@ A Django-based web application that automates tournament management, enforces pr
   - Player Position (GK/DEF/MID/FWD, optional)
   - Date of Birth (for age verification)
   - Phone/Email (optional)
-- Maximum roster size: 20 players per team
+- Maximum roster size: 30 players per team
 - Minimum roster size: 5 players (enforced before tournament entry)
 - Bulk upload option (CSV template provided)
 - Player photo requirements:

@@ -55,8 +55,8 @@
 
     <!-- Players -->
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="section-title"><i class="fas fa-users me-2" style="color:var(--accent-2);"></i>Roster ({{ players|length }}/20)</h3>
-        {% if team.player_count < 20 and not team.is_roster_locked %}
+        <h3 class="section-title"><i class="fas fa-users me-2" style="color:var(--accent-2);"></i>Roster ({{ players|length }}/30)</h3>
+        {% if team.player_count < 30 and not team.is_roster_locked %}
         <a href="{% url 'teams:add_player' %}" class="btn-glow" style="padding:0.5rem 1.25rem;"><i class="fas fa-plus me-1"></i>Add Player</a>
         {% endif %}
     </div>
