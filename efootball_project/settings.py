@@ -112,8 +112,19 @@ if not DEBUG:
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-if env('CLOUDINARY_URL', default=None):
+# 1. EXPLICIT CLOUDINARY CONFIGURATION (Bulletproof)
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': env('CLOUDINARY_CLOUD_NAME', default=None),
+    'API_KEY': env('CLOUDINARY_API_KEY', default=None),
+    'API_SECRET': env('CLOUDINARY_API_SECRET', default=None),
+}
+
+# 2. ACTIVATE CLOUDINARY IF KEYS EXIST
+if CLOUDINARY_STORAGE['CLOUD_NAME'] and CLOUDINARY_STORAGE['API_KEY']:
     STORAGES["default"]["BACKEND"] = "cloudinary_storage.storage.MediaCloudinaryStorage"
+    print("🟢 Cloudinary Storage Active") # Helpful for debugging Render logs
+else:
+    print("🟡 Using Local File Storage (Missing Cloudinary Keys)")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
