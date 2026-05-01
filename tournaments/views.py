@@ -287,7 +287,7 @@ def admin_assign_teams(request, league_pk):
 
     league = get_object_or_404(League, pk=league_pk)
     available_teams = Team.objects.filter(status='approved').exclude(
-        leagues__tournament=league.tournament
+        leagues=league
     )
     assigned_teams = league.teams.all()
 

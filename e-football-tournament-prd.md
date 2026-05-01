@@ -383,7 +383,7 @@ A Django-based web application that automates tournament management, enforces pr
   
 - **Assignment Rules**:
   - Only verified teams can be assigned
-  - Team can be in only ONE league per tournament
+  - Team can be in MULTIPLE leagues per tournament
   - Respect league capacity limits
   - Prevent duplicate assignments
   
