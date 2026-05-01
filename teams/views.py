@@ -9,12 +9,13 @@ from .forms import TeamForm, PlayerForm
 @login_required
 def register_team(request):
     """Register a new team."""
-    # Check if user already has a team (Django 4.0+ safe)
+    # Check if user already has a team (bulletproof check)
     try:
-        if request.user.team:
+        if getattr(request.user, 'team', None):
             messages.warning(request, 'You already have a registered team.')
             return redirect('teams:my_team')
-    except Team.DoesNotExist:
+    except Exception:
+        # If any error occurs (like RelatedObjectDoesNotExist or AttributeError), assume no team
         pass
 
     if request.method == 'POST':
@@ -28,6 +29,8 @@ def register_team(request):
                 return redirect('teams:my_team')
             except IntegrityError:
                 form.add_error(None, 'A database error occurred. Ensure your team name is unique or that you do not already have a team.')
+            except Exception as e:
+                form.add_error(None, f'System error during save (e.g. file upload failed): {str(e)}')
     else:
         form = TeamForm()
 
