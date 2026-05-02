@@ -28,6 +28,9 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'teams:team_list' %}">Teams</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'matches:result_list' %}">Results</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'matches:leaderboard' %}">Leaderboard</a></li>
+                    {% if user.is_authenticated and not user.is_admin_user %}
+                        <li class="nav-item"><a class="nav-link text-accent fw-bold" href="{% url 'teams:my_team' %}">My Team</a></li>
+                    {% endif %}
                 </ul>
                 <div class="d-flex align-items-center gap-3">
                     {% if user.is_authenticated %}
