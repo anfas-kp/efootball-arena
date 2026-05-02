@@ -58,12 +58,12 @@
     {% if messages %}
     <div class="container" style="margin-top:100px; position: relative; z-index: 1050;">
         {% for message in messages %}
-        <div class="alert alert-custom alert-{{ message.tags }} alert-dismissible fade show border-0 shadow-lg" role="alert">
-            <div class="d-flex align-items-center gap-2">
+        <div class="alert alert-custom alert-{{ message.tags }} alert-dismissible fade show shadow-lg" role="alert">
+            <div class="d-flex align-items-center gap-3">
                 {% if message.tags == 'success' %}<i class="fas fa-check-circle text-accent"></i>
-                {% elif message.tags == 'error' %}<i class="fas fa-exclamation-circle text-danger"></i>
+                {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="fas fa-exclamation-circle text-accent-3"></i>
                 {% else %}<i class="fas fa-info-circle text-info"></i>{% endif %}
-                {{ message }}
+                <span class="fw-bold small">{{ message }}</span>
             </div>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
         </div>
