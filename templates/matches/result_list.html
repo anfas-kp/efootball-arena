@@ -24,11 +24,31 @@
                         <!-- Teams & Score -->
                         <div class="col-md-6 text-center">
                             <div class="d-flex align-items-center justify-content-center gap-4">
-                                <div class="text-end fw-bold text-white h5 mb-0" style="width: 40%;">{{ r.fixture.home_team.name }}</div>
-                                <div class="bg-secondary px-3 py-2 rounded font-orbitron h4 mb-0 text-accent" style="min-width: 100px;">
+                                <div class="d-flex align-items-center gap-2 justify-content-end" style="width: 40%;">
+                                    <div class="fw-bold text-white small text-truncate">{{ r.fixture.home_team.name }}</div>
+                                    <div class="flex-shrink-0">
+                                        {% if r.fixture.home_team.logo %}
+                                            <img src="{{ r.fixture.home_team.logo.url }}" class="logo-xs">
+                                        {% else %}
+                                            <div class="logo-xs logo-placeholder" style="font-size: 0.6rem;">{{ r.fixture.home_team.name|first }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-secondary px-3 py-1 rounded font-orbitron fw-bold text-accent" style="min-width: 80px; font-size: 1rem;">
                                     {{ r.home_score }} - {{ r.away_score }}
                                 </div>
-                                <div class="text-start fw-bold text-white h5 mb-0" style="width: 40%;">{{ r.fixture.away_team.name }}</div>
+
+                                <div class="d-flex align-items-center gap-2 justify-content-start" style="width: 40%;">
+                                    <div class="flex-shrink-0">
+                                        {% if r.fixture.away_team.logo %}
+                                            <img src="{{ r.fixture.away_team.logo.url }}" class="logo-xs">
+                                        {% else %}
+                                            <div class="logo-xs logo-placeholder" style="font-size: 0.6rem;">{{ r.fixture.away_team.name|first }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="fw-bold text-white small text-truncate">{{ r.fixture.away_team.name }}</div>
+                                </div>
                             </div>
                         </div>
                         

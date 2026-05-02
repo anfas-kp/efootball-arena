@@ -70,8 +70,13 @@
                         <tbody>
                             {% for app in recent_applications %}
                             <tr>
-                                <td class="fw-bold">{{ app.team.name }}</td>
-                                <td><span class="small text-muted">{{ app.tournament.name }}</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        {% if app.team.logo %}<img src="{{ app.team.logo.url }}" class="logo-xs">{% else %}<div class="logo-xs logo-placeholder" style="font-size:0.6rem;">{{ app.team.name|first }}</div>{% endif %}
+                                        <span class="fw-bold">{{ app.team.name }}</span>
+                                    </div>
+                                </td>
+                                <td><span class="small text-muted text-truncate d-inline-block" style="max-width: 150px;">{{ app.tournament.name }}</span></td>
                                 <td class="small">{{ app.applied_at|date:"M d" }}</td>
                                 <td class="text-end">
                                     <a href="{% url 'tournaments:admin_applications' app.tournament.pk %}" class="btn-outline-glow btn-sm py-1 px-3" style="font-size: 0.7rem;">Review</a>
@@ -94,9 +99,12 @@
                 <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-user-check me-2 text-warning"></i>NEW TEAMS</h5>
                 {% for t in recent_pending_teams %}
                 <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom border-white border-opacity-5 last-child-no-border">
-                    <div>
-                        <div class="fw-bold text-white small">{{ t.name }}</div>
-                        <div class="x-small text-muted">{{ t.get_platform_display }} · {{ t.created_at|naturaltime }}</div>
+                    <div class="d-flex align-items-center gap-3">
+                        {% if t.logo %}<img src="{{ t.logo.url }}" class="logo-xs">{% else %}<div class="logo-xs logo-placeholder" style="font-size:0.6rem;">{{ t.name|first }}</div>{% endif %}
+                        <div>
+                            <div class="fw-bold text-white small">{{ t.name }}</div>
+                            <div class="x-small text-muted">{{ t.get_platform_display }} · {{ t.created_at|naturaltime }}</div>
+                        </div>
                     </div>
                     <a href="{% url 'teams:admin_verify' %}" class="text-accent x-small"><i class="fas fa-arrow-right"></i></a>
                 </div>

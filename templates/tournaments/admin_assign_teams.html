@@ -30,9 +30,9 @@
                 <div class="glass-card p-3 d-flex justify-content-between align-items-center border-white border-opacity-5">
                     <div class="d-flex align-items-center gap-3">
                         {% if t.logo %}
-                            <img src="{{ t.logo.url }}" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                            <img src="{{ t.logo.url }}" class="logo-sm">
                         {% else %}
-                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center fw-bold text-accent" style="width: 32px; height: 32px; font-size: 0.7rem;">{{ t.name|first }}</div>
+                            <div class="logo-sm logo-placeholder" style="font-size: 0.7rem;">{{ t.name|first }}</div>
                         {% endif %}
                         <span class="fw-bold text-white small">{{ t.name }}</span>
                     </div>
@@ -61,6 +61,7 @@
                         <label class="glass-card p-3 d-flex justify-content-between align-items-center border-white border-opacity-5 bg-secondary bg-opacity-10 cursor-pointer" style="cursor: pointer;">
                             <div class="d-flex align-items-center gap-3">
                                 <input type="checkbox" name="teams" value="{{ t.pk }}" class="form-check-input mt-0" style="accent-color: var(--accent);">
+                                {% if t.logo %}<img src="{{ t.logo.url }}" class="logo-xs">{% else %}<div class="logo-xs logo-placeholder" style="font-size:0.6rem;">{{ t.name|first }}</div>{% endif %}
                                 <span class="fw-bold text-white small">{{ t.name }}</span>
                             </div>
                             <span class="text-muted x-small text-uppercase fw-bold">{{ t.player_count }} Players</span>

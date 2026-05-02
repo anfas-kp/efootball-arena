@@ -21,24 +21,23 @@
     {% if standings %}
     <div class="glass-card p-0 overflow-hidden border-accent border-opacity-10">
         <div class="table-responsive">
-            <table class="table table-dark-custom mb-0" style="border-spacing: 0;">
+            <table class="table table-dark-custom mb-0">
                 <thead>
-                    <tr class="bg-secondary bg-opacity-50">
-                        <th class="text-center" style="width: 70px;">POS</th>
-                        <th>TEAM</th>
+                    <tr class="bg-secondary">
+                        <th style="width: 60px;">POS</th>
+                        <th>TEAM NAME</th>
                         <th class="text-center">P</th>
                         <th class="text-center">W</th>
                         <th class="text-center">D</th>
                         <th class="text-center">L</th>
-                        <th class="text-center">GF</th>
-                        <th class="text-center">GA</th>
-                        <th class="text-center">GD</th>
+                        <th class="text-center d-none d-md-table-cell">GD</th>
                         <th class="text-center">PTS</th>
+                        <th class="text-center d-none d-md-table-cell">FORM</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for s in standings %}
-                    <tr class="{% if forloop.counter <= 4 %}border-start border-accent border-4{% endif %}">
+                    <tr class="{% if forloop.counter <= 4 %}border-start border-accent-2 border-4{% endif %} {% if s.team == my_team %}bg-accent bg-opacity-10{% else %}bg-card{% endif %}" style="border-bottom: 1px solid var(--border-color);">
                         <td class="text-center">
                             <span class="position-badge {% if forloop.counter == 1 %}pos-1{% elif forloop.counter == 2 %}pos-2{% elif forloop.counter == 3 %}pos-3{% else %}pos-default{% endif %}">
                                 {{ forloop.counter }}
@@ -47,9 +46,9 @@
                         <td>
                             <div class="d-flex align-items-center gap-3">
                                 {% if s.team.logo %}
-                                    <img src="{{ s.team.logo.url }}" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--border-color);">
+                                    <img src="{{ s.team.logo.url }}" class="logo-sm">
                                 {% else %}
-                                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center fw-bold text-accent" style="width: 32px; height: 32px; font-size: 0.7rem;">{{ s.team.name|first }}</div>
+                                    <div class="logo-sm logo-placeholder" style="font-size: 0.7rem;">{{ s.team.name|first }}</div>
                                 {% endif %}
                                 <span class="fw-bold text-white">{{ s.team.name }}</span>
                             </div>
@@ -58,19 +57,19 @@
                         <td class="text-center">{{ s.won }}</td>
                         <td class="text-center">{{ s.drawn }}</td>
                         <td class="text-center">{{ s.lost }}</td>
-                        <td class="text-center small text-muted">{{ s.gf }}</td>
-                        <td class="text-center small text-muted">{{ s.ga }}</td>
-                        <td class="text-center">
-                            {% if s.gd > 0 %}
-                                <span class="text-accent fw-bold small">+{{ s.gd }}</span>
-                            {% elif s.gd < 0 %}
-                                <span class="text-danger fw-bold small">{{ s.gd }}</span>
-                            {% else %}
-                                <span class="text-muted small">0</span>
-                            {% endif %}
+                        <td class="text-center d-none d-md-table-cell">
+                            <span class="{% if s.gd > 0 %}text-success{% elif s.gd < 0 %}text-danger{% else %}text-muted{% endif %} fw-bold">
+                                {{ s.gd|default:0 }}
+                            </span>
                         </td>
-                        <td class="text-center">
-                            <span class="h5 fw-bold mb-0 font-orbitron text-accent">{{ s.points }}</span>
+                        <td class="text-center fw-bold text-accent">{{ s.points }}</td>
+                        <td class="text-center d-none d-md-table-cell">
+                            <div class="d-flex justify-content-center gap-1">
+                                <!-- Static Form placeholders or logic if available -->
+                                <span class="bg-divider rounded-circle" style="width: 8px; height: 8px;"></span>
+                                <span class="bg-divider rounded-circle" style="width: 8px; height: 8px;"></span>
+                                <span class="bg-divider rounded-circle" style="width: 8px; height: 8px;"></span>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

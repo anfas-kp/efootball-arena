@@ -10,8 +10,9 @@
   
   --text-primary: #F3F4F6;
   --text-secondary: #9CA3AF;
-  --text-muted: #6B7280;
+  --text-muted: #9CA3AF; /* Increased brightness for dark bg */
   
+  --border-color: rgba(255, 255, 255, 0.08);
   --accent: #106EBE; /* Primary Action */
   --accent-rgb: 16, 110, 190;
   --accent-2: #0FFCBE; /* Highlight/Vibe */
@@ -210,33 +211,48 @@ a:hover { color: #fff; }
 }
 .badge-ongoing { background: rgba(var(--accent-rgb), 0.1); color: var(--accent); border: 1px solid rgba(var(--accent-rgb), 0.2); }
 .badge-registration { background: rgba(var(--accent-2-rgb), 0.1); color: var(--accent-2); border: 1px solid rgba(var(--accent-2-rgb), 0.2); }
-.badge-completed { background: rgba(255, 255, 255, 0.03); color: var(--text-muted); border: 1px solid var(--border-color); }
+.badge-completed { background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid var(--border-color); }
 .badge-approved { background: var(--accent-2); color: var(--bg-primary); }
 .badge-pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
 .badge-rejected { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
 
 /* ===== Forms ===== */
-.form-control, .form-select {
-  background: #0E1321 !important;
+input, select, textarea, .form-control, .form-select {
+  background: var(--bg-secondary) !important;
   border: 1px solid #1F2937 !important;
   color: #fff !important;
   border-radius: var(--radius-sm) !important;
   padding: 0.75rem 1rem !important;
   font-size: 0.95rem;
+  transition: var(--transition);
 }
-.form-control:focus, .form-select:focus {
+input:focus, select:focus, textarea:focus, .form-control:focus, .form-select:focus {
   border-color: var(--accent-2) !important;
   box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.1) !important;
   outline: none !important;
 }
 .form-label {
-  color: var(--text-secondary);
+  color: #F3F4F6;
   font-weight: 600;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 0.5rem;
 }
+
+/* ===== Logos ===== */
+.logo-sm { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); }
+.logo-xs { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); }
+.logo-placeholder { background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; font-weight: 900; color: var(--accent-2); }
+
+/* ===== Custom Utilities ===== */
+.border-divider { border-color: rgba(255, 255, 255, 0.05) !important; }
+.bg-divider { background-color: rgba(255, 255, 255, 0.05) !important; }
+.bg-accent { background-color: var(--accent) !important; }
+.bg-accent-2 { background-color: var(--accent-2) !important; }
+.text-accent-2 { color: var(--accent-2) !important; }
+.bg-card { background-color: var(--bg-card) !important; }
+.bg-secondary { background-color: var(--bg-secondary) !important; }
 
 /* ===== Score Display ===== */
 .score-display {
@@ -260,27 +276,28 @@ a:hover { color: #fff; }
 
 /* ===== Tables ===== */
 .table-dark-custom {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 8px;
+  --bs-table-bg: transparent !important;
+  --bs-table-color: var(--text-primary) !important;
+  --bs-table-border-color: var(--border-color) !important;
+  --bs-table-striped-bg: transparent !important;
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.02) !important;
+  border-color: var(--border-color) !important;
 }
 .table-dark-custom thead th {
-  color: var(--text-muted);
+  background: var(--bg-secondary) !important;
+  color: var(--text-muted) !important;
   font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
-  padding: 0.75rem 1rem;
-  border: none;
+  padding: 1rem;
+  border-bottom: 2px solid var(--border-color);
 }
-.table-dark-custom tbody tr {
-  background: var(--bg-card);
-  transition: var(--transition);
+.table-dark-custom tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-color);
 }
-.table-dark-custom tbody tr:hover { background: var(--bg-card-hover); }
-.table-dark-custom td { padding: 1rem; border: none; vertical-align: middle; color: var(--text-primary); }
-.table-dark-custom td:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
-.table-dark-custom td:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
 
 /* ===== Stats ===== */
 .stat-box {

@@ -104,22 +104,22 @@
                 <div class="col-12">
                     <div class="glass-card">
                         <h5 class="section-title mb-4" style="font-size: 1.1rem;"><i class="fas fa-calendar-check me-2 text-accent"></i>UPCOMING FIXTURES</h5>
-                        <div class="table-responsive">
-                            <table class="table table-dark-custom">
-                                <tbody>
-                                    {% for m in upcoming_matches %}
-                                    <tr>
-                                        <td><span class="badge-status badge-ongoing">MD{{ m.matchday }}</span></td>
-                                        <td class="fw-bold">
-                                            {% if m.home_team == team %}YOU vs {{ m.away_team.name }}{% else %}{{ m.home_team.name }} vs YOU{% endif %}
-                                        </td>
-                                        <td class="text-end">
-                                            <a href="{% url 'matches:submit_result' m.pk %}" class="btn-glow btn-sm py-1 px-3" style="font-size: 0.75rem;">Submit Result</a>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                        <div class="d-flex flex-column gap-2">
+                            {% for m in upcoming_matches %}
+                            <div class="glass-card p-3 d-flex justify-content-between align-items-center bg-secondary bg-opacity-10 border-white border-opacity-5">
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="badge-status badge-ongoing" style="background: rgba(15, 252, 190, 0.1); color: var(--accent-2); border-color: rgba(15, 252, 190, 0.2);">MD {{ m.matchday }}</span>
+                                    <div class="fw-bold text-white">
+                                        {% if m.home_team == team %}
+                                            <span class="text-accent-2">YOU</span> <span class="text-muted mx-1">vs</span> {{ m.away_team.name }}
+                                        {% else %}
+                                            {{ m.home_team.name }} <span class="text-muted mx-1">vs</span> <span class="text-accent-2">YOU</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <a href="{% url 'matches:submit_result' m.pk %}" class="btn-glow btn-sm py-1 px-3" style="font-size: 0.75rem;">Submit Result</a>
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
