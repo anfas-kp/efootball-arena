@@ -1,5 +1,5 @@
 from django import forms
-from .models import Tournament, League
+from .models import Tournament, League, Fixture
 
 
 class TournamentForm(forms.ModelForm):
@@ -38,3 +38,21 @@ class LeagueForm(forms.ModelForm):
             'format': forms.Select(attrs={'class': 'form-select'}),
             'max_teams': forms.NumberInput(attrs={'class': 'form-control'}),
         }
+
+class FixtureForm(forms.ModelForm):
+    class Meta:
+        model = Fixture
+        fields = ['home_team', 'away_team', 'matchday', 'match_date', 'status']
+        widgets = {
+            'home_team': forms.Select(attrs={'class': 'form-select'}),
+            'away_team': forms.Select(attrs={'class': 'form-select'}),
+            'matchday': forms.NumberInput(attrs={'class': 'form-control'}),
+            'match_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, league, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only show teams that are in this league
+        self.fields['home_team'].queryset = league.teams.all()
+        self.fields['away_team'].queryset = league.teams.all()

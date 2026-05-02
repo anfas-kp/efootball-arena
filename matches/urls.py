@@ -7,6 +7,7 @@ urlpatterns = [
     path('', views.result_list, name='result_list'),
     path('submit/<int:fixture_pk>/', views.submit_result, name='submit_result'),
     path('result/<int:pk>/', views.result_detail, name='result_detail'),
+    path('result/<int:pk>/edit/', views.edit_result, name='edit_result'),
     path('result/<int:result_pk>/add-goal/', views.add_goal, name='add_goal'),
     path('result/<int:result_pk>/add-card/', views.add_card, name='add_card'),
     path('result/<int:result_pk>/add-rating/', views.add_rating, name='add_rating'),

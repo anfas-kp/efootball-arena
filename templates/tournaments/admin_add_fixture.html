@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Fixture - {{ league.name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 100px; padding-bottom: 50px;">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="text-center mb-4">
+                <div class="badge-status badge-ongoing mb-2 d-inline-block">{{ league.name }}</div>
+                <h2 class="section-title" style="font-size: 1.5rem;"><i class="fas fa-plus me-2 text-accent"></i>ADD MANUAL <span class="text-accent">FIXTURE</span></h2>
+                <p class="text-muted small">Create a custom match within this league</p>
+            </div>
+            
+            <div class="glass-card">
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}<small class="text-muted d-block mt-1">{{ field.help_text }}</small>{% endif %}
+                        {% for error in field.errors %}<small class="text-danger d-block mt-1">{{ error }}</small>{% endfor %}
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn-glow flex-grow-1 justify-content-center py-2">Create Fixture</button>
+                        <a href="{% url 'tournaments:league_fixtures' league.pk %}" class="btn-outline-glow">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

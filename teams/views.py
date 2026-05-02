@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import IntegrityError
+from django.db.models import Sum, Max, Q
 from django.utils.text import slugify
 from django.http import HttpResponse
 import random
@@ -52,9 +53,7 @@ def my_team(request):
         return redirect('teams:register_team')
 
     players = team.players.all()
-    
-    # Calculate overall team stats
-    from django.db.models import Sum, Max
+
     team_stats = players.aggregate(
         total_goals=Sum('total_goals'),
         total_assists=Sum('total_assists'),
@@ -62,20 +61,41 @@ def my_team(request):
         total_red_cards=Sum('total_red_cards'),
         max_matches=Max('matches_played')
     )
-    
-    # Handle None values from aggregate
     for key in team_stats:
         if team_stats[key] is None:
             team_stats[key] = 0
 
-    # Get tournament applications for this team
-    applications = team.tournament_applications.select_related('tournament', 'assigned_league').all()
+    # Tournament applications
+    applications = team.tournament_applications.select_related(
+        'tournament', 'assigned_league'
+    ).all()
+
+    # Active tournaments (accepted applications with league)
+    active_tournaments = []
+    for app in applications.filter(status='accepted', assigned_league__isnull=False):
+        league = app.assigned_league
+        active_tournaments.append({
+            'tournament': app.tournament,
+            'league': league,
+            'fixtures_count': league.fixtures.count(),
+            'completed_count': league.fixtures.filter(status='completed').count(),
+        })
+
+    # Upcoming matches for this team
+    from tournaments.models import Fixture
+    upcoming_matches = Fixture.objects.filter(
+        Q(home_team=team) | Q(away_team=team)
+    ).exclude(status='completed').select_related(
+        'home_team', 'away_team', 'league', 'league__tournament'
+    ).order_by('matchday')[:5]
 
     return render(request, 'teams/my_team.html', {
         'team': team,
         'players': players,
         'team_stats': team_stats,
         'applications': applications,
+        'active_tournaments': active_tournaments,
+        'upcoming_matches': upcoming_matches,
     })
 
 

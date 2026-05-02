@@ -1,36 +1,60 @@
 {% extends "base.html" %}
 {% block title %}Submit Result - eFootball Arena{% endblock %}
 {% block content %}
-<div class="page-header" style="margin-top:60px;"><div class="container"><h1><i class="fas fa-upload me-2" style="color:var(--accent);"></i>Submit Match Result</h1></div></div>
-<div class="container"><div class="row justify-content-center"><div class="col-lg-7">
-    <div class="glass-card mb-4 text-center">
-        <div class="score-display">
-            <span>{{ fixture.home_team.name }}</span>
-            <span class="vs">VS</span>
-            <span>{{ fixture.away_team.name }}</span>
+<div class="container" style="margin-top: 100px; padding-bottom: 50px;">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <!-- Match Header -->
+            <div class="glass-card text-center mb-4 py-5">
+                <div class="text-muted small text-uppercase fw-bold mb-3">{{ fixture.league.name }} · Matchday {{ fixture.matchday }}</div>
+                <div class="d-flex align-items-center justify-content-center gap-4">
+                    <div class="text-center" style="width: 140px;">
+                        {% if fixture.home_team.logo %}
+                            <img src="{{ fixture.home_team.logo.url }}" class="rounded-circle mb-2" style="width: 60px; height: 60px; object-fit: cover; border: 2px solid var(--border-color);">
+                        {% else %}
+                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-2 fw-bold text-accent" style="width: 60px; height: 60px;">{{ fixture.home_team.name|first }}</div>
+                        {% endif %}
+                        <div class="fw-bold small">{{ fixture.home_team.name }}</div>
+                    </div>
+                    <div class="text-accent fw-bold" style="font-family: 'Orbitron', sans-serif; font-size: 1.5rem;">VS</div>
+                    <div class="text-center" style="width: 140px;">
+                        {% if fixture.away_team.logo %}
+                            <img src="{{ fixture.away_team.logo.url }}" class="rounded-circle mb-2" style="width: 60px; height: 60px; object-fit: cover; border: 2px solid var(--border-color);">
+                        {% else %}
+                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-2 fw-bold text-accent" style="width: 60px; height: 60px;">{{ fixture.away_team.name|first }}</div>
+                        {% endif %}
+                        <div class="fw-bold small">{{ fixture.away_team.name }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Form -->
+            <div class="glass-card">
+                <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-upload me-2 text-accent"></i>SUBMIT FINAL SCORE</h5>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row mb-4 justify-content-center align-items-end">
+                        <div class="col-5 text-center">
+                            <label class="form-label small">{{ fixture.home_team.name }}</label>
+                            <input type="number" name="home_score" class="form-control text-center fw-bold" style="font-size: 2rem; font-family: 'Orbitron', sans-serif;" value="0" min="0" required>
+                        </div>
+                        <div class="col-2 text-center pb-2">
+                            <span class="text-muted h4">—</span>
+                        </div>
+                        <div class="col-5 text-center">
+                            <label class="form-label small">{{ fixture.away_team.name }}</label>
+                            <input type="number" name="away_score" class="form-control text-center fw-bold" style="font-size: 2rem; font-family: 'Orbitron', sans-serif;" value="0" min="0" required>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label"><i class="fas fa-camera me-1 text-accent"></i> Scoreline Screenshot</label>
+                        {{ form.screenshot }}
+                        <small class="text-muted d-block mt-1">Upload a clear screenshot showing the final score</small>
+                    </div>
+                    <button type="submit" class="btn-glow w-100 justify-content-center">Submit Result</button>
+                </form>
+            </div>
         </div>
-        <p class="text-secondary small">Matchday {{ fixture.matchday }} · {{ fixture.league.name }}</p>
     </div>
-    <div class="glass-card">
-        <form method="post" enctype="multipart/form-data">{% csrf_token %}
-            <div class="row mb-4 justify-content-center align-items-center">
-                <div class="col-4 text-center">
-                    <label class="form-label">{{ fixture.home_team.name }}</label>
-                    {{ form.home_score }}
-                </div>
-                <div class="col-1 text-center"><span class="text-muted fs-4">-</span></div>
-                <div class="col-4 text-center">
-                    <label class="form-label">{{ fixture.away_team.name }}</label>
-                    {{ form.away_score }}
-                </div>
-            </div>
-            <div class="mb-3">
-                <label class="form-label"><i class="fas fa-camera me-1"></i>Scoreline Screenshot (Required)</label>
-                {{ form.screenshot }}
-                <small class="text-muted d-block mt-1">Upload a clear screenshot showing the final score</small>
-            </div>
-            <button type="submit" class="btn-glow w-100"><i class="fas fa-paper-plane me-2"></i>Submit Result</button>
-        </form>
-    </div>
-</div></div></div>
+</div>
 {% endblock %}

@@ -7,7 +7,7 @@ from django.db.models import Q, Count
 from django.utils import timezone
 from django.http import HttpResponse
 from .models import Tournament, TournamentApplication, League, Fixture
-from .forms import TournamentForm, LeagueForm
+from .forms import TournamentForm, LeagueForm, FixtureForm
 from .utils import get_league_standings
 from teams.models import Team
 
@@ -347,6 +347,31 @@ def admin_generate_fixtures(request, league_pk):
 
     messages.success(request, f'🎯 {league.fixtures.count()} fixtures generated!')
     return redirect('tournaments:league_fixtures', pk=league_pk)
+
+
+@login_required
+def admin_add_fixture(request, league_pk):
+    """Admin adds a fixture manually to a league."""
+    if not request.user.is_admin_user:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    league = get_object_or_404(League, pk=league_pk)
+
+    if request.method == 'POST':
+        form = FixtureForm(league, request.POST)
+        if form.is_valid():
+            fixture = form.save(commit=False)
+            fixture.league = league
+            fixture.save()
+            messages.success(request, 'Fixture added!')
+            return redirect('tournaments:league_fixtures', pk=league_pk)
+    else:
+        form = FixtureForm(league)
+
+    return render(request, 'tournaments/admin_add_fixture.html', {
+        'form': form, 'league': league, 'tournament': league.tournament
+    })
 
 
 # ===== Admin Application Management =====

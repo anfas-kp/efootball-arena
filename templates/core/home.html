@@ -2,49 +2,62 @@
 {% block title %}eFootball Arena - Home{% endblock %}
 {% block content %}
 <!-- Hero -->
-<section class="hero-section" style="margin-top:60px;">
+<section class="hero-section">
     <div class="container position-relative" style="z-index:2;">
         <div class="row align-items-center">
             <div class="col-lg-7 animate-in">
-                <h1 class="hero-title">DOMINATE THE<br><span class="accent">VIRTUAL PITCH</span></h1>
-                <p class="hero-subtitle">The ultimate platform for organizing and competing in e-football tournaments. Register your team, battle in leagues, and climb the rankings.</p>
-                <div class="d-flex gap-3 flex-wrap {% if not user.is_authenticated %}{% endif %}">
+                <div class="badge-status badge-ongoing mb-3 d-inline-block">Competitive League System</div>
+                <h1 class="hero-title">BATTLE FOR THE<br><span>CHAMPIONSHIP</span></h1>
+                <p class="hero-subtitle">Experience the next generation of e-football tournament management. Built by gamers, for the competitive community.</p>
+                <div class="d-flex gap-3 flex-wrap">
                     {% if user.is_authenticated %}
-                        <a href="{% url 'teams:my_team' %}" class="btn-glow"><i class="fas fa-shield-halved me-2"></i>My Team</a>
-                        <a href="{% url 'tournaments:tournament_list' %}" class="btn-outline-glow"><i class="fas fa-trophy me-2"></i>Browse Tournaments</a>
+                        <a href="{% url 'teams:my_team' %}" class="btn-glow">Dashboard</a>
+                        <a href="{% url 'tournaments:tournament_list' %}" class="btn-outline-glow">View Leagues</a>
                     {% else %}
-                        <a href="{% url 'accounts:register' %}" class="btn-glow"><i class="fas fa-rocket me-2"></i>Get Started</a>
-                        <a href="{% url 'tournaments:tournament_list' %}" class="btn-outline-glow"><i class="fas fa-eye me-2"></i>View Tournaments</a>
+                        <a href="{% url 'accounts:register' %}" class="btn-glow">Join the Arena</a>
+                        <a href="{% url 'tournaments:tournament_list' %}" class="btn-outline-glow">Active Tournaments</a>
                     {% endif %}
                 </div>
             </div>
-            <div class="col-lg-5 d-none d-lg-block text-center animate-in delay-2">
-                <div style="font-size:10rem;opacity:0.15;"><i class="fas fa-futbol"></i></div>
+            <div class="col-lg-5 d-none d-lg-block text-center animate-in" style="animation-delay: 0.2s;">
+                <div class="glass-card p-0 overflow-hidden shadow-lg border-accent" style="border-width: 2px;">
+                    <div class="p-5">
+                        <i class="fas fa-trophy fa-5x text-accent mb-4"></i>
+                        <h3 class="font-orbitron">THE ARENA</h3>
+                        <p class="text-secondary small mb-0">Where legends are forged in 90 minutes of virtual glory.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Stats -->
-<section class="section-padding">
+<!-- Stats Grid -->
+<section class="pb-5">
     <div class="container">
-        <div class="row g-4 justify-content-center">
-            <div class="col-md-4 animate-in delay-1">
-                <div class="stat-card">
-                    <div class="stat-number">{{ total_tournaments }}</div>
-                    <div class="stat-label">Tournaments</div>
+        <div class="row g-4 text-center">
+            <div class="col-md-3 col-6">
+                <div class="stat-box">
+                    <span class="number">{{ total_tournaments }}</span>
+                    <span class="label">Tournaments</span>
                 </div>
             </div>
-            <div class="col-md-4 animate-in delay-2">
-                <div class="stat-card">
-                    <div class="stat-number">{{ total_teams }}</div>
-                    <div class="stat-label">Registered Teams</div>
+            <div class="col-md-3 col-6">
+                <div class="stat-box">
+                    <span class="number">{{ total_teams }}</span>
+                    <span class="label">Pro Teams</span>
                 </div>
             </div>
-            <div class="col-md-4 animate-in delay-3">
-                <div class="stat-card">
-                    <div class="stat-number"><i class="fas fa-gamepad"></i></div>
-                    <div class="stat-label">Ready to Compete</div>
+            <div class="col-md-3 col-6">
+                <div class="stat-box">
+                    <span class="number">24/7</span>
+                    <span class="label">Active Support</span>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-box">
+                    <span class="number">Live</span>
+                    <span class="label">Standings</span>
                 </div>
             </div>
         </div>
@@ -53,25 +66,38 @@
 
 <!-- Active Tournaments -->
 {% if active_tournaments %}
-<section class="section-padding" style="background:var(--bg-secondary);">
+<section class="py-5" id="tournaments">
     <div class="container">
-        <h2 class="section-title text-center"><i class="fas fa-fire me-2" style="color:var(--accent-3);"></i>Active Tournaments</h2>
-        <p class="section-subtitle text-center">Join the action now</p>
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h2 class="section-title">ACTIVE <span class="text-accent">LEAGUES</span></h2>
+                <p class="text-secondary mb-0">Compete in the most prestigious virtual tournaments</p>
+            </div>
+            <a href="{% url 'tournaments:tournament_list' %}" class="text-accent text-decoration-none small fw-bold">VIEW ALL <i class="fas fa-chevron-right ms-1"></i></a>
+        </div>
+        
         <div class="row g-4">
             {% for t in active_tournaments %}
-            <div class="col-md-6 col-lg-4 animate-in delay-{{ forloop.counter }}">
-                <div class="tournament-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <h5 class="card-title mb-0">{{ t.name }}</h5>
+            <div class="col-md-6 col-lg-4">
+                <div class="glass-card h-100 p-0 overflow-hidden">
+                    {% if t.banner %}
+                        <img src="{{ t.banner.url }}" class="w-100" style="height: 160px; object-fit: cover; opacity: 0.8;">
+                    {% else %}
+                        <div class="w-100 bg-secondary d-flex align-items-center justify-content-center" style="height: 160px;">
+                            <i class="fas fa-futbol fa-3x text-muted opacity-20"></i>
+                        </div>
+                    {% endif %}
+                    <div class="p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="fw-bold mb-0">{{ t.name }}</h5>
                             <span class="badge-status badge-{{ t.status }}">{{ t.get_status_display }}</span>
                         </div>
-                        <p class="text-secondary small mb-3">{{ t.description|truncatewords:20 }}</p>
-                        <div class="d-flex justify-content-between text-secondary small">
-                            <span><i class="fas fa-calendar me-1"></i>{{ t.start_date|date:"M d" }}</span>
-                            <span><i class="fas fa-layer-group me-1"></i>{{ t.get_format_display }}</span>
+                        <p class="text-secondary small mb-4">{{ t.description|truncatewords:15 }}</p>
+                        <div class="d-flex gap-3 small text-muted mb-4">
+                            <span><i class="far fa-calendar-alt me-1"></i> {{ t.start_date|date:"M d" }}</span>
+                            <span><i class="fas fa-users me-1"></i> {{ t.accepted_team_count }}/{{ t.max_teams }}</span>
                         </div>
-                        <a href="{% url 'tournaments:tournament_detail' t.pk %}" class="btn-glow w-100 text-center mt-3 d-block" style="padding:0.6rem;">View Details</a>
+                        <a href="{% url 'tournaments:tournament_detail' t.pk %}" class="btn-outline-glow w-100 justify-content-center">Enter League</a>
                     </div>
                 </div>
             </div>
@@ -82,30 +108,38 @@
 {% endif %}
 
 <!-- Features -->
-<section class="section-padding">
+<section class="py-5">
     <div class="container">
-        <h2 class="section-title text-center">Why <span style="color:var(--accent);">eFootball Arena</span>?</h2>
-        <p class="section-subtitle text-center">Everything you need for competitive e-football</p>
+        <div class="text-center mb-5">
+            <h2 class="section-title">BUILT FOR <span class="text-accent">COMPETITION</span></h2>
+            <p class="text-secondary">Professional tools for the serious e-footballer</p>
+        </div>
         <div class="row g-4">
-            <div class="col-md-4 animate-in delay-1">
-                <div class="glass-card text-center h-100">
-                    <i class="fas fa-shield-halved fa-2x mb-3" style="color:var(--accent);"></i>
-                    <h5>Team Management</h5>
-                    <p class="text-secondary small">Register your team, manage rosters, and track your journey through every tournament.</p>
+            <div class="col-md-4">
+                <div class="glass-card text-center h-100 py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-shield-halved fa-3x text-accent"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">ROSTER MANAGEMENT</h5>
+                    <p class="text-secondary small mb-0">Build your dream team, manage player stats, and track individual performance across seasons.</p>
                 </div>
             </div>
-            <div class="col-md-4 animate-in delay-2">
-                <div class="glass-card text-center h-100">
-                    <i class="fas fa-camera fa-2x mb-3" style="color:var(--accent-2);"></i>
-                    <h5>Proof-Based Results</h5>
-                    <p class="text-secondary small">Upload screenshots to verify every goal and result. No more disputes.</p>
+            <div class="col-md-4">
+                <div class="glass-card text-center h-100 py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle fa-3x text-accent"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">VERIFIED RESULTS</h5>
+                    <p class="text-secondary small mb-0">Screenshot upload system ensures fair play. Every goal is verified by admins before being finalized.</p>
                 </div>
             </div>
-            <div class="col-md-4 animate-in delay-3">
-                <div class="glass-card text-center h-100">
-                    <i class="fas fa-chart-bar fa-2x mb-3" style="color:var(--accent-4);"></i>
-                    <h5>Live Standings</h5>
-                    <p class="text-secondary small">Auto-calculated league tables, fixtures, and statistics updated in real-time.</p>
+            <div class="col-md-4">
+                <div class="glass-card text-center h-100 py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-chart-line fa-3x text-accent"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">GLOBAL RANKINGS</h5>
+                    <p class="text-secondary small mb-0">Climb the global leaderboard. Earn your spot among the elite e-football clubs in the world.</p>
                 </div>
             </div>
         </div>

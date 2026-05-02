@@ -49,6 +49,41 @@ def submit_result(request, fixture_pk):
 
 
 @login_required
+def edit_result(request, pk):
+    """Edit an existing match result."""
+    result = get_object_or_404(MatchResult, pk=pk)
+    fixture = result.fixture
+
+    # Check if user's team is in this fixture
+    user_team = getattr(request.user, 'team', None)
+    is_team_member = user_team and (user_team == fixture.home_team or user_team == fixture.away_team)
+    
+    if not is_team_member and not request.user.is_admin_user:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    # If result is already approved, only admin can edit
+    if result.status == 'approved' and not request.user.is_admin_user:
+        messages.error(request, 'Approved results can only be edited by an admin.')
+        return redirect('matches:result_detail', pk=pk)
+
+    if request.method == 'POST':
+        form = MatchResultForm(request.POST, request.FILES, instance=result)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Result updated!')
+            return redirect('matches:result_detail', pk=pk)
+    else:
+        form = MatchResultForm(instance=result)
+
+    return render(request, 'matches/edit_result.html', {
+        'form': form,
+        'result': result,
+        'fixture': fixture,
+    })
+
+
+@login_required
 def add_goal(request, result_pk):
     """Add goal details to a match result."""
     result = get_object_or_404(MatchResult, pk=result_pk)

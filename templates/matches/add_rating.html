@@ -1,26 +1,40 @@
 {% extends "base.html" %}
-{% block title %}Add Top Rated Player - eFootball Arena{% endblock %}
+{% block title %}Add Player Rating - eFootball Arena{% endblock %}
 {% block content %}
-<div class="page-header" style="margin-top:60px;"><div class="container"><h1><i class="fas fa-star me-2" style="color:var(--accent-4);"></i>Add Top Rated Player ({{ existing_count }}/3)</h1></div></div>
-<div class="container"><div class="row justify-content-center"><div class="col-lg-7">
-    <div class="glass-card mb-3 text-center">
-        <p class="mb-0">{{ fixture.home_team.name }} <strong style="color:var(--accent);">{{ result.home_score }} - {{ result.away_score }}</strong> {{ fixture.away_team.name }}</p>
-    </div>
-    <div class="glass-card">
-        <form method="post" enctype="multipart/form-data">{% csrf_token %}
-            <div class="mb-3">
-                <label class="form-label">Team</label>
-                <select name="rating_team" class="form-select">
-                    <option value="{{ home_team.pk }}">{{ home_team.name }}</option>
-                    <option value="{{ away_team.pk }}">{{ away_team.name }}</option>
-                </select>
+<div class="container" style="margin-top: 100px; padding-bottom: 50px;">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="glass-card text-center mb-4 py-3">
+                <div class="text-muted small text-uppercase fw-bold mb-1">Top Rated Player ({{ existing_count }}/3)</div>
+                <div style="font-family: 'Orbitron', sans-serif; font-size: 1.2rem;">
+                    {{ fixture.home_team.name }} <span class="text-accent">{{ result.home_score }} - {{ result.away_score }}</span> {{ fixture.away_team.name }}
+                </div>
             </div>
-            {% for field in form %}
-            <div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}{% for e in field.errors %}<small class="text-danger">{{ e }}</small>{% endfor %}</div>
-            {% endfor %}
-            <button type="submit" class="btn-glow"><i class="fas fa-star me-2"></i>Add Rating</button>
-            <a href="{% url 'matches:result_detail' result.pk %}" class="btn-outline-glow ms-2">Back</a>
-        </form>
+            <div class="glass-card">
+                <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-star me-2 text-warning"></i>PLAYER RATING</h5>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Team</label>
+                        <select name="rating_team" class="form-select">
+                            <option value="{{ home_team.pk }}">{{ home_team.name }}</option>
+                            <option value="{{ away_team.pk }}">{{ away_team.name }}</option>
+                        </select>
+                    </div>
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% for e in field.errors %}<small class="text-danger d-block mt-1">{{ e }}</small>{% endfor %}
+                    </div>
+                    {% endfor %}
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn-glow flex-grow-1 justify-content-center py-2">Submit Rating</button>
+                        <a href="{% url 'matches:result_detail' result.pk %}" class="btn-outline-glow">Back</a>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-</div></div></div>
+</div>
 {% endblock %}

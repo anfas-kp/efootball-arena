@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Result - {{ fixture }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h2 class="card-title fw-bold mb-4">Edit Match Result</h2>
+                    
+                    <div class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-4">
+                        <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+                        <div>
+                            <strong>Match:</strong> {{ fixture.home_team.name }} vs {{ fixture.away_team.name }}<br>
+                            <small class="text-muted">Matchday {{ fixture.matchday }}</small>
+                        </div>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.home_score.id_for_label }}" class="form-label">{{ fixture.home_team.name }} Score</label>
+                                {{ form.home_score }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.away_score.id_for_label }}" class="form-label">{{ fixture.away_team.name }} Score</label>
+                                {{ form.away_score }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.screenshot.id_for_label }}" class="form-label">Update Screenshot (Optional)</label>
+                            {{ form.screenshot }}
+                            {% if result.screenshot %}
+                                <div class="mt-2">
+                                    <small class="text-muted">Current: <a href="{{ result.screenshot.url }}" target="_blank">View Screenshot</a></small>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'matches:result_detail' result.pk %}" class="btn btn-light px-4">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-4 fw-bold">Update Result</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,174 +1,241 @@
 {% extends "base.html" %}
-{% block title %}{{ team.name }} - eFootball Arena{% endblock %}
+{% block title %}My Team - {{ team.name }}{% endblock %}
 {% block content %}
-<div class="page-header" style="margin-top:60px;">
-    <div class="container">
-        <div class="d-flex align-items-center gap-3">
-            {% if team.logo %}<img src="{{ team.logo.url }}" class="team-logo-lg">{% else %}<div class="team-logo-lg team-logo-placeholder" style="width:80px;height:80px;font-size:2rem;border-radius:var(--radius);">{{ team.name|first }}</div>{% endif %}
-            <div>
-                <h1 class="mb-1">{{ team.name }}</h1>
-                <span class="badge-status badge-{{ team.status }}">{{ team.get_status_display }}</span>
-                <span class="badge-status badge-draft ms-2">{{ team.get_platform_display }}</span>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="container">
-    {% if team.status == 'rejected' %}
-    <div class="alert alert-custom alert-danger mb-4"><strong>Rejection Reason:</strong> {{ team.rejection_reason }}</div>
-    {% endif %}
-    <!-- Team Info -->
-    <div class="glass-card mb-4">
-        <div class="row">
-            <div class="col-md-6">
-                <p><i class="fas fa-gamepad me-2 text-secondary"></i><strong>Game:</strong> {{ team.get_game_display }}</p>
-                <p><i class="fas fa-user me-2 text-secondary"></i><strong>Captain:</strong> {{ team.captain.username }}</p>
-            </div>
-            <div class="col-md-6">
-                {% if team.description %}<p><i class="fas fa-info-circle me-2 text-secondary"></i>{{ team.description }}</p>{% endif %}
-            </div>
-        </div>
-    </div>
 
-    <!-- Overall Team Stats -->
-    <div class="glass-card mb-4" style="border-color:var(--accent-2);">
-        <h3 class="section-title mb-3" style="font-size:1.1rem;"><i class="fas fa-chart-bar me-2" style="color:var(--accent-2);"></i>Overall Team Stats</h3>
-        <div class="row text-center">
-            <div class="col-6 col-md-3 mb-2">
-                <div class="p-3 rounded" style="background: rgba(255,255,255,0.05);">
-                    <div class="h4 mb-0">{{ team_stats.max_matches }}</div>
-                    <div class="small text-secondary">Matches Played</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3 mb-2">
-                <div class="p-3 rounded" style="background: rgba(255,255,255,0.05);">
-                    <div class="h4 mb-0 text-success">{{ team_stats.total_goals }}</div>
-                    <div class="small text-secondary">Total Goals</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3 mb-2">
-                <div class="p-3 rounded" style="background: rgba(255,255,255,0.05);">
-                    <div class="h4 mb-0 text-info">{{ team_stats.total_assists }}</div>
-                    <div class="small text-secondary">Total Assists</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3 mb-2">
-                <div class="p-3 rounded" style="background: rgba(255,255,255,0.05);">
-                    <div class="h4 mb-0 text-danger">{{ team_stats.total_yellow_cards }} <span class="text-secondary small">Y</span> / {{ team_stats.total_red_cards }} <span class="text-secondary small">R</span></div>
-                    <div class="small text-secondary">Cards</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Active Applications -->
-    {% if applications %}
-    <div class="glass-card mb-4" style="border-color:var(--accent);">
-        <h3 class="section-title mb-3" style="font-size:1.1rem;"><i class="fas fa-trophy me-2" style="color:var(--accent);"></i>Tournament Applications</h3>
-        <div class="d-flex flex-column gap-2">
-            {% for app in applications %}
-            <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:var(--border-color)!important;">
+<div class="container" style="margin-top: 100px; padding-bottom: 50px;">
+    <!-- Team Header -->
+    <div class="glass-card mb-4 overflow-hidden p-0">
+        <div class="bg-secondary p-4 d-flex flex-wrap align-items-center justify-content-between gap-3 border-bottom border-white border-opacity-10">
+            <div class="d-flex align-items-center gap-4">
+                {% if team.logo %}
+                    <img src="{{ team.logo.url }}" class="team-logo-lg" style="width: 100px; height: 100px;">
+                {% else %}
+                    <div class="team-logo-lg team-logo-placeholder" style="width: 100px; height: 100px; font-size: 2rem;">{{ team.name|first }}</div>
+                {% endif %}
                 <div>
-                    <strong>{{ app.tournament.name }}</strong>
-                    {% if app.assigned_league %}<span class="text-secondary small ms-2">({{ app.assigned_league.name }})</span>{% endif %}
-                </div>
-                <span class="badge-status badge-{{ app.status }}">{{ app.get_status_display }}</span>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
-    {% if team.is_roster_locked %}
-    <div class="alert alert-custom alert-warning mb-4">
-        <i class="fas fa-lock me-2"></i><strong>Roster Locked:</strong> You are currently participating in an active tournament. You cannot add, edit, or remove players at this time.
-    </div>
-    {% endif %}
-
-    <!-- Players -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="section-title"><i class="fas fa-users me-2" style="color:var(--accent-2);"></i>Roster ({{ players|length }}/30)</h3>
-        {% if team.player_count < 30 and not team.is_roster_locked %}
-        <a href="{% url 'teams:add_player' %}" class="btn-glow" style="padding:0.5rem 1.25rem;"><i class="fas fa-plus me-1"></i>Add Player</a>
-        {% endif %}
-    </div>
-    {% if players %}
-    <div class="row g-3">
-        {% for p in players %}
-        <div class="col-md-6 col-lg-4">
-            <div class="glass-card d-flex align-items-center gap-3" style="padding:1rem 1.25rem; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#playerModal{{ p.id }}">
-                {% if p.photo %}<img src="{{ p.photo.url }}" class="team-logo-sm">{% else %}<div class="team-logo-sm team-logo-placeholder" style="font-size:0.8rem;">{{ p.name|first }}</div>{% endif %}
-                <div class="flex-grow-1">
-                    <strong>{{ p.name }}</strong>
-                    <div class="text-secondary small">{{ p.gaming_id }} {% if p.position %}· {{ p.get_position_display }}{% endif %} {% if p.jersey_number %}· #{{ p.jersey_number }}{% endif %}</div>
-                </div>
-                <div class="d-flex gap-1" onclick="event.stopPropagation();">
-                    {% if not team.is_roster_locked %}
-                    <a href="{% url 'teams:edit_player' p.pk %}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-edit"></i></a>
-                    <form method="post" action="{% url 'teams:delete_player' p.pk %}" style="display:inline;">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove?')"><i class="fas fa-trash"></i></button></form>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Player Details Modal -->
-        <div class="modal fade" id="playerModal{{ p.id }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content glass-card border-0">
-                    <div class="modal-header border-0 pb-0">
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h1 class="mb-1 fw-bold">{{ team.name }}</h1>
+                    <div class="d-flex gap-2">
+                        <span class="badge-status badge-{{ team.status }}">{{ team.get_status_display }}</span>
+                        <span class="badge-status badge-completed text-uppercase">{{ team.get_platform_display }}</span>
                     </div>
-                    <div class="modal-body text-center pt-0">
-                        {% if p.photo %}<img src="{{ p.photo.url }}" class="rounded-circle mb-3" style="width:100px; height:100px; object-fit:cover; border:2px solid var(--accent);">{% else %}<div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:100px; height:100px; background:var(--surface); border:2px solid var(--accent); font-size:2.5rem; font-weight:bold;">{{ p.name|first }}</div>{% endif %}
-                        <h4 class="mb-1">{{ p.name }}</h4>
-                        <p class="text-secondary mb-4">{{ p.gaming_id }} {% if p.position %}· {{ p.get_position_display }}{% endif %} {% if p.jersey_number %}· #{{ p.jersey_number }}{% endif %}</p>
-                        
-                        <div class="row g-2 text-start">
-                            <div class="col-6">
-                                <div class="p-2 rounded" style="background: rgba(255,255,255,0.05);">
-                                    <small class="text-secondary d-block">Matches Played</small>
-                                    <span class="fs-5">{{ p.matches_played }}</span>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'teams:edit_player' 0 %}" class="btn-outline-glow d-none">Hidden</a> <!-- Reserved for later -->
+                {% if not team.is_roster_locked %}
+                    <a href="{% url 'teams:add_player' %}" class="btn-glow"><i class="fas fa-plus me-1"></i> Add Player</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="p-4 bg-card">
+            <div class="row g-4 text-center">
+                <div class="col-6 col-md-3">
+                    <span class="text-muted d-block small text-uppercase fw-bold mb-1">Matches</span>
+                    <span class="h4 fw-bold mb-0 font-orbitron">{{ team_stats.max_matches }}</span>
+                </div>
+                <div class="col-6 col-md-3">
+                    <span class="text-muted d-block small text-uppercase fw-bold mb-1">Goals</span>
+                    <span class="h4 fw-bold mb-0 font-orbitron text-accent">{{ team_stats.total_goals }}</span>
+                </div>
+                <div class="col-6 col-md-3">
+                    <span class="text-muted d-block small text-uppercase fw-bold mb-1">Assists</span>
+                    <span class="h4 fw-bold mb-0 font-orbitron text-info">{{ team_stats.total_assists }}</span>
+                </div>
+                <div class="col-6 col-md-3">
+                    <span class="text-muted d-block small text-uppercase fw-bold mb-1">Cards</span>
+                    <span class="h4 fw-bold mb-0 font-orbitron text-danger">{{ team_stats.total_yellow_cards }}Y / {{ team_stats.total_red_cards }}R</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Active Tournaments Visualization (New) -->
+            {% if active_tournaments %}
+            <div class="glass-card mb-4 border-accent border-opacity-20">
+                <h5 class="section-title mb-4" style="font-size: 1.1rem;"><i class="fas fa-trophy me-2 text-accent"></i>ACTIVE TOURNAMENTS</h5>
+                <div class="row g-3">
+                    {% for item in active_tournaments %}
+                    <div class="col-md-6">
+                        <div class="glass-card p-3 h-100 bg-secondary bg-opacity-10 border-white border-opacity-5">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <div class="fw-bold text-white mb-0">{{ item.tournament.name }}</div>
+                                    <div class="text-accent small fw-bold font-orbitron">{{ item.league.name }}</div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge-status badge-approved" style="font-size: 0.6rem;">Active</span>
                                 </div>
                             </div>
-                            <div class="col-6">
-                                <div class="p-2 rounded" style="background: rgba(255,255,255,0.05);">
-                                    <small class="text-secondary d-block">Avg Rating</small>
-                                    <span class="fs-5 text-warning">{{ p.avg_rating }} <i class="fas fa-star" style="font-size:0.8rem;"></i></span>
+                            
+                            <!-- Progress Bar (Matches Completed) -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between small text-muted mb-1">
+                                    <span>Season Progress</span>
+                                    <span>{{ item.completed_count }}/{{ item.fixtures_count }} Matches</span>
+                                </div>
+                                <div class="progress" style="height: 6px; background: rgba(255,255,255,0.05);">
+                                    {% if item.fixtures_count > 0 %}
+                                        <div class="progress-bar bg-accent" role="progressbar" 
+                                             style="width: {% widthratio item.completed_count item.fixtures_count 100 %}%;" 
+                                             aria-valuenow="{{ item.completed_count }}" aria-valuemin="0" aria-valuemax="{{ item.fixtures_count }}"></div>
+                                    {% else %}
+                                        <div class="progress-bar bg-accent" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                    {% endif %}
                                 </div>
                             </div>
-                            <div class="col-6">
-                                <div class="p-2 rounded" style="background: rgba(255,255,255,0.05);">
-                                    <small class="text-secondary d-block">Goals</small>
-                                    <span class="fs-5 text-success">{{ p.total_goals }} <i class="fas fa-futbol" style="font-size:0.8rem;"></i></span>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="p-2 rounded" style="background: rgba(255,255,255,0.05);">
-                                    <small class="text-secondary d-block">Assists</small>
-                                    <span class="fs-5 text-info">{{ p.total_assists }} <i class="fas fa-hands-helping" style="font-size:0.8rem;"></i></span>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="p-2 rounded" style="background: rgba(255,255,255,0.05);">
-                                    <small class="text-secondary d-block">Yellow Cards</small>
-                                    <span class="fs-5 text-warning">{{ p.total_yellow_cards }} <i class="fas fa-square" style="font-size:0.8rem;"></i></span>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="p-2 rounded" style="background: rgba(255,255,255,0.05);">
-                                    <small class="text-secondary d-block">Red Cards</small>
-                                    <span class="fs-5 text-danger">{{ p.total_red_cards }} <i class="fas fa-square" style="font-size:0.8rem;"></i></span>
-                                </div>
+
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'tournaments:league_standings' item.league.pk %}" class="btn-outline-glow btn-sm flex-grow-1 justify-content-center py-1" style="font-size: 0.7rem;">Table</a>
+                                <a href="{% url 'tournaments:league_fixtures' item.league.pk %}" class="btn-glow btn-sm flex-grow-1 justify-content-center py-1" style="font-size: 0.7rem;">Fixtures</a>
                             </div>
                         </div>
                     </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Matches & Applications -->
+            <div class="row g-4 mb-4">
+                {% if upcoming_matches %}
+                <div class="col-12">
+                    <div class="glass-card">
+                        <h5 class="section-title mb-4" style="font-size: 1.1rem;"><i class="fas fa-calendar-check me-2 text-accent"></i>UPCOMING FIXTURES</h5>
+                        <div class="table-responsive">
+                            <table class="table table-dark-custom">
+                                <tbody>
+                                    {% for m in upcoming_matches %}
+                                    <tr>
+                                        <td><span class="badge-status badge-ongoing">MD{{ m.matchday }}</span></td>
+                                        <td class="fw-bold">
+                                            {% if m.home_team == team %}YOU vs {{ m.away_team.name }}{% else %}{{ m.home_team.name }} vs YOU{% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            <a href="{% url 'matches:submit_result' m.pk %}" class="btn-glow btn-sm py-1 px-3" style="font-size: 0.75rem;">Submit Result</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Roster -->
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="section-title mb-0" style="font-size: 1.1rem;"><i class="fas fa-users me-2 text-accent"></i>TEAM ROSTER ({{ players|length }}/30)</h5>
+                    </div>
+                    
+                    <div class="row g-3">
+                        {% for p in players %}
+                        <div class="col-md-6">
+                            <div class="glass-card p-3 d-flex align-items-center justify-content-between gap-3" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#playerModal{{ p.id }}">
+                                <div class="d-flex align-items-center gap-3 overflow-hidden">
+                                    {% if p.photo %}
+                                        <img src="{{ p.photo.url }}" class="rounded" style="width: 45px; height: 45px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-secondary rounded d-flex align-items-center justify-content-center fw-bold text-accent" style="width: 45px; height: 45px;">{{ p.name|first }}</div>
+                                    {% endif %}
+                                    <div class="text-truncate">
+                                        <div class="fw-bold text-white text-truncate">{{ p.name }}</div>
+                                        <div class="small text-muted">{{ p.get_position_display }} · #{{ p.jersey_number|default:"-" }}</div>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-1" onclick="event.stopPropagation();">
+                                    {% if not team.is_roster_locked %}
+                                        <a href="{% url 'teams:edit_player' p.pk %}" class="text-muted hover-accent p-1"><i class="fas fa-edit"></i></a>
+                                        <form method="post" action="{% url 'teams:delete_player' p.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button class="btn btn-link text-muted hover-danger p-1" onclick="return confirm('Remove player?')"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
-        {% endfor %}
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            {% if applications %}
+            <div class="glass-card mb-4 border-accent" style="border-width: 1px;">
+                <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-trophy me-2 text-accent"></i>TOURNAMENTS</h5>
+                {% for app in applications %}
+                <div class="mb-3 pb-3 border-bottom border-white border-opacity-10 last-child-no-border">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="fw-bold text-white small">{{ app.tournament.name }}</div>
+                        <span class="badge-status badge-{{ app.status }}" style="font-size: 0.6rem;">{{ app.get_status_display }}</span>
+                    </div>
+                    {% if app.assigned_league %}
+                    <div class="text-muted x-small d-flex justify-content-between">
+                        <span>League: {{ app.assigned_league.name }}</span>
+                        <a href="{% url 'tournaments:league_fixtures' app.assigned_league.pk %}" class="text-accent text-decoration-none">Fixtures <i class="fas fa-arrow-right ms-1"></i></a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="glass-card">
+                <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-info-circle me-2 text-accent"></i>TEAM DETAILS</h5>
+                <div class="small mb-3">
+                    <span class="text-muted d-block mb-1">Game Platform</span>
+                    <span class="text-white">{{ team.get_game_display }} / {{ team.get_platform_display }}</span>
+                </div>
+                <div class="small mb-3">
+                    <span class="text-muted d-block mb-1">Captain</span>
+                    <span class="text-white">{{ team.captain.username }}</span>
+                </div>
+                <div class="small mb-0">
+                    <span class="text-muted d-block mb-1">Bio</span>
+                    <span class="text-white fst-italic">"{{ team.description|default:"No description provided." }}"</span>
+                </div>
+            </div>
+        </div>
     </div>
-    {% else %}
-    <div class="glass-card text-center text-secondary"><p class="mb-0">No players yet. Add players to your roster!</p></div>
-    {% endif %}
 </div>
+
+<!-- Player Modals -->
+{% for p in players %}
+<div class="modal fade" id="playerModal{{ p.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border-accent border-opacity-25">
+            <div class="modal-body text-center p-5">
+                {% if p.photo %}
+                    <img src="{{ p.photo.url }}" class="rounded-circle mb-4 border border-accent border-4" style="width: 120px; height: 120px; object-fit: cover;">
+                {% else %}
+                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-4 border border-accent border-4 fw-bold text-accent h1" style="width: 120px; height: 120px;">{{ p.name|first }}</div>
+                {% endif %}
+                <h3 class="fw-bold mb-1">{{ p.name }}</h3>
+                <p class="text-accent small font-orbitron mb-4">#{{ p.jersey_number|default:"0" }} · {{ p.get_position_display }}</p>
+                
+                <div class="row g-2">
+                    <div class="col-6"><div class="stat-box p-2"><span class="number" style="font-size: 1.1rem;">{{ p.matches_played }}</span><span class="label" style="font-size: 0.6rem;">Matches</span></div></div>
+                    <div class="col-6"><div class="stat-box p-2"><span class="number" style="font-size: 1.1rem;">{{ p.avg_rating }}</span><span class="label" style="font-size: 0.6rem;">Rating</span></div></div>
+                    <div class="col-6"><div class="stat-box p-2"><span class="number text-success" style="font-size: 1.1rem;">{{ p.total_goals }}</span><span class="label" style="font-size: 0.6rem;">Goals</span></div></div>
+                    <div class="col-6"><div class="stat-box p-2"><span class="number text-info" style="font-size: 1.1rem;">{{ p.total_assists }}</span><span class="label" style="font-size: 0.6rem;">Assists</span></div></div>
+                </div>
+                
+                <button type="button" class="btn btn-outline-glow w-100 mt-4" data-bs-dismiss="modal">Close Profile</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<style>
+    .hover-accent:hover { color: var(--accent) !important; }
+    .hover-danger:hover { color: var(--accent-3) !important; }
+    .x-small { font-size: 0.75rem; }
+    .last-child-no-border:last-child { border-bottom: none !important; }
+</style>
 {% endblock %}
