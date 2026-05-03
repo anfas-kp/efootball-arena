@@ -13,6 +13,16 @@ class MatchResultForm(forms.ModelForm):
             'screenshot': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
+    def __init__(self, *args, is_admin=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_admin = is_admin
+        if is_admin:
+            self.fields['screenshot'].required = False
+            self.fields['screenshot'].help_text = 'Optional for admin'
+        else:
+            self.fields['screenshot'].required = True
+            self.fields['screenshot'].help_text = 'Upload a clear screenshot showing the final score (required)'
+
 
 class GoalForm(forms.ModelForm):
     class Meta:
@@ -26,8 +36,9 @@ class GoalForm(forms.ModelForm):
             'screenshot': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
-    def __init__(self, fixture=None, *args, **kwargs):
+    def __init__(self, fixture=None, is_admin=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.is_admin = is_admin
         if fixture:
             players = Player.objects.filter(team__in=[fixture.home_team, fixture.away_team], is_active=True).order_by('team__name', 'name')
             self.fields['scorer'].queryset = players
@@ -35,6 +46,8 @@ class GoalForm(forms.ModelForm):
             self.fields['assist'].queryset = players
             self.fields['assist'].label_from_instance = lambda obj: f"{obj.name} ({obj.team.name})"
             self.fields['assist'].required = False
+        # Screenshot always optional for goals (was already blank=True on model)
+        self.fields['screenshot'].required = False
 
 
 class CardForm(forms.ModelForm):
@@ -48,12 +61,15 @@ class CardForm(forms.ModelForm):
             'screenshot': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
-    def __init__(self, fixture=None, *args, **kwargs):
+    def __init__(self, fixture=None, is_admin=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.is_admin = is_admin
         if fixture:
             players = Player.objects.filter(team__in=[fixture.home_team, fixture.away_team], is_active=True).order_by('team__name', 'name')
             self.fields['player'].queryset = players
             self.fields['player'].label_from_instance = lambda obj: f"{obj.name} ({obj.team.name})"
+        # Screenshot always optional for cards (was already blank=True on model)
+        self.fields['screenshot'].required = False
 
 
 class PlayerRatingForm(forms.ModelForm):
@@ -66,9 +82,16 @@ class PlayerRatingForm(forms.ModelForm):
             'screenshot': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
-    def __init__(self, fixture=None, *args, **kwargs):
+    def __init__(self, fixture=None, is_admin=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.is_admin = is_admin
         if fixture:
             players = Player.objects.filter(team__in=[fixture.home_team, fixture.away_team], is_active=True).order_by('team__name', 'name')
             self.fields['player'].queryset = players
             self.fields['player'].label_from_instance = lambda obj: f"{obj.name} ({obj.team.name})"
+        if is_admin:
+            self.fields['screenshot'].required = False
+            self.fields['screenshot'].help_text = 'Optional for admin'
+        else:
+            self.fields['screenshot'].required = True
+            self.fields['screenshot'].help_text = 'Upload screenshot of in-game rating (required)'

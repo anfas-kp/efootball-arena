@@ -18,10 +18,12 @@ def submit_result(request, fixture_pk):
 
     # Check if user's team is in this fixture
     user_team = getattr(request.user, 'team', None)
-    if not user_team or (user_team != fixture.home_team and user_team != fixture.away_team):
-        if not request.user.is_admin_user:
-            messages.error(request, 'You are not part of this fixture.')
-            return redirect('core:home')
+    is_admin = request.user.is_admin_user
+    is_team_member = user_team and (user_team == fixture.home_team or user_team == fixture.away_team)
+
+    if not is_team_member and not is_admin:
+        messages.error(request, 'You are not part of this fixture.')
+        return redirect('core:home')
 
     # Check if result already submitted
     if hasattr(fixture, 'result'):
@@ -29,35 +31,36 @@ def submit_result(request, fixture_pk):
         return redirect('matches:result_detail', pk=fixture.result.pk)
 
     if request.method == 'POST':
-        form = MatchResultForm(request.POST, request.FILES)
+        form = MatchResultForm(request.POST, request.FILES, is_admin=is_admin)
         if form.is_valid():
             result = form.save(commit=False)
             result.fixture = fixture
             result.submitted_by = request.user
             
-            if request.user.is_admin_user:
+            if is_admin:
                 result.status = 'approved'
                 result.verified_at = timezone.now()
             
             result.save()
             
-            if request.user.is_admin_user:
+            if is_admin:
                 fixture.status = 'completed'
             else:
                 fixture.status = 'in_progress'
             fixture.save()
             
-            if request.user.is_admin_user:
+            if is_admin:
                 messages.success(request, '✅ Result submitted and auto-approved! Now add goal details, cards, and top rated players.')
             else:
                 messages.success(request, '📸 Result submitted! Now add goal details, cards, and top rated players.')
             return redirect('matches:result_detail', pk=result.pk)
     else:
-        form = MatchResultForm()
+        form = MatchResultForm(is_admin=is_admin)
 
     return render(request, 'matches/submit_result.html', {
         'form': form,
         'fixture': fixture,
+        'is_admin': is_admin,
     })
 
 
@@ -69,30 +72,35 @@ def edit_result(request, pk):
 
     # Check if user's team is in this fixture
     user_team = getattr(request.user, 'team', None)
+    is_admin = request.user.is_admin_user
     is_team_member = user_team and (user_team == fixture.home_team or user_team == fixture.away_team)
     
-    if not is_team_member and not request.user.is_admin_user:
+    if not is_team_member and not is_admin:
         messages.error(request, 'Access denied.')
         return redirect('core:home')
 
     # If result is already approved, only admin can edit
-    if result.status == 'approved' and not request.user.is_admin_user:
+    if result.status == 'approved' and not is_admin:
         messages.error(request, 'Approved results can only be edited by an admin.')
         return redirect('matches:result_detail', pk=pk)
 
     if request.method == 'POST':
-        form = MatchResultForm(request.POST, request.FILES, instance=result)
+        form = MatchResultForm(request.POST, request.FILES, instance=result, is_admin=is_admin)
         if form.is_valid():
-            form.save()
+            updated_result = form.save()
+            # If admin edits an approved result, re-sync stats
+            if is_admin and updated_result.status == 'approved':
+                _sync_player_stats(updated_result)
             messages.success(request, 'Result updated!')
             return redirect('matches:result_detail', pk=pk)
     else:
-        form = MatchResultForm(instance=result)
+        form = MatchResultForm(instance=result, is_admin=is_admin)
 
     return render(request, 'matches/edit_result.html', {
         'form': form,
         'result': result,
         'fixture': fixture,
+        'is_admin': is_admin,
     })
 
 
@@ -103,10 +111,17 @@ def add_goal(request, result_pk):
     fixture = result.fixture
 
     user_team = getattr(request.user, 'team', None)
-    if not user_team or (user_team != fixture.home_team and user_team != fixture.away_team):
-        if not request.user.is_admin_user:
-            messages.error(request, 'Access denied.')
-            return redirect('core:home')
+    is_admin = request.user.is_admin_user
+    is_team_member = user_team and (user_team == fixture.home_team or user_team == fixture.away_team)
+
+    if not is_team_member and not is_admin:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    # Teams can only add goals if result is not yet approved
+    if not is_admin and result.status == 'approved':
+        messages.error(request, 'Cannot modify approved results. Contact admin.')
+        return redirect('matches:result_detail', pk=result_pk)
 
     # Determine which team to add goal for
     team = user_team if user_team else fixture.home_team
@@ -117,7 +132,7 @@ def add_goal(request, result_pk):
             from teams.models import Team
             team = get_object_or_404(Team, pk=scoring_team_id)
 
-        form = GoalForm(fixture=fixture, data=request.POST, files=request.FILES)
+        form = GoalForm(fixture=fixture, is_admin=is_admin, data=request.POST, files=request.FILES)
         if form.is_valid():
             goal = form.save(commit=False)
             goal.result = result
@@ -129,7 +144,7 @@ def add_goal(request, result_pk):
             messages.success(request, f'⚽ Goal by {goal.scorer.name} added!')
             return redirect('matches:result_detail', pk=result_pk)
     else:
-        form = GoalForm(fixture=fixture)
+        form = GoalForm(fixture=fixture, is_admin=is_admin)
 
     players_dict = {p.id: p.team_id for p in Player.objects.filter(team__in=[fixture.home_team, fixture.away_team])}
 
@@ -140,6 +155,7 @@ def add_goal(request, result_pk):
         'home_team': fixture.home_team,
         'away_team': fixture.away_team,
         'players_dict': players_dict,
+        'is_admin': is_admin,
     })
 
 
@@ -150,10 +166,17 @@ def add_card(request, result_pk):
     fixture = result.fixture
 
     user_team = getattr(request.user, 'team', None)
-    if not user_team or (user_team != fixture.home_team and user_team != fixture.away_team):
-        if not request.user.is_admin_user:
-            messages.error(request, 'Access denied.')
-            return redirect('core:home')
+    is_admin = request.user.is_admin_user
+    is_team_member = user_team and (user_team == fixture.home_team or user_team == fixture.away_team)
+
+    if not is_team_member and not is_admin:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    # Teams can only add cards if result is not yet approved
+    if not is_admin and result.status == 'approved':
+        messages.error(request, 'Cannot modify approved results. Contact admin.')
+        return redirect('matches:result_detail', pk=result_pk)
 
     team = user_team if user_team else fixture.home_team
 
@@ -163,7 +186,7 @@ def add_card(request, result_pk):
             from teams.models import Team
             team = get_object_or_404(Team, pk=card_team_id)
 
-        form = CardForm(fixture=fixture, data=request.POST, files=request.FILES)
+        form = CardForm(fixture=fixture, is_admin=is_admin, data=request.POST, files=request.FILES)
         if form.is_valid():
             card = form.save(commit=False)
             card.result = result
@@ -175,7 +198,7 @@ def add_card(request, result_pk):
             messages.success(request, f'{emoji} {card.get_card_type_display()} for {card.player.name} added!')
             return redirect('matches:result_detail', pk=result_pk)
     else:
-        form = CardForm(fixture=fixture)
+        form = CardForm(fixture=fixture, is_admin=is_admin)
 
     players_dict = {p.id: p.team_id for p in Player.objects.filter(team__in=[fixture.home_team, fixture.away_team])}
 
@@ -183,6 +206,7 @@ def add_card(request, result_pk):
         'form': form, 'result': result, 'fixture': fixture,
         'home_team': fixture.home_team, 'away_team': fixture.away_team,
         'players_dict': players_dict,
+        'is_admin': is_admin,
     })
 
 
@@ -193,17 +217,34 @@ def add_rating(request, result_pk):
     fixture = result.fixture
 
     user_team = getattr(request.user, 'team', None)
-    if not user_team or (user_team != fixture.home_team and user_team != fixture.away_team):
-        if not request.user.is_admin_user:
-            messages.error(request, 'Access denied.')
-            return redirect('core:home')
+    is_admin = request.user.is_admin_user
+    is_team_member = user_team and (user_team == fixture.home_team or user_team == fixture.away_team)
+
+    if not is_team_member and not is_admin:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    # Teams can only add ratings if result is not yet approved
+    if not is_admin and result.status == 'approved':
+        messages.error(request, 'Cannot modify approved results. Contact admin.')
+        return redirect('matches:result_detail', pk=result_pk)
 
     team = user_team if user_team else fixture.home_team
 
-    # Check if team already has 3 ratings for this match
-    existing_count = result.ratings.filter(team=team).count()
-    if existing_count >= 3:
-        messages.warning(request, 'You already submitted 3 top-rated players for this match.')
+    # Check if team already has 3 ratings for this match (per team)
+    if is_team_member and user_team:
+        existing_count = result.ratings.filter(team=user_team).count()
+    else:
+        # Admin: count total ratings (from both teams)
+        existing_count = result.ratings.count()
+
+    # Teams limited to 3 ratings per team; admin limited to 6 total (3 per team)
+    max_ratings = 6 if is_admin else 3
+    if existing_count >= max_ratings:
+        if is_admin:
+            messages.warning(request, 'Both teams already have 3 top-rated players each (6 total).')
+        else:
+            messages.warning(request, 'You already submitted 3 top-rated players for this match.')
         return redirect('matches:result_detail', pk=result_pk)
 
     if request.method == 'POST':
@@ -212,18 +253,25 @@ def add_rating(request, result_pk):
             from teams.models import Team
             team = get_object_or_404(Team, pk=rating_team_id)
 
-        form = PlayerRatingForm(fixture=fixture, data=request.POST, files=request.FILES)
+        form = PlayerRatingForm(fixture=fixture, is_admin=is_admin, data=request.POST, files=request.FILES)
         if form.is_valid():
             rating = form.save(commit=False)
             rating.result = result
             rating.team = rating.player.team
+
+            # Check per-team limit of 3
+            team_rating_count = result.ratings.filter(team=rating.team).count()
+            if team_rating_count >= 3:
+                messages.warning(request, f'{rating.team.name} already has 3 top-rated players for this match.')
+                return redirect('matches:result_detail', pk=result_pk)
+
             rating.save()
             if result.status == 'approved':
                 _sync_player_stats(result)
             messages.success(request, f'⭐ {rating.player.name} rated {rating.rating}/10!')
             return redirect('matches:result_detail', pk=result_pk)
     else:
-        form = PlayerRatingForm(fixture=fixture)
+        form = PlayerRatingForm(fixture=fixture, is_admin=is_admin)
 
     players_dict = {p.id: p.team_id for p in Player.objects.filter(team__in=[fixture.home_team, fixture.away_team])}
 
@@ -232,20 +280,97 @@ def add_rating(request, result_pk):
         'home_team': fixture.home_team, 'away_team': fixture.away_team,
         'existing_count': existing_count,
         'players_dict': players_dict,
+        'is_admin': is_admin,
     })
+
+
+# ===== Delete Goal / Card / Rating (Admin Only) =====
+
+@login_required
+def delete_goal(request, goal_pk):
+    """Admin deletes a goal entry."""
+    goal = get_object_or_404(Goal, pk=goal_pk)
+    result = goal.result
+
+    if not request.user.is_admin_user:
+        messages.error(request, 'Only admins can delete match events.')
+        return redirect('matches:result_detail', pk=result.pk)
+
+    if request.method == 'POST':
+        scorer_name = goal.scorer.name
+        goal.delete()
+        if result.status == 'approved':
+            _sync_player_stats(result)
+        messages.success(request, f'🗑️ Goal by {scorer_name} deleted.')
+    return redirect('matches:result_detail', pk=result.pk)
+
+
+@login_required
+def delete_card(request, card_pk):
+    """Admin deletes a card entry."""
+    card = get_object_or_404(Card, pk=card_pk)
+    result = card.result
+
+    if not request.user.is_admin_user:
+        messages.error(request, 'Only admins can delete match events.')
+        return redirect('matches:result_detail', pk=result.pk)
+
+    if request.method == 'POST':
+        player_name = card.player.name
+        card.delete()
+        if result.status == 'approved':
+            _sync_player_stats(result)
+        messages.success(request, f'🗑️ Card for {player_name} deleted.')
+    return redirect('matches:result_detail', pk=result.pk)
+
+
+@login_required
+def delete_rating(request, rating_pk):
+    """Admin deletes a rating entry."""
+    rating = get_object_or_404(PlayerRating, pk=rating_pk)
+    result = rating.result
+
+    if not request.user.is_admin_user:
+        messages.error(request, 'Only admins can delete match events.')
+        return redirect('matches:result_detail', pk=result.pk)
+
+    if request.method == 'POST':
+        player_name = rating.player.name
+        rating.delete()
+        if result.status == 'approved':
+            _sync_player_stats(result)
+        messages.success(request, f'🗑️ Rating for {player_name} deleted.')
+    return redirect('matches:result_detail', pk=result.pk)
 
 
 def result_detail(request, pk):
     """View match result details."""
     result = get_object_or_404(MatchResult, pk=pk)
+    fixture = result.fixture
     goals = result.goals.all()
     cards = result.cards.all()
     ratings = result.ratings.all()
+
+    # Determine permissions
+    is_admin = request.user.is_authenticated and request.user.is_admin_user
+    user_team = getattr(request.user, 'team', None) if request.user.is_authenticated else None
+    is_team_member = user_team and (user_team == fixture.home_team or user_team == fixture.away_team)
+
+    # Teams can add/edit only when not approved; Admin can always add/edit
+    can_add_events = is_admin or (is_team_member and result.status != 'approved')
+    can_edit_result = is_admin or (is_team_member and result.status != 'approved')
+    can_delete_events = is_admin  # Only admin can delete
+
     return render(request, 'matches/result_detail.html', {
         'result': result,
         'goals': goals,
         'cards': cards,
         'ratings': ratings,
+        'can_add_events': can_add_events,
+        'can_edit_result': can_edit_result,
+        'can_delete_events': can_delete_events,
+        'is_admin': is_admin,
+        'is_team_member': is_team_member,
     })
 
 

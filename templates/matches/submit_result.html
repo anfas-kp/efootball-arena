@@ -28,6 +28,13 @@
                 </div>
             </div>
 
+            {% if is_admin %}
+            <div class="alert alert-info border-0 glass-card mb-4 py-2 px-3 d-flex align-items-center" style="background: rgba(0,210,255,0.08); border-left: 3px solid var(--accent-color) !important;">
+                <i class="fas fa-shield-alt text-accent me-2"></i>
+                <small class="text-muted">Admin mode — Screenshot proof is <strong>optional</strong>. Result will be auto-approved.</small>
+            </div>
+            {% endif %}
+
             <!-- Submit Form -->
             <div class="glass-card">
                 <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-upload me-2 text-accent"></i>SUBMIT FINAL SCORE</h5>
@@ -47,9 +54,16 @@
                         </div>
                     </div>
                     <div class="mb-4">
-                        <label class="form-label"><i class="fas fa-camera me-1 text-accent"></i> Scoreline Screenshot</label>
+                        <label class="form-label">
+                            <i class="fas fa-camera me-1 text-accent"></i> Scoreline Screenshot
+                            {% if is_admin %}<span class="badge bg-secondary ms-1" style="font-size: 0.65rem;">OPTIONAL</span>{% else %}<span class="text-danger">*</span>{% endif %}
+                        </label>
                         {{ form.screenshot }}
-                        <small class="text-muted d-block mt-1">Upload a clear screenshot showing the final score</small>
+                        {% if is_admin %}
+                        <small class="text-muted d-block mt-1">Optional — Admin submissions don't require proof</small>
+                        {% else %}
+                        <small class="text-muted d-block mt-1">Upload a clear screenshot showing the final score (required)</small>
+                        {% endif %}
                     </div>
                     <button type="submit" class="btn-glow w-100 justify-content-center">Submit Result</button>
                 </form>

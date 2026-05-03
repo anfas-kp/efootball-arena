@@ -37,8 +37,9 @@
                         </div>
                     </div>
                     <div class="col-md-7 text-end">
-                        <div class="d-flex gap-2 justify-content-end align-items-center">
-                            <a href="{% url 'matches:result_detail' r.pk %}" class="btn-outline-glow btn-sm py-1 px-3" style="font-size: 0.75rem;">View Proof</a>
+                        <div class="d-flex gap-2 justify-content-end align-items-center flex-wrap">
+                            <a href="{% url 'matches:result_detail' r.pk %}" class="btn-outline-glow btn-sm py-1 px-3" style="font-size: 0.75rem;">View Details</a>
+                            <a href="{% url 'matches:edit_result' r.pk %}" class="btn-outline-glow btn-sm py-1 px-3" style="font-size: 0.75rem;"><i class="fas fa-edit me-1"></i> Edit</a>
                             {% if r.status == 'pending' %}
                             <a href="{% url 'matches:admin_approve' r.pk %}" class="btn-glow btn-sm py-1 px-3" style="font-size: 0.75rem;"><i class="fas fa-check me-1"></i> Approve</a>
                             <button class="btn-danger-glow btn-sm py-1 px-3" style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#rejectR{{ r.pk }}"><i class="fas fa-times me-1"></i> Reject</button>

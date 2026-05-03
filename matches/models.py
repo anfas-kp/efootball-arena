@@ -16,7 +16,7 @@ class MatchResult(models.Model):
     fixture = models.OneToOneField(Fixture, on_delete=models.CASCADE, related_name='result')
     home_score = models.PositiveIntegerField(default=0)
     away_score = models.PositiveIntegerField(default=0)
-    screenshot = models.ImageField(upload_to='match_screenshots/', help_text='Full-time scoreline screenshot')
+    screenshot = models.ImageField(upload_to='match_screenshots/', blank=True, null=True, help_text='Full-time scoreline screenshot')
     submitted_by = models.ForeignKey(
         'accounts.User', on_delete=models.SET_NULL, null=True, related_name='submitted_results'
     )
@@ -106,7 +106,7 @@ class PlayerRating(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='match_ratings')
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     rating = models.DecimalField(max_digits=3, decimal_places=1, help_text='Match rating out of 10')
-    screenshot = models.ImageField(upload_to='rating_screenshots/', help_text='Screenshot of in-game rating')
+    screenshot = models.ImageField(upload_to='rating_screenshots/', blank=True, null=True, help_text='Screenshot of in-game rating')
 
     class Meta:
         ordering = ['-rating']
