@@ -32,7 +32,12 @@
     <div class="matchday-section mb-5">
         <div class="d-flex align-items-center mb-4">
             <div class="flex-grow-1 bg-divider" style="height: 1px;"></div>
-            <div class="px-3 small fw-bold text-muted text-uppercase letter-spacing-1">Matchday {{ md }}</div>
+            <div class="px-3 d-flex align-items-center gap-3">
+                <span class="small fw-bold text-muted text-uppercase letter-spacing-1">Matchday {{ md }}</span>
+                <a href="{% url 'tournaments:download_matchday_fixtures' league.pk md %}" class="text-accent hover-lift" title="Download PDF/Image">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
             <div class="flex-grow-1 bg-divider" style="height: 1px;"></div>
         </div>
         

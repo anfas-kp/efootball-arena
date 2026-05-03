@@ -185,6 +185,19 @@ def league_fixtures(request, pk):
     })
 
 
+def download_matchday_fixtures(request, league_pk, matchday):
+    """Download fixtures for a specific matchday."""
+    league = get_object_or_404(League, pk=league_pk)
+    fixtures = league.fixtures.filter(matchday=matchday)
+    
+    return render(request, 'tournaments/pdf_matchday_fixtures.html', {
+        'league': league,
+        'tournament': league.tournament,
+        'matchday': matchday,
+        'fixtures': fixtures
+    })
+
+
 # ===== Admin Views =====
 
 @login_required
@@ -326,6 +339,7 @@ def admin_generate_fixtures(request, league_pk):
     half = n // 2
 
     team_indices = list(range(n))
+    is_2leg = league.format == 'round_robin_2leg'
 
     matchday = 1
     for round_num in range(rounds):
@@ -334,12 +348,22 @@ def admin_generate_fixtures(request, league_pk):
             t2 = team_indices[n - 1 - i]
 
             if teams[t1] is not None and teams[t2] is not None:
+                # First leg
                 Fixture.objects.create(
                     league=league,
                     home_team=teams[t1],
                     away_team=teams[t2],
                     matchday=matchday,
                 )
+                
+                # Second leg
+                if is_2leg:
+                    Fixture.objects.create(
+                        league=league,
+                        home_team=teams[t2],
+                        away_team=teams[t1],
+                        matchday=matchday + rounds,
+                    )
 
         matchday += 1
         # Rotate: fix first team, rotate rest

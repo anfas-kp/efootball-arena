@@ -1,0 +1,90 @@
+{% extends "pdf_base.html" %}
+
+{% block title %}Matchday {{ matchday }} Fixtures{% endblock %}
+{% block header_title %}{{ tournament.name }}{% endblock %}
+{% block sub_title %}{{ league.name }} - Matchday {{ matchday }} Fixtures{% endblock %}
+{% block filename %}{{ league.name|slugify }}_md{{ matchday }}_fixtures.pdf{% endblock %}
+
+{% block content %}
+<style>
+    .fixture-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px 0;
+        border-bottom: 1px solid #bdc3c7;
+    }
+    .team {
+        width: 40%;
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+    .home-team {
+        text-align: right;
+    }
+    .away-team {
+        text-align: left;
+    }
+    .vs-box {
+        width: 20%;
+        text-align: center;
+        font-weight: bold;
+        color: #7f8c8d;
+    }
+    .score-box {
+        width: 20%;
+        text-align: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+        background-color: #ecf0f1;
+        padding: 5px 10px;
+        border-radius: 5px;
+        display: inline-block;
+    }
+    .team-logo {
+        max-height: 30px;
+        max-width: 30px;
+        vertical-align: middle;
+        margin: 0 10px;
+    }
+</style>
+
+<div class="fixtures-list">
+    {% for f in fixtures %}
+    <div class="fixture-row">
+        <div class="team home-team">
+            {{ f.home_team.name }}
+            {% if f.home_team.logo %}
+                <img src="{{ f.home_team.logo.url }}" class="team-logo" alt="logo">
+            {% endif %}
+        </div>
+        
+        <div class="vs-box">
+            {% if f.status == 'completed' and f.result %}
+                <span class="score-box">{{ f.result.home_score }} - {{ f.result.away_score }}</span>
+            {% else %}
+                VS
+            {% endif %}
+            <div style="font-size: 0.8rem; margin-top: 5px;">
+                {% if f.match_date %}
+                    {{ f.match_date|date:"d M, Y" }}
+                {% else %}
+                    TBD
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="team away-team">
+            {% if f.away_team.logo %}
+                <img src="{{ f.away_team.logo.url }}" class="team-logo" alt="logo">
+            {% endif %}
+            {{ f.away_team.name }}
+        </div>
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 20px;">
+        No fixtures found for this matchday.
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

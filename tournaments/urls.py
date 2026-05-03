@@ -10,6 +10,7 @@ urlpatterns = [
     path('<int:pk>/apply/', views.apply_tournament, name='apply'),
     path('league/<int:pk>/standings/', views.league_standings, name='league_standings'),
     path('league/<int:pk>/fixtures/', views.league_fixtures, name='league_fixtures'),
+    path('league/<int:league_pk>/matchday/<int:matchday>/download/', views.download_matchday_fixtures, name='download_matchday_fixtures'),
     # Admin
     path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('admin/create/', views.admin_create_tournament, name='admin_create'),
