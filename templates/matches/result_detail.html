@@ -151,8 +151,29 @@
             {% endif %}
         </div>
 
-        <!-- Sidebar: Ratings -->
+        <!-- Sidebar: Ratings & H2H -->
         <div class="col-lg-4">
+            {% if ratings %}
+            <div class="glass-card border-warning border-opacity-10 mb-4">
+                <h5 class="section-title mb-3" style="font-size: 1rem;"><i class="fas fa-star me-2 text-warning"></i>TOP RATED</h5>
+                {% for r in ratings %}
+                <div class="d-flex align-items-center gap-3 py-3 {% if not forloop.last %}border-bottom border-white border-opacity-5{% endif %}">
+                    <div class="flex-grow-1">
+                        <div class="fw-bold text-white small">{{ r.player.name }}</div>
+                        <div class="text-muted" style="font-size: 0.7rem;">{{ r.team.name }}</div>
+                    </div>
+                    <span class="fw-bold text-warning" style="font-family: 'Orbitron', sans-serif; font-size: 1.1rem;">{{ r.rating }}</span>
+                    {% if can_delete_events %}
+                    <form method="post" action="{% url 'matches:delete_rating' r.pk %}" class="d-inline ms-1" onsubmit="return confirm('Delete rating for {{ r.player.name }}?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm p-0 border-0" style="background: none; color: var(--danger-color, #ff4444); font-size: 0.7rem;" title="Delete rating">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
             {% endif %}
 
             <!-- Head-to-Head History -->
@@ -166,15 +187,13 @@
                         <span>DRAWS</span>
                         <span>{{ result.fixture.away_team.name|truncatechars:10 }} WINS</span>
                     </div>
-                    <div class="progress h2h-progress" style="height: 10px; background: rgba(255,255,255,0.05);">
-                        {% if h2h_stats.home_wins or h2h_stats.away_wins or h2h_stats.draws %}
-                            {% with total=h2h_stats.home_wins|add:h2h_stats.away_wins|add:h2h_stats.draws %}
-                            <div class="progress-bar bg-accent" style="width: {% widthratio h2h_stats.home_wins total 100 %}%"></div>
-                            <div class="progress-bar bg-secondary" style="width: {% widthratio h2h_stats.draws total 100 %}%"></div>
-                            <div class="progress-bar bg-danger" style="width: {% widthratio h2h_stats.away_wins total 100 %}%"></div>
-                            {% endwith %}
+                    <div class="progress h2h-progress" style="height: 10px; background: rgba(255,255,255,0.05); --home-pct: {{ h2h_stats.home_pct }}%; --draw-pct: {{ h2h_stats.draw_pct }}%; --away-pct: {{ h2h_stats.away_pct }}%;">
+                        {% if h2h_stats.matches %}
+                            <div class="progress-bar bg-accent" style="width: var(--home-pct);"></div>
+                            <div class="progress-bar bg-secondary" style="width: var(--draw-pct);"></div>
+                            <div class="progress-bar bg-danger" style="width: var(--away-pct);"></div>
                         {% else %}
-                            <div class="progress-bar bg-secondary" style="width: 100%"></div>
+                            <div class="progress-bar bg-secondary" style="width: 100%;"></div>
                         {% endif %}
                     </div>
                     <div class="d-flex justify-content-between mt-2 fw-bold font-orbitron" style="font-size: 0.9rem;">

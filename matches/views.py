@@ -530,7 +530,12 @@ def result_detail(request, pk):
         fixture__away_team__in=[fixture.home_team, fixture.away_team]
     ).exclude(pk=result.pk).select_related('fixture', 'fixture__home_team', 'fixture__away_team').order_by('-fixture__matchday')
     
-    h2h_stats = {'home_wins': 0, 'away_wins': 0, 'draws': 0, 'matches': h2h_matches[:5]}
+    h2h_stats = {
+        'home_wins': 0, 'away_wins': 0, 'draws': 0, 
+        'matches': h2h_matches[:5],
+        'home_pct': 0, 'away_pct': 0, 'draw_pct': 0
+    }
+    total_h2h = h2h_matches.count()
     for h in h2h_matches:
         if h.home_score > h.away_score:
             if h.fixture.home_team == fixture.home_team: h2h_stats['home_wins'] += 1
@@ -540,6 +545,11 @@ def result_detail(request, pk):
             else: h2h_stats['away_wins'] += 1
         else:
             h2h_stats['draws'] += 1
+
+    if total_h2h > 0:
+        h2h_stats['home_pct'] = (h2h_stats['home_wins'] / total_h2h) * 100
+        h2h_stats['draw_pct'] = (h2h_stats['draws'] / total_h2h) * 100
+        h2h_stats['away_pct'] = (h2h_stats['away_wins'] / total_h2h) * 100
 
     # Determine permissions
     is_admin = request.user.is_authenticated and request.user.is_admin_user
