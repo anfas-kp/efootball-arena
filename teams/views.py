@@ -144,11 +144,14 @@ def add_player(request):
 
 @login_required
 def edit_player(request, pk):
-    """Edit a player."""
-    player = get_object_or_404(Player, pk=pk, team__captain=request.user)
+    """Edit a player. Allowed for team captain or admin."""
+    if request.user.is_admin_user:
+        player = get_object_or_404(Player, pk=pk)
+    else:
+        player = get_object_or_404(Player, pk=pk, team__captain=request.user)
 
-    # Roster lock check
-    if player.team.is_roster_locked:
+    # Roster lock check (Admins can bypass lock)
+    if player.team.is_roster_locked and not request.user.is_admin_user:
         messages.warning(request, '🔒 Roster is locked — cannot edit players during an active tournament.')
         return redirect('teams:my_team')
 
@@ -157,6 +160,9 @@ def edit_player(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, f'✅ {player.name} updated!')
+            next_url = request.POST.get('next')
+            if next_url:
+                return redirect(next_url)
             return redirect('teams:my_team')
     else:
         form = PlayerForm(instance=player)
@@ -166,18 +172,24 @@ def edit_player(request, pk):
 
 @login_required
 def delete_player(request, pk):
-    """Remove a player from roster."""
-    player = get_object_or_404(Player, pk=pk, team__captain=request.user)
+    """Remove a player from roster. Allowed for team captain or admin."""
+    if request.user.is_admin_user:
+        player = get_object_or_404(Player, pk=pk)
+    else:
+        player = get_object_or_404(Player, pk=pk, team__captain=request.user)
 
-    # Roster lock check
-    if player.team.is_roster_locked:
+    # Roster lock check (Admins can bypass lock)
+    if player.team.is_roster_locked and not request.user.is_admin_user:
         messages.warning(request, '🔒 Roster is locked — cannot remove players during an active tournament.')
         return redirect('teams:my_team')
 
     if request.method == 'POST':
         name = player.name
         player.delete()
-        messages.success(request, f'{name} removed from roster.')
+        messages.success(request, f'🗑️ {name} removed from roster.')
+        next_url = request.POST.get('next')
+        if next_url:
+            return redirect(next_url)
     return redirect('teams:my_team')
 
 

@@ -6,11 +6,14 @@
     <div class="glass-card">
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
+            {% if request.GET.next %}
+                <input type="hidden" name="next" value="{{ request.GET.next }}">
+            {% endif %}
             {% for field in form %}
             <div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}{% for e in field.errors %}<small class="text-danger">{{ e }}</small>{% endfor %}</div>
             {% endfor %}
             <button type="submit" class="btn-glow"><i class="fas fa-save me-2"></i>Save</button>
-            <a href="{% url 'teams:my_team' %}" class="btn-outline-glow ms-2">Cancel</a>
+            <a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'teams:my_team' %}{% endif %}" class="btn-outline-glow ms-2">Cancel</a>
         </form>
     </div>
 </div></div></div>

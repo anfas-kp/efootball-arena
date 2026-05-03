@@ -59,7 +59,19 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="lb-stat" style="color: #ffaa00;">{% if selected_league %}{{ p.league_goals }}{% else %}{{ p.total_goals }}{% endif %}</div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="lb-stat" style="color: #ffaa00;">{% if selected_league %}{{ p.league_goals }}{% else %}{{ p.total_goals }}{% endif %}</div>
+                            {% if user.is_authenticated and user.is_admin_user %}
+                            <div class="lb-actions d-flex gap-2 opacity-50" style="font-size: 0.85rem;">
+                                <a href="{% url 'teams:edit_player' p.pk %}?next={{ request.get_full_path|urlencode }}" class="text-info hover-text-white transition-all"><i class="fas fa-edit"></i></a>
+                                <form method="post" action="{% url 'teams:delete_player' p.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ p.name }} completely?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" class="btn btn-link p-0 text-danger hover-text-white transition-all border-0"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                     {% empty %}
                     <div class="text-center py-4"><p class="text-muted small mb-0">No goals recorded yet.</p></div>
@@ -93,7 +105,19 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="lb-stat" style="color: #00b4ff;">{% if selected_league %}{{ p.league_assists }}{% else %}{{ p.total_assists }}{% endif %}</div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="lb-stat" style="color: #00b4ff;">{% if selected_league %}{{ p.league_assists }}{% else %}{{ p.total_assists }}{% endif %}</div>
+                            {% if user.is_authenticated and user.is_admin_user %}
+                            <div class="lb-actions d-flex gap-2 opacity-50" style="font-size: 0.85rem;">
+                                <a href="{% url 'teams:edit_player' p.pk %}?next={{ request.get_full_path|urlencode }}" class="text-info hover-text-white transition-all"><i class="fas fa-edit"></i></a>
+                                <form method="post" action="{% url 'teams:delete_player' p.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ p.name }} completely?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" class="btn btn-link p-0 text-danger hover-text-white transition-all border-0"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                     {% empty %}
                     <div class="text-center py-4"><p class="text-muted small mb-0">No assists recorded yet.</p></div>
@@ -127,7 +151,19 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="lb-stat" style="color: #ffc800;">{% if selected_league %}{{ p.league_avg_rating|floatformat:1 }}{% else %}{{ p.avg_rating }}{% endif %}</div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="lb-stat" style="color: #ffc800;">{% if selected_league %}{{ p.league_avg_rating|floatformat:1 }}{% else %}{{ p.avg_rating }}{% endif %}</div>
+                            {% if user.is_authenticated and user.is_admin_user %}
+                            <div class="lb-actions d-flex gap-2 opacity-50" style="font-size: 0.85rem;">
+                                <a href="{% url 'teams:edit_player' p.pk %}?next={{ request.get_full_path|urlencode }}" class="text-info hover-text-white transition-all"><i class="fas fa-edit"></i></a>
+                                <form method="post" action="{% url 'teams:delete_player' p.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ p.name }} completely?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" class="btn btn-link p-0 text-danger hover-text-white transition-all border-0"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                     {% empty %}
                     <div class="text-center py-4"><p class="text-muted small mb-0">No ratings evaluated yet.</p></div>
@@ -161,7 +197,19 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="lb-stat" style="color: #00c864;">{% if selected_league %}{{ p.league_clean_sheets }}{% else %}{{ p.total_clean_sheets }}{% endif %}</div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="lb-stat" style="color: #00c864;">{% if selected_league %}{{ p.league_clean_sheets }}{% else %}{{ p.total_clean_sheets }}{% endif %}</div>
+                            {% if user.is_authenticated and user.is_admin_user %}
+                            <div class="lb-actions d-flex gap-2 opacity-50" style="font-size: 0.85rem;">
+                                <a href="{% url 'teams:edit_player' p.pk %}?next={{ request.get_full_path|urlencode }}" class="text-info hover-text-white transition-all"><i class="fas fa-edit"></i></a>
+                                <form method="post" action="{% url 'teams:delete_player' p.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ p.name }} completely?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" class="btn btn-link p-0 text-danger hover-text-white transition-all border-0"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                     {% empty %}
                     <div class="text-center py-4"><p class="text-muted small mb-0">No clean sheets recorded yet.</p></div>
@@ -196,13 +244,25 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="d-flex gap-2 align-items-center">
-                                {% if selected_league %}
-                                    {% if p.league_yellow_cards %}<span class="card-badge card-yellow">{{ p.league_yellow_cards }}</span>{% endif %}
-                                    {% if p.league_red_cards %}<span class="card-badge card-red">{{ p.league_red_cards }}</span>{% endif %}
-                                {% else %}
-                                    {% if p.total_yellow_cards %}<span class="card-badge card-yellow">{{ p.total_yellow_cards }}</span>{% endif %}
-                                    {% if p.total_red_cards %}<span class="card-badge card-red">{{ p.total_red_cards }}</span>{% endif %}
+                            <div class="d-flex gap-3 align-items-center">
+                                <div class="d-flex gap-2 align-items-center">
+                                    {% if selected_league %}
+                                        {% if p.league_yellow_cards %}<span class="card-badge card-yellow">{{ p.league_yellow_cards }}</span>{% endif %}
+                                        {% if p.league_red_cards %}<span class="card-badge card-red">{{ p.league_red_cards }}</span>{% endif %}
+                                    {% else %}
+                                        {% if p.total_yellow_cards %}<span class="card-badge card-yellow">{{ p.total_yellow_cards }}</span>{% endif %}
+                                        {% if p.total_red_cards %}<span class="card-badge card-red">{{ p.total_red_cards }}</span>{% endif %}
+                                    {% endif %}
+                                </div>
+                                {% if user.is_authenticated and user.is_admin_user %}
+                                <div class="lb-actions d-flex gap-2 opacity-50" style="font-size: 0.85rem;">
+                                    <a href="{% url 'teams:edit_player' p.pk %}?next={{ request.get_full_path|urlencode }}" class="text-info hover-text-white transition-all"><i class="fas fa-edit"></i></a>
+                                    <form method="post" action="{% url 'teams:delete_player' p.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ p.name }} completely?');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                        <button type="submit" class="btn btn-link p-0 text-danger hover-text-white transition-all border-0"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
                                 {% endif %}
                             </div>
                         </div>
@@ -358,6 +418,25 @@
     }
     .card-yellow { background: #ffc107; color: #000; }
     .card-red { background: #dc3545; color: #fff; }
+
+    /* ===== Admin Actions ===== */
+    .lb-actions {
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .lb-row:hover .lb-actions {
+        opacity: 1 !important;
+    }
+    .lb-actions a, .lb-actions button {
+        transition: transform 0.2s ease, color 0.2s ease;
+        text-decoration: none;
+    }
+    .lb-actions a:hover, .lb-actions button:hover {
+        transform: scale(1.2);
+    }
+    .hover-text-white:hover { color: #fff !important; }
 
     /* ===== Selector ===== */
     #leagueSelector:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0, 255, 135, 0.15); }

@@ -580,51 +580,36 @@ def leaderboard(request):
     if league_pk:
         # Per-league stats: query from Goal/Card/Rating records for that league
         selected_league = get_object_or_404(League, pk=league_pk)
-        league_filter = Q(result__fixture__league=selected_league, result__status='approved')
-
-        # Top scorers: count goals per scorer in this league
-        top_scorers = Player.objects.filter(
-            goals_scored__result__fixture__league=selected_league,
-            goals_scored__result__status='approved'
-        ).annotate(
-            league_goals=Count('goals_scored', filter=league_filter)
+        # Top scorers
+        goals_filter = Q(goals_scored__result__fixture__league=selected_league, goals_scored__result__status='approved')
+        top_scorers = Player.objects.select_related('team').filter(goals_filter).annotate(
+            league_goals=Count('goals_scored', filter=goals_filter)
         ).filter(league_goals__gt=0).order_by('-league_goals')[:20]
 
         # Top assists
-        top_assists = Player.objects.filter(
-            assists__result__fixture__league=selected_league,
-            assists__result__status='approved'
-        ).annotate(
-            league_assists=Count('assists', filter=league_filter)
+        assists_filter = Q(assists__result__fixture__league=selected_league, assists__result__status='approved')
+        top_assists = Player.objects.select_related('team').filter(assists_filter).annotate(
+            league_assists=Count('assists', filter=assists_filter)
         ).filter(league_assists__gt=0).order_by('-league_assists')[:20]
 
         # Top rated
-        top_rated = Player.objects.filter(
-            match_ratings__result__fixture__league=selected_league,
-            match_ratings__result__status='approved'
-        ).annotate(
-            league_avg_rating=Avg('match_ratings__rating', filter=league_filter)
+        ratings_filter = Q(match_ratings__result__fixture__league=selected_league, match_ratings__result__status='approved')
+        top_rated = Player.objects.select_related('team').filter(ratings_filter).annotate(
+            league_avg_rating=Avg('match_ratings__rating', filter=ratings_filter)
         ).filter(league_avg_rating__gt=0).order_by('-league_avg_rating')[:20]
 
         # Most cards
-        most_cards = Player.objects.filter(
-            cards__result__fixture__league=selected_league,
-            cards__result__status='approved'
-        ).annotate(
-            league_red_cards=Count('cards', filter=league_filter & Q(cards__card_type='red')),
-            league_yellow_cards=Count('cards', filter=league_filter & Q(cards__card_type='yellow')),
+        cards_filter = Q(cards__result__fixture__league=selected_league, cards__result__status='approved')
+        most_cards = Player.objects.select_related('team').filter(cards_filter).annotate(
+            league_red_cards=Count('cards', filter=cards_filter & Q(cards__card_type='red')),
+            league_yellow_cards=Count('cards', filter=cards_filter & Q(cards__card_type='yellow')),
         ).filter(
             Q(league_red_cards__gt=0) | Q(league_yellow_cards__gt=0)
         ).order_by('-league_red_cards', '-league_yellow_cards')[:20]
 
         # Top clean sheets
-        cs_filter = Q(clean_sheet_records__result__fixture__league=selected_league,
-                      clean_sheet_records__result__status='approved')
-        top_clean_sheets = Player.objects.filter(
-            clean_sheet_records__result__fixture__league=selected_league,
-            clean_sheet_records__result__status='approved',
-            position='GK'
-        ).annotate(
+        cs_filter = Q(clean_sheet_records__result__fixture__league=selected_league, clean_sheet_records__result__status='approved')
+        top_clean_sheets = Player.objects.select_related('team').filter(cs_filter, position='GK').annotate(
             league_clean_sheets=Count('clean_sheet_records', filter=cs_filter)
         ).filter(league_clean_sheets__gt=0).order_by('-league_clean_sheets')[:20]
 
