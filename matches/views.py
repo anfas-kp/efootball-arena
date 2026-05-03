@@ -429,13 +429,13 @@ def delete_goal(request, goal_pk):
         # Recalculate score from remaining goals
         _recalculate_score(result)
 
-        if result.status == 'approved':
-            scorer.total_goals = scorer.goals_scored.filter(result__status='approved').count()
-            scorer.save(update_fields=['total_goals'])
+        # ALWAYS recalculate player stats (not just approved)
+        scorer.total_goals = scorer.goals_scored.filter(result__status='approved').count()
+        scorer.save(update_fields=['total_goals'])
 
-            if assister:
-                assister.total_assists = assister.assists.filter(result__status='approved').count()
-                assister.save(update_fields=['total_assists'])
+        if assister:
+            assister.total_assists = assister.assists.filter(result__status='approved').count()
+            assister.save(update_fields=['total_assists'])
 
         messages.success(request, f'🗑️ Goal by {scorer_name} deleted. Score updated to {result.home_score}-{result.away_score}.')
     return redirect('matches:result_detail', pk=result.pk)
@@ -457,10 +457,10 @@ def delete_card(request, card_pk):
 
         card.delete()
 
-        if result.status == 'approved':
-            player.total_red_cards = player.cards.filter(card_type='red', result__status='approved').count()
-            player.total_yellow_cards = player.cards.filter(card_type='yellow', result__status='approved').count()
-            player.save(update_fields=['total_red_cards', 'total_yellow_cards'])
+        # ALWAYS recalculate player stats
+        player.total_red_cards = player.cards.filter(card_type='red', result__status='approved').count()
+        player.total_yellow_cards = player.cards.filter(card_type='yellow', result__status='approved').count()
+        player.save(update_fields=['total_red_cards', 'total_yellow_cards'])
 
         messages.success(request, f'🗑️ Card for {player_name} deleted.')
     return redirect('matches:result_detail', pk=result.pk)
@@ -482,10 +482,10 @@ def delete_rating(request, rating_pk):
 
         rating.delete()
 
-        if result.status == 'approved':
-            ratings = player.match_ratings.filter(result__status='approved')
-            player.avg_rating = ratings.aggregate(avg=Avg('rating'))['avg'] or 0
-            player.save(update_fields=['avg_rating'])
+        # ALWAYS recalculate player stats
+        ratings = player.match_ratings.filter(result__status='approved')
+        player.avg_rating = ratings.aggregate(avg=Avg('rating'))['avg'] or 0
+        player.save(update_fields=['avg_rating'])
 
         messages.success(request, f'🗑️ Rating for {player_name} deleted.')
     return redirect('matches:result_detail', pk=result.pk)
@@ -507,8 +507,8 @@ def delete_clean_sheet(request, cs_pk):
 
         cs.delete()
 
-        if result.status == 'approved':
-            _sync_clean_sheet_stats_for_player(player)
+        # ALWAYS recalculate player stats
+        _sync_clean_sheet_stats_for_player(player)
 
         messages.success(request, f'🗑️ Clean sheet for {player_name} removed.')
     return redirect('matches:result_detail', pk=result.pk)
@@ -566,16 +566,79 @@ def result_list(request):
 # ===== Leaderboards =====
 
 def leaderboard(request):
-    """Public leaderboard — top scorers, assists, ratings, clean sheets, discipline."""
-    top_scorers = Player.objects.filter(total_goals__gt=0).order_by('-total_goals')[:20]
-    top_assists = Player.objects.filter(total_assists__gt=0).order_by('-total_assists')[:20]
-    top_rated = Player.objects.filter(avg_rating__gt=0).order_by('-avg_rating')[:20]
-    most_cards = Player.objects.filter(
-        Q(total_red_cards__gt=0) | Q(total_yellow_cards__gt=0)
-    ).order_by('-total_red_cards', '-total_yellow_cards')[:20]
-    top_clean_sheets = Player.objects.filter(
-        total_clean_sheets__gt=0, position='GK'
-    ).order_by('-total_clean_sheets')[:20]
+    """Public leaderboard with per-league filtering."""
+    from tournaments.models import League
+
+    # Get all leagues for the selector
+    leagues = League.objects.select_related('tournament').filter(
+        tournament__is_active=True
+    ).order_by('tournament__name', 'name')
+
+    league_pk = request.GET.get('league')
+    selected_league = None
+
+    if league_pk:
+        # Per-league stats: query from Goal/Card/Rating records for that league
+        selected_league = get_object_or_404(League, pk=league_pk)
+        league_filter = Q(result__fixture__league=selected_league, result__status='approved')
+
+        # Top scorers: count goals per scorer in this league
+        top_scorers = Player.objects.filter(
+            goals_scored__result__fixture__league=selected_league,
+            goals_scored__result__status='approved'
+        ).annotate(
+            league_goals=Count('goals_scored', filter=league_filter)
+        ).filter(league_goals__gt=0).order_by('-league_goals')[:20]
+
+        # Top assists
+        top_assists = Player.objects.filter(
+            assists__result__fixture__league=selected_league,
+            assists__result__status='approved'
+        ).annotate(
+            league_assists=Count('assists', filter=league_filter)
+        ).filter(league_assists__gt=0).order_by('-league_assists')[:20]
+
+        # Top rated
+        top_rated = Player.objects.filter(
+            match_ratings__result__fixture__league=selected_league,
+            match_ratings__result__status='approved'
+        ).annotate(
+            league_avg_rating=Avg('match_ratings__rating', filter=league_filter)
+        ).filter(league_avg_rating__gt=0).order_by('-league_avg_rating')[:20]
+
+        # Most cards
+        most_cards = Player.objects.filter(
+            cards__result__fixture__league=selected_league,
+            cards__result__status='approved'
+        ).annotate(
+            league_red_cards=Count('cards', filter=league_filter & Q(cards__card_type='red')),
+            league_yellow_cards=Count('cards', filter=league_filter & Q(cards__card_type='yellow')),
+        ).filter(
+            Q(league_red_cards__gt=0) | Q(league_yellow_cards__gt=0)
+        ).order_by('-league_red_cards', '-league_yellow_cards')[:20]
+
+        # Top clean sheets
+        cs_filter = Q(clean_sheet_records__result__fixture__league=selected_league,
+                      clean_sheet_records__result__status='approved')
+        top_clean_sheets = Player.objects.filter(
+            clean_sheet_records__result__fixture__league=selected_league,
+            clean_sheet_records__result__status='approved',
+            position='GK'
+        ).annotate(
+            league_clean_sheets=Count('clean_sheet_records', filter=cs_filter)
+        ).filter(league_clean_sheets__gt=0).order_by('-league_clean_sheets')[:20]
+
+    else:
+        # Global stats: use cached fields on Player
+        top_scorers = Player.objects.select_related('team').filter(total_goals__gt=0).order_by('-total_goals')[:20]
+        top_assists = Player.objects.select_related('team').filter(total_assists__gt=0).order_by('-total_assists')[:20]
+        top_rated = Player.objects.select_related('team').filter(avg_rating__gt=0).order_by('-avg_rating')[:20]
+        most_cards = Player.objects.select_related('team').filter(
+            Q(total_red_cards__gt=0) | Q(total_yellow_cards__gt=0)
+        ).order_by('-total_red_cards', '-total_yellow_cards')[:20]
+        top_clean_sheets = Player.objects.select_related('team').filter(
+            total_clean_sheets__gt=0, position='GK'
+        ).order_by('-total_clean_sheets')[:20]
 
     return render(request, 'matches/leaderboard.html', {
         'top_scorers': top_scorers,
@@ -583,6 +646,8 @@ def leaderboard(request):
         'top_rated': top_rated,
         'most_cards': most_cards,
         'top_clean_sheets': top_clean_sheets,
+        'leagues': leagues,
+        'selected_league': selected_league,
     })
 
 
