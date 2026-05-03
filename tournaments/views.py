@@ -187,15 +187,20 @@ def league_fixtures(request, pk):
 
 def download_matchday_fixtures(request, league_pk, matchday):
     """Download fixtures for a specific matchday."""
-    league = get_object_or_404(League, pk=league_pk)
-    fixtures = league.fixtures.filter(matchday=matchday)
-    
-    return render(request, 'tournaments/pdf_matchday_fixtures.html', {
-        'league': league,
-        'tournament': league.tournament,
-        'matchday': matchday,
-        'fixtures': fixtures
-    })
+    import logging
+    try:
+        league = get_object_or_404(League, pk=league_pk)
+        fixtures = league.fixtures.filter(matchday=matchday).select_related('home_team', 'away_team', 'result')
+        
+        return render(request, 'tournaments/pdf_matchday_fixtures.html', {
+            'league': league,
+            'tournament': league.tournament,
+            'matchday': matchday,
+            'fixtures': fixtures
+        })
+    except Exception as e:
+        logging.error(f"Error in download_matchday_fixtures: {e}")
+        return HttpResponse(f"Server Error: {str(e)}", status=500)
 
 
 # ===== Admin Views =====
