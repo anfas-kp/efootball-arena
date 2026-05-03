@@ -1,90 +1,278 @@
 {% extends "pdf_base.html" %}
 
 {% block title %}Matchday {{ matchday }} Fixtures{% endblock %}
-{% block header_title %}{{ tournament.name }}{% endblock %}
-{% block sub_title %}{{ league.name }} - Matchday {{ matchday }} Fixtures{% endblock %}
 {% block filename %}{{ league.name|slugify }}_md{{ matchday }}_fixtures.pdf{% endblock %}
 
 {% block content %}
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Montserrat:wght@900&display=swap');
+
+    /* Hide base template headers */
+    .pdf-header, .footer { display: none !important; }
+    
+    #pdf-content {
+        background: radial-gradient(circle at center, #273c75, #192a56);
+        padding: 50px 20px;
+        font-family: 'Oswald', sans-serif;
+        color: white;
+        text-align: center;
+        max-width: 900px;
+        margin: auto;
+        position: relative;
+        overflow: hidden;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    
+    /* Subtle pitch markings */
+    #pdf-content::before {
+        content: '';
+        position: absolute;
+        top: 30%;
+        left: -20%;
+        width: 140%;
+        height: 80%;
+        border: 3px solid rgba(255,255,255,0.05);
+        border-radius: 50%;
+        z-index: 0;
+        transform: rotateX(75deg);
+    }
+    
+    .custom-fixture-container {
+        position: relative;
+        z-index: 1;
+    }
+
+    .tournament-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: -5px;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    }
+
+    .matchweek-banner {
+        background-color: white;
+        color: #192a56;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 4rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        padding: 5px 80px;
+        display: inline-block;
+        clip-path: polygon(5% 0, 95% 0, 100% 100%, 0% 100%);
+        margin: 10px 0 20px 0;
+        line-height: 1.2;
+    }
+
+    .date-pill {
+        background-color: #0c1530;
+        color: white;
+        font-size: 1rem;
+        font-weight: 700;
+        padding: 10px 35px;
+        border-radius: 25px;
+        display: inline-block;
+        margin-bottom: 50px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .fixtures-list {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 45px;
+        padding-bottom: 30px;
+    }
+
     .fixture-row {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        width: 85%;
+    }
+
+    .banner-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        width: 100%;
+        height: 45px;
+    }
+
+    .match-banner {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 15px 0;
-        border-bottom: 1px solid #bdc3c7;
+        width: 100%;
+        height: 100%;
+        border-radius: 4px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.4);
     }
-    .team {
-        width: 40%;
-        font-size: 1.1rem;
+
+    /* Vibrant color variants for each row */
+    .fixture-row:nth-child(5n+1) .match-banner { background: #f1c40f; }
+    .fixture-row:nth-child(5n+2) .match-banner { background: #2ecc71; }
+    .fixture-row:nth-child(5n+3) .match-banner { background: #00cec9; }
+    .fixture-row:nth-child(5n+4) .match-banner { background: #e74c3c; }
+    .fixture-row:nth-child(5n+4) .team-name { color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    .fixture-row:nth-child(5n+5) .match-banner { background: #e67e22; }
+
+    .team-name {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #111;
+        width: 50%;
+        padding: 0 60px;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+    }
+    .home-name {
+        justify-content: flex-end;
+    }
+    .away-name {
+        justify-content: flex-start;
+    }
+
+    .vs-shield {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(to bottom, #444, #111);
+        color: white;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1.6rem;
+        font-weight: 900;
+        width: 65px;
+        height: 70px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
+        z-index: 2;
+    }
+    /* Pseudo-element for inner border effect since clip-path cuts borders */
+    .vs-shield::after {
+        content: '';
+        position: absolute;
+        top: 2px; left: 2px; right: 2px; bottom: 2px;
+        background: linear-gradient(to bottom, #222, #000);
+        clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
+        z-index: -1;
+    }
+
+    .team-logo-circle {
+        width: 85px;
+        height: 85px;
+        border-radius: 50%;
+        background-color: white;
+        border: 4px solid #f5f6fa;
+        position: absolute;
+        z-index: 3;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 0 0 3px #dcdde1;
+        overflow: hidden;
+    }
+    .team-logo-circle.home {
+        left: -40px;
+    }
+    .team-logo-circle.away {
+        right: -40px;
+    }
+    .team-logo-circle img {
+        width: 75%;
+        height: 75%;
+        object-fit: contain;
+    }
+    .team-logo-circle .placeholder {
+        font-size: 2.2rem;
         font-weight: bold;
+        color: #2c3e50;
     }
-    .home-team {
-        text-align: right;
+
+    .kickoff-text {
+        color: white;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-top: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
-    .away-team {
-        text-align: left;
+
+    .score-shield {
+        background: linear-gradient(to bottom, #ecf0f1, #bdc3c7);
+        color: #111;
     }
-    .vs-box {
-        width: 20%;
-        text-align: center;
-        font-weight: bold;
-        color: #7f8c8d;
-    }
-    .score-box {
-        width: 20%;
-        text-align: center;
-        font-weight: bold;
-        font-size: 1.2rem;
-        background-color: #ecf0f1;
-        padding: 5px 10px;
-        border-radius: 5px;
-        display: inline-block;
-    }
-    .team-logo {
-        max-height: 30px;
-        max-width: 30px;
-        vertical-align: middle;
-        margin: 0 10px;
+    .score-shield::after {
+        background: linear-gradient(to bottom, #ecf0f1, #bdc3c7);
     }
 </style>
 
-<div class="fixtures-list">
-    {% for f in fixtures %}
-    <div class="fixture-row">
-        <div class="team home-team">
-            {{ f.home_team.name }}
-            {% if f.home_team.logo %}
-                <img src="{{ f.home_team.logo.url }}" class="team-logo" alt="logo">
-            {% endif %}
-        </div>
-        
-        <div class="vs-box">
-            {% if f.status == 'completed' and f.result %}
-                <span class="score-box">{{ f.result.home_score }} - {{ f.result.away_score }}</span>
-            {% else %}
-                VS
-            {% endif %}
-            <div style="font-size: 0.8rem; margin-top: 5px;">
-                {% if f.match_date %}
-                    {{ f.match_date|date:"d M, Y" }}
+<div class="custom-fixture-container">
+    <div class="tournament-name">{{ tournament.name }}</div>
+    
+    <div class="matchweek-banner">
+        MATCHDAY {{ matchday }}
+    </div>
+    
+    <div class="date-pill">
+        FIXTURES & SCHEDULE
+    </div>
+    
+    <div class="fixtures-list">
+        {% for f in fixtures %}
+        <div class="fixture-row">
+            <div class="banner-container">
+                <!-- Home Logo -->
+                <div class="team-logo-circle home">
+                    {% if f.home_team.logo %}
+                        <img src="{{ f.home_team.logo.url }}" alt="logo">
+                    {% else %}
+                        <div class="placeholder">{{ f.home_team.name|first }}</div>
+                    {% endif %}
+                </div>
+                
+                <!-- Colored Banner -->
+                <div class="match-banner">
+                    <div class="team-name home-name">{{ f.home_team.name }}</div>
+                    <div class="team-name away-name">{{ f.away_team.name }}</div>
+                </div>
+                
+                <!-- VS Shield or Score -->
+                {% if f.status == 'completed' and f.result %}
+                    <div class="vs-shield score-shield" style="font-size: 1.3rem;">
+                        {{ f.result.home_score }} - {{ f.result.away_score }}
+                    </div>
                 {% else %}
-                    TBD
+                    <div class="vs-shield">VS</div>
                 {% endif %}
+                
+                <!-- Away Logo -->
+                <div class="team-logo-circle away">
+                    {% if f.away_team.logo %}
+                        <img src="{{ f.away_team.logo.url }}" alt="logo">
+                    {% else %}
+                        <div class="placeholder">{{ f.away_team.name|first }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="kickoff-text">
+                KICK OFF AT {% if f.match_date %}{{ f.match_date|date:"g:i A - d M Y" }}{% else %}TBD{% endif %}
             </div>
         </div>
-        
-        <div class="team away-team">
-            {% if f.away_team.logo %}
-                <img src="{{ f.away_team.logo.url }}" class="team-logo" alt="logo">
-            {% endif %}
-            {{ f.away_team.name }}
+        {% empty %}
+        <div style="text-align: center; padding: 20px; color: white;">
+            No fixtures found for this matchday.
         </div>
+        {% endfor %}
     </div>
-    {% empty %}
-    <div style="text-align: center; padding: 20px;">
-        No fixtures found for this matchday.
-    </div>
-    {% endfor %}
 </div>
 {% endblock %}

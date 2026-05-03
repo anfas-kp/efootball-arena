@@ -14,13 +14,16 @@
                 <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-square me-2 text-danger"></i>ADD CARD</h5>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
+
                     <div class="mb-3">
                         <label class="form-label">Team</label>
-                        <select name="card_team" class="form-select">
+                        <select id="teamSelect" class="form-select" required>
+                            <option value="">-- Select Team --</option>
                             <option value="{{ home_team.pk }}">{{ home_team.name }}</option>
                             <option value="{{ away_team.pk }}">{{ away_team.name }}</option>
                         </select>
                     </div>
+
                     {% for field in form %}
                     <div class="mb-3">
                         <label class="form-label">{{ field.label }}</label>
@@ -37,4 +40,42 @@
         </div>
     </div>
 </div>
+
+{{ players_dict|json_script:"player-data" }}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const playerDict = JSON.parse(document.getElementById('player-data').textContent);
+        const teamSelect = document.getElementById('teamSelect');
+        const playerSelects = document.querySelectorAll('select[name="player"]');
+        
+        // Store original options
+        const originalOptions = {};
+        playerSelects.forEach(select => {
+            originalOptions[select.name] = Array.from(select.options);
+        });
+
+        teamSelect.addEventListener('change', function() {
+            const selectedTeamId = this.value;
+            
+            playerSelects.forEach(select => {
+                const currentVal = select.value;
+                select.innerHTML = '';
+                
+                originalOptions[select.name].forEach(option => {
+                    if (option.value === "" || !selectedTeamId || playerDict[option.value] == selectedTeamId) {
+                        select.appendChild(option.cloneNode(true));
+                    }
+                });
+                
+                if (Array.from(select.options).some(opt => opt.value === currentVal)) {
+                    select.value = currentVal;
+                } else {
+                    select.value = "";
+                }
+            });
+        });
+        
+        teamSelect.dispatchEvent(new Event('change'));
+    });
+</script>
 {% endblock %}

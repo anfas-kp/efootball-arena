@@ -34,10 +34,23 @@ def submit_result(request, fixture_pk):
             result = form.save(commit=False)
             result.fixture = fixture
             result.submitted_by = request.user
+            
+            if request.user.is_admin_user:
+                result.status = 'approved'
+                result.verified_at = timezone.now()
+            
             result.save()
-            fixture.status = 'in_progress'
+            
+            if request.user.is_admin_user:
+                fixture.status = 'completed'
+            else:
+                fixture.status = 'in_progress'
             fixture.save()
-            messages.success(request, '📸 Result submitted! Now add goal details, cards, and top rated players.')
+            
+            if request.user.is_admin_user:
+                messages.success(request, '✅ Result submitted and auto-approved! Now add goal details, cards, and top rated players.')
+            else:
+                messages.success(request, '📸 Result submitted! Now add goal details, cards, and top rated players.')
             return redirect('matches:result_detail', pk=result.pk)
     else:
         form = MatchResultForm()
@@ -104,16 +117,21 @@ def add_goal(request, result_pk):
             from teams.models import Team
             team = get_object_or_404(Team, pk=scoring_team_id)
 
-        form = GoalForm(team=team, data=request.POST, files=request.FILES)
+        form = GoalForm(fixture=fixture, data=request.POST, files=request.FILES)
         if form.is_valid():
             goal = form.save(commit=False)
             goal.result = result
-            goal.team = team
+            # Automatically assign goal to the scorer's team
+            goal.team = goal.scorer.team
             goal.save()
+            if result.status == 'approved':
+                _sync_player_stats(result)
             messages.success(request, f'⚽ Goal by {goal.scorer.name} added!')
             return redirect('matches:result_detail', pk=result_pk)
     else:
-        form = GoalForm(team=team)
+        form = GoalForm(fixture=fixture)
+
+    players_dict = {p.id: p.team_id for p in Player.objects.filter(team__in=[fixture.home_team, fixture.away_team])}
 
     return render(request, 'matches/add_goal.html', {
         'form': form,
@@ -121,6 +139,7 @@ def add_goal(request, result_pk):
         'fixture': fixture,
         'home_team': fixture.home_team,
         'away_team': fixture.away_team,
+        'players_dict': players_dict,
     })
 
 
@@ -144,21 +163,26 @@ def add_card(request, result_pk):
             from teams.models import Team
             team = get_object_or_404(Team, pk=card_team_id)
 
-        form = CardForm(team=team, data=request.POST, files=request.FILES)
+        form = CardForm(fixture=fixture, data=request.POST, files=request.FILES)
         if form.is_valid():
             card = form.save(commit=False)
             card.result = result
-            card.team = team
+            card.team = card.player.team
             card.save()
+            if result.status == 'approved':
+                _sync_player_stats(result)
             emoji = '🟨' if card.card_type == 'yellow' else '🟥'
             messages.success(request, f'{emoji} {card.get_card_type_display()} for {card.player.name} added!')
             return redirect('matches:result_detail', pk=result_pk)
     else:
-        form = CardForm(team=team)
+        form = CardForm(fixture=fixture)
+
+    players_dict = {p.id: p.team_id for p in Player.objects.filter(team__in=[fixture.home_team, fixture.away_team])}
 
     return render(request, 'matches/add_card.html', {
         'form': form, 'result': result, 'fixture': fixture,
         'home_team': fixture.home_team, 'away_team': fixture.away_team,
+        'players_dict': players_dict,
     })
 
 
@@ -188,21 +212,26 @@ def add_rating(request, result_pk):
             from teams.models import Team
             team = get_object_or_404(Team, pk=rating_team_id)
 
-        form = PlayerRatingForm(team=team, data=request.POST, files=request.FILES)
+        form = PlayerRatingForm(fixture=fixture, data=request.POST, files=request.FILES)
         if form.is_valid():
             rating = form.save(commit=False)
             rating.result = result
-            rating.team = team
+            rating.team = rating.player.team
             rating.save()
+            if result.status == 'approved':
+                _sync_player_stats(result)
             messages.success(request, f'⭐ {rating.player.name} rated {rating.rating}/10!')
             return redirect('matches:result_detail', pk=result_pk)
     else:
-        form = PlayerRatingForm(team=team)
+        form = PlayerRatingForm(fixture=fixture)
+
+    players_dict = {p.id: p.team_id for p in Player.objects.filter(team__in=[fixture.home_team, fixture.away_team])}
 
     return render(request, 'matches/add_rating.html', {
         'form': form, 'result': result, 'fixture': fixture,
         'home_team': fixture.home_team, 'away_team': fixture.away_team,
         'existing_count': existing_count,
+        'players_dict': players_dict,
     })
 
 

@@ -26,12 +26,14 @@ class GoalForm(forms.ModelForm):
             'screenshot': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
-    def __init__(self, team=None, *args, **kwargs):
+    def __init__(self, fixture=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if team:
-            players = Player.objects.filter(team=team, is_active=True)
+        if fixture:
+            players = Player.objects.filter(team__in=[fixture.home_team, fixture.away_team], is_active=True).order_by('team__name', 'name')
             self.fields['scorer'].queryset = players
+            self.fields['scorer'].label_from_instance = lambda obj: f"{obj.name} ({obj.team.name})"
             self.fields['assist'].queryset = players
+            self.fields['assist'].label_from_instance = lambda obj: f"{obj.name} ({obj.team.name})"
             self.fields['assist'].required = False
 
 
@@ -46,10 +48,12 @@ class CardForm(forms.ModelForm):
             'screenshot': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
-    def __init__(self, team=None, *args, **kwargs):
+    def __init__(self, fixture=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if team:
-            self.fields['player'].queryset = Player.objects.filter(team=team, is_active=True)
+        if fixture:
+            players = Player.objects.filter(team__in=[fixture.home_team, fixture.away_team], is_active=True).order_by('team__name', 'name')
+            self.fields['player'].queryset = players
+            self.fields['player'].label_from_instance = lambda obj: f"{obj.name} ({obj.team.name})"
 
 
 class PlayerRatingForm(forms.ModelForm):
@@ -62,7 +66,9 @@ class PlayerRatingForm(forms.ModelForm):
             'screenshot': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
-    def __init__(self, team=None, *args, **kwargs):
+    def __init__(self, fixture=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if team:
-            self.fields['player'].queryset = Player.objects.filter(team=team, is_active=True)
+        if fixture:
+            players = Player.objects.filter(team__in=[fixture.home_team, fixture.away_team], is_active=True).order_by('team__name', 'name')
+            self.fields['player'].queryset = players
+            self.fields['player'].label_from_instance = lambda obj: f"{obj.name} ({obj.team.name})"
