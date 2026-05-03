@@ -65,10 +65,9 @@
                         <td class="text-center fw-bold text-accent">{{ s.points }}</td>
                         <td class="text-center d-none d-md-table-cell">
                             <div class="d-flex justify-content-center gap-1">
-                                <!-- Static Form placeholders or logic if available -->
-                                <span class="bg-divider rounded-circle" style="width: 8px; height: 8px;"></span>
-                                <span class="bg-divider rounded-circle" style="width: 8px; height: 8px;"></span>
-                                <span class="bg-divider rounded-circle" style="width: 8px; height: 8px;"></span>
+                                {% for result in s.form %}
+                                    <span class="form-badge form-{{ result|lower }}">{{ result }}</span>
+                                {% endfor %}
                             </div>
                         </td>
                     </tr>
@@ -96,5 +95,21 @@
 <style>
     .table-dark-custom thead th { border-bottom: 1px solid var(--border-color) !important; padding: 1.25rem 1rem !important; }
     .table-dark-custom tbody td { padding: 1rem !important; border-bottom: 1px solid rgba(255,255,255,0.03) !important; }
+
+    .form-badge {
+        width: 22px;
+        height: 22px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 900;
+        margin-right: 3px;
+        font-family: 'Orbitron', sans-serif;
+    }
+    .form-w { background: #00c864; color: #fff; box-shadow: 0 0 8px rgba(0,200,100,0.3); }
+    .form-d { background: #6c757d; color: #fff; }
+    .form-l { background: #dc3545; color: #fff; box-shadow: 0 0 8px rgba(220,53,69,0.3); }
 </style>
 {% endblock %}

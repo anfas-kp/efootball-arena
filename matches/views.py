@@ -523,6 +523,24 @@ def result_detail(request, pk):
     ratings = result.ratings.all()
     clean_sheets = result.clean_sheets.select_related('player', 'team').all()
 
+    # Head-to-Head (H2H) History
+    h2h_matches = MatchResult.objects.filter(
+        status='approved',
+        fixture__home_team__in=[fixture.home_team, fixture.away_team],
+        fixture__away_team__in=[fixture.home_team, fixture.away_team]
+    ).exclude(pk=result.pk).select_related('fixture', 'fixture__home_team', 'fixture__away_team').order_by('-fixture__matchday')
+    
+    h2h_stats = {'home_wins': 0, 'away_wins': 0, 'draws': 0, 'matches': h2h_matches[:5]}
+    for h in h2h_matches:
+        if h.home_score > h.away_score:
+            if h.fixture.home_team == fixture.home_team: h2h_stats['home_wins'] += 1
+            else: h2h_stats['away_wins'] += 1
+        elif h.home_score < h.away_score:
+            if h.fixture.away_team == fixture.home_team: h2h_stats['home_wins'] += 1
+            else: h2h_stats['away_wins'] += 1
+        else:
+            h2h_stats['draws'] += 1
+
     # Determine permissions
     is_admin = request.user.is_authenticated and request.user.is_admin_user
     user_team = getattr(request.user, 'team', None) if request.user.is_authenticated else None
@@ -548,6 +566,7 @@ def result_detail(request, pk):
         'cards': cards,
         'ratings': ratings,
         'clean_sheets': clean_sheets,
+        'h2h_stats': h2h_stats,
         'can_add_events': can_add_events,
         'can_edit_result': can_edit_result,
         'can_delete_events': can_delete_events,

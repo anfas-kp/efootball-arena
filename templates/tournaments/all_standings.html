@@ -51,6 +51,7 @@
                                 <th class="text-center">L</th>
                                 <th class="text-center d-none d-md-table-cell">GD</th>
                                 <th class="text-center">PTS</th>
+                                <th class="text-center">FORM</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -81,6 +82,13 @@
                                     </span>
                                 </td>
                                 <td class="text-center fw-bold text-accent">{{ s.points }}</td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center">
+                                        {% for result in s.form %}
+                                            <span class="form-badge form-{{ result|lower }}">{{ result }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -112,6 +120,22 @@
     #leagueSelector:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0, 255, 135, 0.15); }
     .league-section { transition: opacity 0.3s ease, max-height 0.4s ease; }
     .league-section.hidden { display: none; }
+
+    .form-badge {
+        width: 22px;
+        height: 22px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 900;
+        margin-right: 3px;
+        font-family: 'Orbitron', sans-serif;
+    }
+    .form-w { background: #00c864; color: #fff; box-shadow: 0 0 8px rgba(0,200,100,0.3); }
+    .form-d { background: #6c757d; color: #fff; }
+    .form-l { background: #dc3545; color: #fff; box-shadow: 0 0 8px rgba(220,53,69,0.3); }
 </style>
 
 <script>

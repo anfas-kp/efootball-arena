@@ -52,7 +52,20 @@
     <div class="row g-4">
         <!-- Main Content -->
         <div class="col-lg-8">
-            <!-- Active Tournaments Visualization (New) -->
+            <!-- Performance Trend Chart -->
+            {% if performance_data.labels %}
+            <div class="glass-card mb-4 border-accent border-opacity-20">
+                <h5 class="section-title mb-4" style="font-size: 1.1rem;"><i class="fas fa-chart-line me-2 text-accent"></i>PERFORMANCE TREND</h5>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+                <div class="mt-3 text-center small text-muted">
+                    <span class="text-accent-2 fw-bold">Points History</span> — Primary League Performance
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Active Tournaments Visualization -->
             {% if active_tournaments %}
             <div class="glass-card mb-4 border-accent border-opacity-20">
                 <h5 class="section-title mb-4" style="font-size: 1.1rem;"><i class="fas fa-trophy me-2 text-accent"></i>ACTIVE TOURNAMENTS</h5>
@@ -218,11 +231,17 @@
                 <h3 class="fw-bold mb-1">{{ p.name }}</h3>
                 <p class="text-accent small font-orbitron mb-4">#{{ p.jersey_number|default:"0" }} · {{ p.get_position_display }}</p>
                 
-                <div class="row g-2">
+                <div class="row g-2 mb-4">
                     <div class="col-6"><div class="stat-box p-2"><span class="number" style="font-size: 1.1rem;">{{ p.matches_played }}</span><span class="label" style="font-size: 0.6rem;">Matches</span></div></div>
                     <div class="col-6"><div class="stat-box p-2"><span class="number" style="font-size: 1.1rem;">{{ p.avg_rating }}</span><span class="label" style="font-size: 0.6rem;">Rating</span></div></div>
                     <div class="col-6"><div class="stat-box p-2"><span class="number text-success" style="font-size: 1.1rem;">{{ p.total_goals }}</span><span class="label" style="font-size: 0.6rem;">Goals</span></div></div>
                     <div class="col-6"><div class="stat-box p-2"><span class="number text-info" style="font-size: 1.1rem;">{{ p.total_assists }}</span><span class="label" style="font-size: 0.6rem;">Assists</span></div></div>
+                </div>
+
+                <!-- Player Form Chart -->
+                <div class="mb-2 text-start small fw-bold text-muted text-uppercase letter-spacing-1">Match Ratings History</div>
+                <div style="height: 120px; position: relative;" class="mb-4">
+                    <canvas id="playerChart{{ p.id }}" class="player-form-chart" data-ratings="{{ p.ratings_history|safe }}"></canvas>
                 </div>
                 
                 <button type="button" class="btn btn-outline-glow w-100 mt-4" data-bs-dismiss="modal">Close Profile</button>
@@ -237,4 +256,96 @@
     .hover-danger:hover { color: var(--accent-3) !important; }
     .last-child-no-border:last-child { border-bottom: none !important; }
 </style>
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Performance Chart Initialization
+        const perfCtx = document.getElementById('performanceChart');
+        if (perfCtx) {
+            const labels = {{ performance_data.labels|safe }};
+            const data = {{ performance_data.data|safe }};
+            
+            new Chart(perfCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Cumulative Points',
+                        data: data,
+                        borderColor: '#0ffcbe',
+                        backgroundColor: 'rgba(15, 252, 190, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#0ffcbe',
+                        pointBorderColor: '#fff',
+                        pointHoverRadius: 6,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Inter' } },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        x: {
+                            ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Inter' } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Player Profile Charts (Initialized on Modal Show)
+        const playerModals = document.querySelectorAll('.modal');
+        playerModals.forEach(modal => {
+            modal.addEventListener('shown.bs.modal', function () {
+                const canvas = modal.querySelector('.player-form-chart');
+                if (canvas && !canvas.chart) {
+                    const ratings = JSON.parse(canvas.dataset.ratings);
+                    if (ratings.length === 0) return;
+
+                    const labels = ratings.map((_, i) => `G${i+1}`);
+                    canvas.chart = new Chart(canvas, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Rating',
+                                data: ratings,
+                                borderColor: '#00b4ff',
+                                backgroundColor: 'rgba(0, 180, 255, 0.1)',
+                                borderWidth: 2,
+                                pointRadius: 3,
+                                tension: 0.3,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: {
+                                    min: 0, max: 10,
+                                    ticks: { color: 'rgba(255,255,255,0.3)', stepSize: 2 },
+                                    grid: { color: 'rgba(255,255,255,0.05)' }
+                                },
+                                x: { display: false }
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

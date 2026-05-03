@@ -81,6 +81,31 @@ def my_team(request):
             'completed_count': league.fixtures.filter(status='completed').count(),
         })
 
+    # Performance Trends (Cumulative Points for the first active league)
+    performance_data = {'labels': [], 'data': []}
+    if active_tournaments:
+        first_active = active_tournaments[0]['league']
+        perf_fixtures = first_active.fixtures.filter(
+            Q(home_team=team) | Q(away_team=team),
+            status='completed'
+        ).select_related('result').order_by('matchday')
+        
+        c_points = 0
+        t_pts = first_active.tournament
+        for f in perf_fixtures:
+            res = f.result
+            if f.home_team == team:
+                if res.home_score > res.away_score: c_points += t_pts.points_win
+                elif res.home_score == res.away_score: c_points += t_pts.points_draw
+                else: c_points += t_pts.points_loss
+            else:
+                if res.away_score > res.home_score: c_points += t_pts.points_win
+                elif res.home_score == res.away_score: c_points += t_pts.points_draw
+                else: c_points += t_pts.points_loss
+            
+            performance_data['labels'].append(f"MD {f.matchday}")
+            performance_data['data'].append(c_points)
+
     # Upcoming matches for this team
     from tournaments.models import Fixture
     upcoming_matches = Fixture.objects.filter(
@@ -89,6 +114,12 @@ def my_team(request):
         'home_team', 'away_team', 'league', 'league__tournament'
     ).order_by('matchday')[:5]
 
+    # Enhanced Player data with ratings history for charts
+    for p in players:
+        p.ratings_history = list(p.match_ratings.filter(
+            result__status='approved'
+        ).order_by('result__fixture__matchday').values_list('rating', flat=True))
+
     return render(request, 'teams/my_team.html', {
         'team': team,
         'players': players,
@@ -96,6 +127,7 @@ def my_team(request):
         'applications': applications,
         'active_tournaments': active_tournaments,
         'upcoming_matches': upcoming_matches,
+        'performance_data': performance_data,
     })
 
 
