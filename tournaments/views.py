@@ -122,6 +122,27 @@ def apply_tournament(request, pk):
     return redirect('tournaments:browse')
 
 
+def all_standings(request):
+    """View standings for all leagues across all active tournaments."""
+    leagues = League.objects.select_related('tournament').filter(
+        tournament__is_active=True
+    ).order_by('tournament__name', 'name')
+
+    league_data = []
+    for league in leagues:
+        standings = get_league_standings(league)
+        if standings:
+            league_data.append({
+                'league': league,
+                'tournament': league.tournament,
+                'standings': standings,
+            })
+
+    return render(request, 'tournaments/all_standings.html', {
+        'league_data': league_data,
+    })
+
+
 def league_standings(request, pk):
     """View league standings."""
     league = get_object_or_404(League, pk=pk)

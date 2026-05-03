@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}All Standings - eFootball Arena{% endblock %}
+{% block content %}
+
+<div class="container" style="margin-top: 100px; padding-bottom: 50px;">
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h1 class="display-5 fw-bold mb-2 font-orbitron text-accent">LEAGUE <span class="text-white">STANDINGS</span></h1>
+        <p class="text-muted mb-0 small text-uppercase fw-bold letter-spacing-1">Select a league to view standings</p>
+    </div>
+
+    {% if league_data %}
+        <!-- League Selector -->
+        <div class="d-flex justify-content-center mb-4">
+            <div class="glass-card d-inline-flex align-items-center gap-3 px-4 py-3" style="border: 1px solid var(--border-color);">
+                <i class="fas fa-trophy text-accent"></i>
+                <select id="leagueSelector" class="form-select form-select-sm" style="background: var(--bg-card); color: white; border: 1px solid var(--border-color); min-width: 260px;">
+                    <option value="all">All Leagues</option>
+                    {% for data in league_data %}
+                        <option value="league-{{ data.league.pk }}">{{ data.tournament.name }} — {{ data.league.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        {% for data in league_data %}
+        <div class="mb-5 league-section" data-league="league-{{ data.league.pk }}">
+            <!-- League Header -->
+            <div class="d-flex justify-content-between align-items-end mb-3">
+                <div>
+                    <div class="badge-status badge-ongoing mb-1 d-inline-block">{{ data.tournament.name }}</div>
+                    <h3 class="fw-bold mb-0 text-white">{{ data.league.name }}</h3>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'tournaments:league_standings' data.league.pk %}" class="btn-outline-glow btn-sm"><i class="fas fa-expand me-1"></i>Full View</a>
+                    <a href="{% url 'tournaments:league_fixtures' data.league.pk %}" class="btn-glow btn-sm"><i class="fas fa-calendar-alt me-1"></i>Fixtures</a>
+                </div>
+            </div>
+
+            <!-- Standings Table -->
+            <div class="glass-card p-0 overflow-hidden border-accent border-opacity-10">
+                <div class="table-responsive">
+                    <table class="table table-dark-custom mb-0">
+                        <thead>
+                            <tr class="bg-secondary">
+                                <th style="width: 60px;">POS</th>
+                                <th>TEAM NAME</th>
+                                <th class="text-center">P</th>
+                                <th class="text-center">W</th>
+                                <th class="text-center">D</th>
+                                <th class="text-center">L</th>
+                                <th class="text-center d-none d-md-table-cell">GD</th>
+                                <th class="text-center">PTS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in data.standings %}
+                            <tr class="{% if forloop.counter <= 4 %}border-start border-accent-2 border-4{% endif %} bg-card" style="border-bottom: 1px solid var(--border-color);">
+                                <td class="text-center">
+                                    <span class="position-badge {% if forloop.counter == 1 %}pos-1{% elif forloop.counter == 2 %}pos-2{% elif forloop.counter == 3 %}pos-3{% else %}pos-default{% endif %}">
+                                        {{ forloop.counter }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        {% if s.team.logo %}
+                                            <img src="{{ s.team.logo.url }}" class="logo-sm">
+                                        {% else %}
+                                            <div class="logo-sm logo-placeholder" style="font-size: 0.7rem;">{{ s.team.name|first }}</div>
+                                        {% endif %}
+                                        <span class="fw-bold text-white">{{ s.team.name }}</span>
+                                    </div>
+                                </td>
+                                <td class="text-center fw-bold text-white">{{ s.played }}</td>
+                                <td class="text-center">{{ s.won }}</td>
+                                <td class="text-center">{{ s.drawn }}</td>
+                                <td class="text-center">{{ s.lost }}</td>
+                                <td class="text-center d-none d-md-table-cell">
+                                    <span class="{% if s.gd > 0 %}text-success{% elif s.gd < 0 %}text-danger{% else %}text-muted{% endif %} fw-bold">
+                                        {{ s.gd|default:0 }}
+                                    </span>
+                                </td>
+                                <td class="text-center fw-bold text-accent">{{ s.points }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Legend -->
+        <div class="mt-4 p-3 glass-card bg-secondary bg-opacity-20 league-section" data-league="legend">
+            <div class="d-flex gap-4 small flex-wrap">
+                <div class="d-flex align-items-center gap-2"><span class="bg-accent" style="width: 12px; height: 12px; border-radius: 2px;"></span> <span class="text-muted">Qualification Zone</span></div>
+                <div class="text-muted"><span class="fw-bold text-white">P</span>: Played · <span class="fw-bold text-white">W</span>: Won · <span class="fw-bold text-white">D</span>: Drawn · <span class="fw-bold text-white">L</span>: Lost · <span class="fw-bold text-white">PTS</span>: Points</div>
+            </div>
+        </div>
+
+    {% else %}
+        <div class="glass-card text-center py-5">
+            <i class="fas fa-table fa-3x text-muted opacity-20 mb-3"></i>
+            <p class="text-secondary mb-0">No league standings available yet.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .table-dark-custom thead th { border-bottom: 1px solid var(--border-color) !important; padding: 1.25rem 1rem !important; }
+    .table-dark-custom tbody td { padding: 1rem !important; border-bottom: 1px solid rgba(255,255,255,0.03) !important; }
+    #leagueSelector:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0, 255, 135, 0.15); }
+    .league-section { transition: opacity 0.3s ease, max-height 0.4s ease; }
+    .league-section.hidden { display: none; }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selector = document.getElementById('leagueSelector');
+        const sections = document.querySelectorAll('.league-section');
+
+        selector.addEventListener('change', function() {
+            const val = this.value;
+
+            sections.forEach(function(section) {
+                if (val === 'all') {
+                    section.classList.remove('hidden');
+                } else if (section.dataset.league === val || section.dataset.league === 'legend') {
+                    section.classList.remove('hidden');
+                } else {
+                    section.classList.add('hidden');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
