@@ -90,11 +90,13 @@
     </div>
 
     <script>
+        const exportFilename = '{% block filename %}export.pdf{% endblock %}';
+
         function generatePDF() {
             const element = document.getElementById('pdf-content');
             const opt = {
                 margin:       [0.5, 0.5, 0.5, 0.5],
-                filename:     '{% block filename %}export.pdf{% endblock %}',
+                filename:     exportFilename,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2 },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
@@ -106,8 +108,7 @@
             const element = document.getElementById('pdf-content');
             html2canvas(element, { scale: 2, useCORS: true }).then(canvas => {
                 const link = document.createElement('a');
-                let rawFilename = '{% block filename %}export.pdf{% endblock %}';
-                let imgFilename = rawFilename.replace('.pdf', '.png');
+                let imgFilename = exportFilename.replace('.pdf', '.png');
                 link.download = imgFilename;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
