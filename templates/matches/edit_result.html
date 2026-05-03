@@ -35,7 +35,7 @@
             {% if is_admin %}
             <div class="alert alert-info border-0 glass-card mb-4 py-2 px-3 d-flex align-items-center" style="background: rgba(0,210,255,0.08); border-left: 3px solid var(--accent-color) !important;">
                 <i class="fas fa-shield-alt text-accent me-2"></i>
-                <small class="text-muted">Admin mode — Screenshot is <strong>optional</strong>. Changes are applied immediately.</small>
+                <small class="text-muted">Admin mode — You can manually <strong>override the score</strong> and update the screenshot.</small>
             </div>
             {% endif %}
 
@@ -44,6 +44,15 @@
                 <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-edit me-2 text-accent"></i>EDIT MATCH RESULT</h5>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
+
+                    {% if is_admin %}
+                    <!-- Admin: manual score override -->
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-exclamation-triangle text-warning" style="font-size: 0.75rem;"></i>
+                            <small class="text-warning">Manual score override — this will NOT auto-update from goals</small>
+                        </div>
+                    </div>
                     <div class="row mb-4 justify-content-center align-items-end">
                         <div class="col-5 text-center">
                             <label class="form-label small">{{ fixture.home_team.name }}</label>
@@ -57,6 +66,17 @@
                             <input type="number" name="away_score" class="form-control text-center fw-bold" style="font-size: 2rem; font-family: 'Orbitron', sans-serif;" value="{{ result.away_score }}" min="0" required>
                         </div>
                     </div>
+                    {% else %}
+                    <!-- Team: score info (read-only, auto-calculated) -->
+                    <div class="glass-card text-center mb-4 py-3" style="background: rgba(0,210,255,0.04);">
+                        <div class="text-muted small mb-1">Score is auto-calculated from goals</div>
+                        <div style="font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 900;">
+                            {{ result.home_score }} <span class="text-muted mx-1">-</span> {{ result.away_score }}
+                        </div>
+                        <div class="text-muted small mt-1">Add or remove goals to change the score</div>
+                    </div>
+                    {% endif %}
+
                     <div class="mb-4">
                         <label class="form-label">
                             <i class="fas fa-camera me-1 text-accent"></i> Update Screenshot

@@ -1,15 +1,15 @@
 from django import forms
-from .models import MatchResult, Goal, Card, PlayerRating
+from .models import MatchResult, Goal, Card, PlayerRating, CleanSheet
 from teams.models import Player
 
 
 class MatchResultForm(forms.ModelForm):
+    """For initial result submission. Teams only upload screenshot;
+    score is auto-calculated from goals. Admin can optionally set score manually."""
     class Meta:
         model = MatchResult
-        fields = ['home_score', 'away_score', 'screenshot']
+        fields = ['screenshot']
         widgets = {
-            'home_score': forms.NumberInput(attrs={'class': 'form-control score-input', 'min': 0}),
-            'away_score': forms.NumberInput(attrs={'class': 'form-control score-input', 'min': 0}),
             'screenshot': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
@@ -22,6 +22,23 @@ class MatchResultForm(forms.ModelForm):
         else:
             self.fields['screenshot'].required = True
             self.fields['screenshot'].help_text = 'Upload a clear screenshot showing the final score (required)'
+
+
+class AdminEditScoreForm(forms.ModelForm):
+    """Admin-only form to manually override the score (for corrections)."""
+    class Meta:
+        model = MatchResult
+        fields = ['home_score', 'away_score', 'screenshot']
+        widgets = {
+            'home_score': forms.NumberInput(attrs={'class': 'form-control score-input', 'min': 0}),
+            'away_score': forms.NumberInput(attrs={'class': 'form-control score-input', 'min': 0}),
+            'screenshot': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['screenshot'].required = False
+        self.fields['screenshot'].help_text = 'Optional — update if needed'
 
 
 class GoalForm(forms.ModelForm):
@@ -95,3 +112,26 @@ class PlayerRatingForm(forms.ModelForm):
         else:
             self.fields['screenshot'].required = True
             self.fields['screenshot'].help_text = 'Upload screenshot of in-game rating (required)'
+
+
+class CleanSheetForm(forms.ModelForm):
+    """Form to assign a clean sheet to a specific GK."""
+    class Meta:
+        model = CleanSheet
+        fields = ['player']
+        widgets = {
+            'player': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, fixture=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if fixture:
+            # Only show GK players from both teams
+            gks = Player.objects.filter(
+                team__in=[fixture.home_team, fixture.away_team],
+                position='GK',
+                is_active=True
+            ).order_by('team__name', 'name')
+            self.fields['player'].queryset = gks
+            self.fields['player'].label_from_instance = lambda obj: f"{obj.name} ({obj.team.name})"
+            self.fields['player'].label = 'Goalkeeper'

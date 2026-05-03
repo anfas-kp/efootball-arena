@@ -24,6 +24,7 @@
                     <span class="text-white">{{ result.away_score }}</span>
                 </div>
                 <div class="text-accent small fw-bold text-uppercase mt-1">Full Time</div>
+                <div class="text-muted mt-1" style="font-size: 0.65rem;">Score auto-calculated from goals</div>
             </div>
             <div class="text-center" style="width: 160px;">
                 {% if result.fixture.away_team.logo %}
@@ -48,9 +49,12 @@
         <a href="{% url 'matches:add_goal' result.pk %}" class="btn-glow flex-grow-1 justify-content-center py-2" style="font-size: 0.85rem;"><i class="fas fa-futbol me-1"></i> Add Goal</a>
         <a href="{% url 'matches:add_card' result.pk %}" class="btn-outline-glow flex-grow-1 justify-content-center py-2" style="font-size: 0.85rem;"><i class="fas fa-square me-1"></i> Add Card</a>
         <a href="{% url 'matches:add_rating' result.pk %}" class="btn-outline-glow flex-grow-1 justify-content-center py-2" style="font-size: 0.85rem;"><i class="fas fa-star me-1"></i> Add Rating</a>
+        {% if can_add_clean_sheet %}
+        <a href="{% url 'matches:add_clean_sheet' result.pk %}" class="btn-outline-glow flex-grow-1 justify-content-center py-2" style="font-size: 0.85rem; border-color: rgba(0,200,100,0.4); color: #00c864;"><i class="fas fa-shield-alt me-1"></i> Clean Sheet</a>
+        {% endif %}
         {% endif %}
         {% if can_edit_result %}
-        <a href="{% url 'matches:edit_result' result.pk %}" class="btn-outline-glow flex-grow-1 justify-content-center py-2" style="font-size: 0.85rem;"><i class="fas fa-edit me-1"></i> Edit Score</a>
+        <a href="{% url 'matches:edit_result' result.pk %}" class="btn-outline-glow flex-grow-1 justify-content-center py-2" style="font-size: 0.85rem;"><i class="fas fa-edit me-1"></i> Override Score</a>
         {% endif %}
     </div>
     {% endif %}
@@ -58,7 +62,7 @@
     {% if is_admin and result.status == 'approved' %}
     <div class="alert alert-info border-0 glass-card mb-4 py-2 px-3 d-flex align-items-center" style="background: rgba(0,210,255,0.08); border-left: 3px solid var(--accent-color) !important;">
         <i class="fas fa-shield-alt text-accent me-2"></i>
-        <small class="text-muted">Admin mode — You can edit scores, add/remove goals, cards, and ratings on this approved result.</small>
+        <small class="text-muted">Admin mode — Score auto-updates from goals. Use "Override Score" to set manually. You can add/remove goals, cards, and ratings.</small>
     </div>
     {% endif %}
 
@@ -115,7 +119,32 @@
             </div>
             {% endif %}
 
-            {% if not goals and not cards %}
+            <!-- Clean Sheets -->
+            {% if clean_sheets %}
+            <div class="glass-card mb-4" style="border: 1px solid rgba(0, 200, 100, 0.15);">
+                <h5 class="section-title mb-3" style="font-size: 1rem;"><i class="fas fa-shield-alt me-2" style="color: #00c864;"></i>CLEAN SHEETS</h5>
+                {% for cs in clean_sheets %}
+                <div class="d-flex align-items-center gap-3 py-3 {% if not forloop.last %}border-bottom border-white border-opacity-5{% endif %}">
+                    <span class="fw-bold" style="font-size: 1.2rem;">🧤</span>
+                    <div class="flex-grow-1">
+                        <span class="fw-bold text-white">{{ cs.player.name }}</span>
+                        <span class="badge ms-2" style="background: rgba(0,200,100,0.15); color: #00c864; font-size: 0.65rem;">GK</span>
+                    </div>
+                    <span class="text-muted small">{{ cs.team.name }}</span>
+                    {% if can_delete_events %}
+                    <form method="post" action="{% url 'matches:delete_clean_sheet' cs.pk %}" class="d-inline ms-2" onsubmit="return confirm('Remove clean sheet for {{ cs.player.name }}?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm p-0 border-0" style="background: none; color: var(--danger-color, #ff4444); font-size: 0.75rem;" title="Delete clean sheet">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if not goals and not cards and not clean_sheets %}
             <div class="glass-card text-center py-4 mb-4">
                 <p class="text-muted mb-0 small">No match events recorded yet.</p>
             </div>

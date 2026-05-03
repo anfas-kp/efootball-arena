@@ -114,3 +114,23 @@ class PlayerRating(models.Model):
 
     def __str__(self):
         return f"⭐ {self.player.name} - {self.rating}/10"
+
+
+class CleanSheet(models.Model):
+    """Tracks which GK earned a clean sheet in a match.
+    
+    Only valid when the GK's team conceded 0 goals.
+    One clean sheet entry per team per match.
+    """
+
+    result = models.ForeignKey(MatchResult, on_delete=models.CASCADE, related_name='clean_sheets')
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='clean_sheet_records')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ['result', 'team']  # Max 1 clean sheet per team per match
+        ordering = ['team__name']
+
+    def __str__(self):
+        return f"🧤 {self.player.name} — Clean Sheet"
+

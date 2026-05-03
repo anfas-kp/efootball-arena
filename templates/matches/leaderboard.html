@@ -25,6 +25,11 @@
                         <span class="position-badge {% if forloop.counter == 1 %}pos-1{% elif forloop.counter == 2 %}pos-2{% elif forloop.counter == 3 %}pos-3{% else %}pos-default{% endif %}">
                             {{ forloop.counter }}
                         </span>
+                        {% if p.photo %}
+                        <img src="{{ p.photo.url }}" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover; border: 2px solid var(--border-color);">
+                        {% else %}
+                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center fw-bold text-accent" style="width: 36px; height: 36px; font-size: 0.75rem;">{{ p.name|first }}</div>
+                        {% endif %}
                         <div>
                             <div class="fw-bold text-white small">{{ p.name }}</div>
                             <div class="x-small text-muted text-uppercase">{{ p.team.name }}</div>
@@ -51,6 +56,11 @@
                         <span class="position-badge {% if forloop.counter == 1 %}pos-1{% elif forloop.counter == 2 %}pos-2{% elif forloop.counter == 3 %}pos-3{% else %}pos-default{% endif %}">
                             {{ forloop.counter }}
                         </span>
+                        {% if p.photo %}
+                        <img src="{{ p.photo.url }}" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover; border: 2px solid var(--border-color);">
+                        {% else %}
+                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center fw-bold text-info" style="width: 36px; height: 36px; font-size: 0.75rem;">{{ p.name|first }}</div>
+                        {% endif %}
                         <div>
                             <div class="fw-bold text-white small">{{ p.name }}</div>
                             <div class="x-small text-muted text-uppercase">{{ p.team.name }}</div>
@@ -77,6 +87,11 @@
                         <span class="position-badge {% if forloop.counter == 1 %}pos-1{% elif forloop.counter == 2 %}pos-2{% elif forloop.counter == 3 %}pos-3{% else %}pos-default{% endif %}">
                             {{ forloop.counter }}
                         </span>
+                        {% if p.photo %}
+                        <img src="{{ p.photo.url }}" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover; border: 2px solid var(--border-color);">
+                        {% else %}
+                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center fw-bold text-warning" style="width: 36px; height: 36px; font-size: 0.75rem;">{{ p.name|first }}</div>
+                        {% endif %}
                         <div>
                             <div class="fw-bold text-white small">{{ p.name }}</div>
                             <div class="x-small text-muted text-uppercase">{{ p.team.name }}</div>
@@ -93,6 +108,37 @@
             </div>
         </div>
 
+        <!-- Clean Sheets (GK Only) -->
+        <div class="col-lg-6">
+            <div class="glass-card h-100" style="border: 1px solid rgba(0, 200, 100, 0.1);">
+                <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-shield-alt me-2" style="color: #00c864;"></i>GOLDEN GLOVE</h5>
+                {% for p in top_clean_sheets %}
+                <div class="d-flex justify-content-between align-items-center py-3 {% if not forloop.last %}border-bottom border-white border-opacity-5{% endif %}">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="position-badge {% if forloop.counter == 1 %}pos-1{% elif forloop.counter == 2 %}pos-2{% elif forloop.counter == 3 %}pos-3{% else %}pos-default{% endif %}">
+                            {{ forloop.counter }}
+                        </span>
+                        {% if p.photo %}
+                        <img src="{{ p.photo.url }}" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover; border: 2px solid var(--border-color);">
+                        {% else %}
+                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px; font-size: 0.75rem; color: #00c864;">{{ p.name|first }}</div>
+                        {% endif %}
+                        <div>
+                            <div class="fw-bold text-white small">{{ p.name }}</div>
+                            <div class="x-small text-muted text-uppercase">{{ p.team.name }} · <span style="color: #00c864;">GK</span></div>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span class="h5 fw-bold mb-0 font-orbitron" style="color: #00c864;">{{ p.total_clean_sheets }}</span>
+                        <div class="x-small text-muted text-uppercase">Clean Sheets</div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted small mb-0">No clean sheets recorded yet. The GKs are waiting for their shutouts.</p>
+                {% endfor %}
+            </div>
+        </div>
+
         <!-- Discipline -->
         <div class="col-lg-6">
             <div class="glass-card border-danger border-opacity-10 h-100">
@@ -103,6 +149,11 @@
                         <span class="position-badge pos-default">
                             {{ forloop.counter }}
                         </span>
+                        {% if p.photo %}
+                        <img src="{{ p.photo.url }}" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover; border: 2px solid var(--border-color);">
+                        {% else %}
+                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center fw-bold text-danger" style="width: 36px; height: 36px; font-size: 0.75rem;">{{ p.name|first }}</div>
+                        {% endif %}
                         <div>
                             <div class="fw-bold text-white small">{{ p.name }}</div>
                             <div class="x-small text-muted text-uppercase">{{ p.team.name }}</div>

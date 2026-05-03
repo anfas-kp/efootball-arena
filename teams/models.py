@@ -83,6 +83,7 @@ class Player(models.Model):
     total_assists = models.PositiveIntegerField(default=0)
     total_red_cards = models.PositiveIntegerField(default=0)
     total_yellow_cards = models.PositiveIntegerField(default=0)
+    total_clean_sheets = models.PositiveIntegerField(default=0)
     matches_played = models.PositiveIntegerField(default=0)
     avg_rating = models.DecimalField(max_digits=3, decimal_places=1, default=0.0)
     created_at = models.DateTimeField(auto_now_add=True)

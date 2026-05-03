@@ -11,10 +11,12 @@ urlpatterns = [
     path('result/<int:result_pk>/add-goal/', views.add_goal, name='add_goal'),
     path('result/<int:result_pk>/add-card/', views.add_card, name='add_card'),
     path('result/<int:result_pk>/add-rating/', views.add_rating, name='add_rating'),
+    path('result/<int:result_pk>/add-clean-sheet/', views.add_clean_sheet, name='add_clean_sheet'),
     # Admin delete events
     path('goal/<int:goal_pk>/delete/', views.delete_goal, name='delete_goal'),
     path('card/<int:card_pk>/delete/', views.delete_card, name='delete_card'),
     path('rating/<int:rating_pk>/delete/', views.delete_rating, name='delete_rating'),
+    path('clean-sheet/<int:cs_pk>/delete/', views.delete_clean_sheet, name='delete_clean_sheet'),
     path('leaderboard/', views.leaderboard, name='leaderboard'),
     # Admin
     path('admin/verify/', views.admin_verify_results, name='admin_verify'),
