@@ -79,6 +79,7 @@ def my_team(request):
             'league': league,
             'fixtures_count': league.fixtures.count(),
             'completed_count': league.fixtures.filter(status='completed').count(),
+            'progress_percent': int((league.fixtures.filter(status='completed').count() / league.fixtures.count() * 100)) if league.fixtures.count() > 0 else 0,
         })
 
     # Performance Trends (Cumulative Points for the first active league)
