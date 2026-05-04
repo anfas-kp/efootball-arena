@@ -70,12 +70,11 @@ def my_team(request):
         'tournament', 'assigned_league'
     ).all()
 
-    # Active tournaments (accepted applications with league)
+    # Active tournaments (Directly from leagues the team is part of)
     active_tournaments = []
-    for app in applications.filter(status='accepted', assigned_league__isnull=False):
-        league = app.assigned_league
+    for league in team.leagues.select_related('tournament').all():
         active_tournaments.append({
-            'tournament': app.tournament,
+            'tournament': league.tournament,
             'league': league,
             'fixtures_count': league.fixtures.count(),
             'completed_count': league.fixtures.filter(status='completed').count(),
@@ -107,8 +106,18 @@ def my_team(request):
             performance_data['labels'].append(f"MD {f.matchday}")
             performance_data['data'].append(c_points)
 
-    # Upcoming matches for this team
+    # Matches logic
     from tournaments.models import Fixture
+    
+    # Recent results (last 5)
+    recent_results = Fixture.objects.filter(
+        Q(home_team=team) | Q(away_team=team),
+        status='completed'
+    ).select_related(
+        'home_team', 'away_team', 'result', 'league', 'league__tournament'
+    ).order_by('-matchday', '-created_at')[:5]
+
+    # Upcoming matches (next 5)
     upcoming_matches = Fixture.objects.filter(
         Q(home_team=team) | Q(away_team=team)
     ).exclude(status='completed').select_related(
@@ -128,6 +137,7 @@ def my_team(request):
         'applications': applications,
         'active_tournaments': active_tournaments,
         'upcoming_matches': upcoming_matches,
+        'recent_results': recent_results,
         'performance_data': performance_data,
     })
 

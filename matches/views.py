@@ -82,9 +82,12 @@ def submit_result(request, fixture_pk):
             fixture.save()
             
             if is_admin:
+                _sync_player_stats(result)
+                _sync_clean_sheet_stats(result)
                 messages.success(request, '✅ Result created and auto-approved! Now add goals — score will be calculated automatically.')
             else:
                 messages.success(request, '📸 Result submitted! Now add goals, cards, and top rated players. Score will update automatically.')
+                
             return redirect('matches:result_detail', pk=result.pk)
     else:
         form = MatchResultForm(is_admin=is_admin)
@@ -681,8 +684,21 @@ def download_top_scorers_pdf(request):
 
 # ===== Admin Views & Stats Sync =====
 
+def _sync_player_matches_played(team):
+    """Update matches_played for all players in a team based on approved results."""
+    match_count = MatchResult.objects.filter(
+        Q(fixture__home_team=team) | Q(fixture__away_team=team),
+        status='approved'
+    ).count()
+    team.players.all().update(matches_played=match_count)
+
+
 def _sync_player_stats(result):
     """Recalculate player stats after result approval."""
+    # Sync matches_played for both teams
+    _sync_player_matches_played(result.fixture.home_team)
+    _sync_player_matches_played(result.fixture.away_team)
+
     for goal in result.goals.all():
         scorer = goal.scorer
         scorer.total_goals = scorer.goals_scored.filter(result__status='approved').count()

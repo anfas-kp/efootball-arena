@@ -1,7 +1,21 @@
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.db.models import Avg
-from .models import Goal, Card, PlayerRating, CleanSheet
+from .models import Goal, Card, PlayerRating, CleanSheet, MatchResult
+from django.db.models import Q
+
+
+@receiver(post_delete, sender=MatchResult)
+def recalc_on_result_delete(sender, instance, **kwargs):
+    """When a match result is deleted, update matches_played for both teams."""
+    fixture = instance.fixture
+    teams = [fixture.home_team, fixture.away_team]
+    for team in teams:
+        match_count = MatchResult.objects.filter(
+            Q(fixture__home_team=team) | Q(fixture__away_team=team),
+            status='approved'
+        ).count()
+        team.players.all().update(matches_played=match_count)
 
 
 @receiver(post_delete, sender=Goal)

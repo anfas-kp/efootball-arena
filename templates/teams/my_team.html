@@ -114,26 +114,69 @@
 
             <!-- Matches & Applications -->
             <div class="row g-4 mb-4">
-                {% if upcoming_matches %}
+                {% if upcoming_matches or recent_results %}
                 <div class="col-12">
-                    <div class="glass-card">
-                        <h5 class="section-title mb-4" style="font-size: 1.1rem;"><i class="fas fa-calendar-check me-2 text-accent"></i>UPCOMING FIXTURES</h5>
-                        <div class="d-flex flex-column gap-2">
-                            {% for m in upcoming_matches %}
-                            <div class="glass-card p-3 d-flex justify-content-between align-items-center bg-secondary bg-opacity-10 border-white border-opacity-5">
-                                <div class="d-flex align-items-center gap-3">
-                                    <span class="badge-status badge-ongoing" style="background: rgba(15, 252, 190, 0.1); color: var(--accent-2); border-color: rgba(15, 252, 190, 0.2);">MD {{ m.matchday }}</span>
-                                    <div class="fw-bold text-white">
-                                        {% if m.home_team == team %}
-                                            <span class="text-accent-2">YOU</span> <span class="text-muted mx-1">vs</span> {{ m.away_team.name }}
-                                        {% else %}
-                                            {{ m.home_team.name }} <span class="text-muted mx-1">vs</span> <span class="text-accent-2">YOU</span>
-                                        {% endif %}
-                                    </div>
+                    <div class="row g-4">
+                        <!-- Upcoming -->
+                        <div class="col-md-6">
+                            <div class="glass-card h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h5 class="section-title mb-0" style="font-size: 1rem;"><i class="fas fa-calendar-check me-2 text-accent"></i>UPCOMING</h5>
+                                    {% if active_tournaments %}
+                                        <a href="{% url 'tournaments:league_fixtures' active_tournaments.0.league.pk %}" class="small text-accent text-decoration-none hover-accent">View All <i class="fas fa-chevron-right ms-1"></i></a>
+                                    {% endif %}
                                 </div>
-                                <a href="{% url 'matches:submit_result' m.pk %}" class="btn-glow btn-sm py-1 px-3" style="font-size: 0.75rem;">Submit Result</a>
+                                <div class="d-flex flex-column gap-2">
+                                    {% for m in upcoming_matches %}
+                                    <div class="glass-card p-3 d-flex justify-content-between align-items-center bg-secondary bg-opacity-10 border-white border-opacity-5">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <span class="badge-status badge-ongoing" style="background: rgba(15, 252, 190, 0.1); color: var(--accent-2); border-color: rgba(15, 252, 190, 0.2);">MD {{ m.matchday }}</span>
+                                            <div class="fw-bold text-white small text-truncate" style="max-width: 150px;">
+                                                {% if m.home_team == team %}
+                                                    <span class="text-accent-2">YOU</span> <span class="text-muted mx-1">vs</span> {{ m.away_team.name }}
+                                                {% else %}
+                                                    {{ m.home_team.name }} <span class="text-muted mx-1">vs</span> <span class="text-accent-2">YOU</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <a href="{% url 'matches:submit_result' m.pk %}" class="btn-glow btn-sm py-1 px-3" style="font-size: 0.65rem;">Submit</a>
+                                    </div>
+                                    {% empty %}
+                                        <div class="text-center py-4 text-muted small">No upcoming matches scheduled.</div>
+                                    {% endfor %}
+                                </div>
                             </div>
-                            {% endfor %}
+                        </div>
+
+                        <!-- Recent -->
+                        <div class="col-md-6">
+                            <div class="glass-card h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h5 class="section-title mb-0" style="font-size: 1rem;"><i class="fas fa-history me-2 text-info"></i>RECENT RESULTS</h5>
+                                    {% if active_tournaments %}
+                                        <a href="{% url 'tournaments:league_fixtures' active_tournaments.0.league.pk %}" class="small text-info text-decoration-none hover-accent">View All <i class="fas fa-chevron-right ms-1"></i></a>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex flex-column gap-2">
+                                    {% for m in recent_results %}
+                                    <div class="glass-card p-3 d-flex justify-content-between align-items-center bg-secondary bg-opacity-10 border-white border-opacity-5">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <span class="badge-status badge-completed" style="font-size: 0.6rem;">MD {{ m.matchday }}</span>
+                                            <div class="fw-bold text-white small">
+                                                {% if m.home_team == team %}
+                                                    <span class="text-accent-2">YOU</span> <span class="text-accent mx-1">{{ m.result.home_score }}-{{ m.result.away_score }}</span> {{ m.away_team.name }}
+                                                {% else %}
+                                                    {{ m.home_team.name }} <span class="text-accent mx-1">{{ m.result.home_score }}-{{ m.result.away_score }}</span> <span class="text-accent-2">YOU</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <a href="{% url 'matches:result_detail' m.result.pk %}" class="btn-outline-glow btn-sm py-1 px-3" style="font-size: 0.65rem;">Details</a>
+                                    </div>
+                                    {% empty %}
+                                        <div class="text-center py-4 text-muted small">No completed matches found.</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
