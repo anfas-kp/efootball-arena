@@ -442,210 +442,297 @@
     .hover-text-white:hover { color: #fff !important; }
 
     /* ===== Selector ===== */
-    /* ===== Selector ===== */
     #leagueSelector:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0, 255, 135, 0.15); }
 
     /* ===== Export Graphics ===== */
     .export-graphic {
         width: 800px;
-        background: #0f1722;
-        padding: 30px;
+        background: linear-gradient(180deg, #0f1522 0%, #060910 100%);
+        padding: 40px;
         font-family: 'Orbitron', sans-serif;
         color: white;
         box-sizing: border-box;
     }
-    .export-title {
+    .export-header {
         text-align: center;
-        font-size: 28px;
-        font-weight: 900;
-        letter-spacing: 2px;
         margin-bottom: 30px;
-        color: white;
-        text-transform: uppercase;
     }
-    .export-row {
+    .eh-top {
+        color: #b0c4de;
+        font-size: 1.2rem;
+        letter-spacing: 3px;
+        margin-bottom: -5px;
+    }
+    .eh-title {
+        font-size: 4.5rem;
+        font-weight: 900;
+        background: linear-gradient(180deg, #fceca1 0%, #c59327 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+        text-transform: uppercase;
+        filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.5));
+        line-height: 1;
+    }
+    .eh-subtitle {
+        display: inline-block;
+        background: linear-gradient(90deg, #d4af37, #aa7c11);
+        color: #000;
+        padding: 5px 25px;
+        border-radius: 20px;
+        font-weight: 900;
+        font-size: 1rem;
+        letter-spacing: 2px;
+        margin-top: 15px;
+    }
+    .export-table {
+        width: 100%;
+        border: 1px solid #334155;
+        border-radius: 16px;
+        overflow: hidden;
+        background: rgba(15, 23, 42, 0.4);
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    .et-head {
+        display: grid;
+        grid-template-columns: 80px 300px 1fr 100px;
+        padding: 15px 20px;
+        border-bottom: 2px solid #c59327;
+        font-size: 0.85rem;
+        color: #94a3b8;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+    .et-row {
+        display: grid;
+        grid-template-columns: 80px 300px 1fr 100px;
+        padding: 12px 20px;
+        align-items: center;
+        border-bottom: 1px solid #1e293b;
+    }
+    .et-row:last-child {
+        border-bottom: none;
+    }
+    .et-rank {
+        font-size: 2.8rem;
+        font-weight: 900;
+        color: #e2e8f0;
+    }
+    .rank-1, .rank-2, .rank-3 {
+        color: #d4af37;
+        text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+    }
+    .et-player {
         display: flex;
         align-items: center;
-        height: 120px;
-        border-radius: 12px;
-        margin-bottom: 15px;
-        position: relative;
-        overflow: hidden;
+        gap: 15px;
     }
-    .export-stat-box {
-        flex: 0 0 40%;
-        padding-left: 30px;
-        z-index: 2;
-    }
-    .export-stat {
-        font-size: 60px;
-        font-weight: 900;
-        line-height: 1;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    }
-    .export-substat {
-        font-size: 14px;
-        font-weight: 700;
-        margin-top: 5px;
-        opacity: 0.9;
-        font-family: sans-serif;
-    }
-    .export-player-box {
-        flex: 1;
-        position: relative;
-        height: 100%;
+    .et-photo-box {
+        width: 60px;
+        height: 60px;
         display: flex;
-        justify-content: flex-end;
         align-items: flex-end;
-        padding-right: 20px;
+        justify-content: center;
     }
-    .export-photo {
-        height: 140%;
+    .et-photo {
+        max-height: 100%;
+        max-width: 100%;
         object-fit: contain;
-        transform: translateY(10px);
-        filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
     }
-    .export-photo-bg {
-        /* If no bg removed, we round it a bit */
-        height: 90%;
+    .et-photo-bg {
         border-radius: 50%;
-        transform: translateY(-5%);
-        aspect-ratio: 1;
         object-fit: cover;
+        height: 50px;
+        width: 50px;
+        margin-bottom: 5px;
     }
-    .export-team-box {
-        flex: 0 0 25%;
+    .et-player-name {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background: white;
-        height: 100%;
-        color: black;
-        z-index: 2;
     }
-    .export-name {
+    .ep-first {
+        font-size: 0.85rem;
+        color: #cbd5e1;
+        font-family: sans-serif;
+    }
+    .ep-last {
+        font-size: 1.4rem;
         font-weight: 800;
-        font-size: 16px;
-        text-align: center;
-        text-transform: uppercase;
-        margin-bottom: 10px;
-        writing-mode: vertical-rl;
-        transform: rotate(180deg);
-        position: absolute;
-        right: 10px;
-        height: 100%;
-        padding: 10px 0;
+        color: white;
+        line-height: 1.1;
     }
-    .export-logo {
-        width: 80px;
-        height: 80px;
+    .et-team {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .et-logo {
+        width: 45px;
+        height: 45px;
         object-fit: contain;
+    }
+    .et-team-name {
+        font-size: 0.95rem;
+        color: #cbd5e1;
+        font-family: sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .et-stat {
+        font-size: 2.8rem;
+        font-weight: 900;
+        color: #d4af37;
+        text-align: center;
     }
     .export-footer {
         text-align: center;
-        font-size: 14px;
+        font-size: 0.85rem;
         margin-top: 20px;
-        font-weight: bold;
-        color: var(--accent);
+        color: #64748b;
+        font-family: sans-serif;
+        letter-spacing: 2px;
     }
-    
-    /* Export Row Gradients */
-    .export-row-1 { background: linear-gradient(90deg, #b71c1c, #d32f2f); }
-    .export-row-2 { background: linear-gradient(90deg, #e65100, #f57c00); }
-    .export-row-3 { background: linear-gradient(90deg, #1b5e20, #388e3c); }
-    .export-row-4 { background: linear-gradient(90deg, #3e2723, #5d4037); }
-    .export-row-default { background: linear-gradient(90deg, #0d47a1, #1976d2); }
 </style>
 
 <!-- Hidden Export Container -->
 <div id="export-container" style="position: absolute; left: -9999px; top: -9999px;">
+    
     <!-- Goals Export -->
     <div id="export-goals" class="export-graphic">
-        <div class="export-title">TOP SCORERS</div>
-        {% for p in top_scorers|slice:":5" %}
-        <div class="export-row {% if forloop.counter <= 4 %}export-row-{{ forloop.counter }}{% else %}export-row-default{% endif %}">
-            <div class="export-stat-box">
-                <div class="export-stat">{% if selected_league %}{{ p.league_goals }}{% else %}{{ p.total_goals }}{% endif %} <span style="font-size: 0.5em">GOALS</span></div>
-                <div class="export-substat">IN {{ p.matches_played }} MATCHES</div>
-            </div>
-            <div class="export-player-box">
-                {% if p.photo_no_bg %}
-                <img src="{{ p.photo_no_bg.url }}" crossorigin="anonymous" class="export-photo">
-                {% elif p.photo %}
-                <img src="{{ p.photo.url }}" crossorigin="anonymous" class="export-photo export-photo-bg">
-                {% endif %}
-            </div>
-            <div class="export-team-box">
-                {% if p.team.logo %}
-                <img src="{{ p.team.logo.url }}" crossorigin="anonymous" class="export-logo">
-                {% else %}
-                <div style="font-weight:bold; font-size: 24px;">{{ p.team.name|first }}</div>
-                {% endif %}
-                <div class="export-name">{{ p.name }}</div>
-            </div>
+        <div class="export-header">
+            <div class="eh-top">TOP 10</div>
+            <div class="eh-title">GOAL SCORERS</div>
+            <div class="eh-subtitle">{{ selected_league.name|default:"ALL LEAGUES" }}</div>
         </div>
-        {% endfor %}
-        <div class="export-footer">EFOOTBALL ARENA</div>
+        <div class="export-table">
+            <div class="et-head">
+                <div>RANK</div>
+                <div>PLAYER</div>
+                <div>TEAM</div>
+                <div style="text-align:center;">GOALS</div>
+            </div>
+            {% for p in top_scorers|slice:":10" %}
+            <div class="et-row">
+                <div class="et-rank {% if forloop.counter <= 3 %}rank-{{ forloop.counter }}{% endif %}">{{ forloop.counter }}</div>
+                <div class="et-player">
+                    <div class="et-photo-box">
+                        {% if p.photo_no_bg %}
+                        <img src="{{ p.photo_no_bg.url }}" crossorigin="anonymous" class="et-photo">
+                        {% elif p.photo %}
+                        <img src="{{ p.photo.url }}" crossorigin="anonymous" class="et-photo et-photo-bg">
+                        {% endif %}
+                    </div>
+                    <div class="et-player-name">
+                        <div class="ep-first">{{ p.name }}</div>
+                        <div class="ep-last">{{ p.name }}</div>
+                    </div>
+                </div>
+                <div class="et-team">
+                    {% if p.team.logo %}
+                    <img src="{{ p.team.logo.url }}" crossorigin="anonymous" class="et-logo">
+                    {% else %}
+                    <div style="font-weight:bold; font-size: 24px; color:#cbd5e1;">{{ p.team.name|first }}</div>
+                    {% endif %}
+                    <div class="et-team-name">{{ p.team.name }}</div>
+                </div>
+                <div class="et-stat">{% if selected_league %}{{ p.league_goals }}{% else %}{{ p.total_goals }}{% endif %}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="export-footer">GENERATED BY EFOOTBALL ARENA</div>
     </div>
 
     <!-- Assists Export -->
     <div id="export-assists" class="export-graphic">
-        <div class="export-title">TOP ASSISTS</div>
-        {% for p in top_assists|slice:":5" %}
-        <div class="export-row {% if forloop.counter <= 4 %}export-row-{{ forloop.counter }}{% else %}export-row-default{% endif %}">
-            <div class="export-stat-box">
-                <div class="export-stat">{% if selected_league %}{{ p.league_assists }}{% else %}{{ p.total_assists }}{% endif %} <span style="font-size: 0.5em">ASSISTS</span></div>
-                <div class="export-substat">IN {{ p.matches_played }} MATCHES</div>
-            </div>
-            <div class="export-player-box">
-                {% if p.photo_no_bg %}
-                <img src="{{ p.photo_no_bg.url }}" crossorigin="anonymous" class="export-photo">
-                {% elif p.photo %}
-                <img src="{{ p.photo.url }}" crossorigin="anonymous" class="export-photo export-photo-bg">
-                {% endif %}
-            </div>
-            <div class="export-team-box">
-                {% if p.team.logo %}
-                <img src="{{ p.team.logo.url }}" crossorigin="anonymous" class="export-logo">
-                {% else %}
-                <div style="font-weight:bold; font-size: 24px;">{{ p.team.name|first }}</div>
-                {% endif %}
-                <div class="export-name">{{ p.name }}</div>
-            </div>
+        <div class="export-header">
+            <div class="eh-top">TOP 10</div>
+            <div class="eh-title">ASSISTS</div>
+            <div class="eh-subtitle">{{ selected_league.name|default:"ALL LEAGUES" }}</div>
         </div>
-        {% endfor %}
-        <div class="export-footer">EFOOTBALL ARENA</div>
+        <div class="export-table">
+            <div class="et-head">
+                <div>RANK</div>
+                <div>PLAYER</div>
+                <div>TEAM</div>
+                <div style="text-align:center;">AST</div>
+            </div>
+            {% for p in top_assists|slice:":10" %}
+            <div class="et-row">
+                <div class="et-rank {% if forloop.counter <= 3 %}rank-{{ forloop.counter }}{% endif %}">{{ forloop.counter }}</div>
+                <div class="et-player">
+                    <div class="et-photo-box">
+                        {% if p.photo_no_bg %}
+                        <img src="{{ p.photo_no_bg.url }}" crossorigin="anonymous" class="et-photo">
+                        {% elif p.photo %}
+                        <img src="{{ p.photo.url }}" crossorigin="anonymous" class="et-photo et-photo-bg">
+                        {% endif %}
+                    </div>
+                    <div class="et-player-name">
+                        <div class="ep-first">{{ p.name }}</div>
+                        <div class="ep-last">{{ p.name }}</div>
+                    </div>
+                </div>
+                <div class="et-team">
+                    {% if p.team.logo %}
+                    <img src="{{ p.team.logo.url }}" crossorigin="anonymous" class="et-logo">
+                    {% else %}
+                    <div style="font-weight:bold; font-size: 24px; color:#cbd5e1;">{{ p.team.name|first }}</div>
+                    {% endif %}
+                    <div class="et-team-name">{{ p.team.name }}</div>
+                </div>
+                <div class="et-stat">{% if selected_league %}{{ p.league_assists }}{% else %}{{ p.total_assists }}{% endif %}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="export-footer">GENERATED BY EFOOTBALL ARENA</div>
     </div>
 
     <!-- Rating Export -->
     <div id="export-ratings" class="export-graphic">
-        <div class="export-title">HIGHEST RATED PLAYERS</div>
-        {% for p in top_rated|slice:":5" %}
-        <div class="export-row {% if forloop.counter <= 4 %}export-row-{{ forloop.counter }}{% else %}export-row-default{% endif %}">
-            <div class="export-stat-box">
-                <div class="export-stat">{% if selected_league %}{{ p.league_avg_rating|floatformat:1 }}{% else %}{{ p.avg_rating }}{% endif %} <span style="font-size: 0.5em">/ 10</span></div>
-                <div class="export-substat">RATING</div>
-            </div>
-            <div class="export-player-box">
-                {% if p.photo_no_bg %}
-                <img src="{{ p.photo_no_bg.url }}" crossorigin="anonymous" class="export-photo">
-                {% elif p.photo %}
-                <img src="{{ p.photo.url }}" crossorigin="anonymous" class="export-photo export-photo-bg">
-                {% endif %}
-            </div>
-            <div class="export-team-box">
-                {% if p.team.logo %}
-                <img src="{{ p.team.logo.url }}" crossorigin="anonymous" class="export-logo">
-                {% else %}
-                <div style="font-weight:bold; font-size: 24px;">{{ p.team.name|first }}</div>
-                {% endif %}
-                <div class="export-name">{{ p.name }}</div>
-            </div>
+        <div class="export-header">
+            <div class="eh-top">TOP 10</div>
+            <div class="eh-title">RATED PLAYERS</div>
+            <div class="eh-subtitle">{{ selected_league.name|default:"ALL LEAGUES" }}</div>
         </div>
-        {% endfor %}
-        <div class="export-footer">EFOOTBALL ARENA</div>
+        <div class="export-table">
+            <div class="et-head">
+                <div>RANK</div>
+                <div>PLAYER</div>
+                <div>TEAM</div>
+                <div style="text-align:center;">RTG</div>
+            </div>
+            {% for p in top_rated|slice:":10" %}
+            <div class="et-row">
+                <div class="et-rank {% if forloop.counter <= 3 %}rank-{{ forloop.counter }}{% endif %}">{{ forloop.counter }}</div>
+                <div class="et-player">
+                    <div class="et-photo-box">
+                        {% if p.photo_no_bg %}
+                        <img src="{{ p.photo_no_bg.url }}" crossorigin="anonymous" class="et-photo">
+                        {% elif p.photo %}
+                        <img src="{{ p.photo.url }}" crossorigin="anonymous" class="et-photo et-photo-bg">
+                        {% endif %}
+                    </div>
+                    <div class="et-player-name">
+                        <div class="ep-first">{{ p.name }}</div>
+                        <div class="ep-last">{{ p.name }}</div>
+                    </div>
+                </div>
+                <div class="et-team">
+                    {% if p.team.logo %}
+                    <img src="{{ p.team.logo.url }}" crossorigin="anonymous" class="et-logo">
+                    {% else %}
+                    <div style="font-weight:bold; font-size: 24px; color:#cbd5e1;">{{ p.team.name|first }}</div>
+                    {% endif %}
+                    <div class="et-team-name">{{ p.team.name }}</div>
+                </div>
+                <div class="et-stat">{% if selected_league %}{{ p.league_avg_rating|floatformat:1 }}{% else %}{{ p.avg_rating|floatformat:1 }}{% endif %}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="export-footer">GENERATED BY EFOOTBALL ARENA</div>
     </div>
+</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
