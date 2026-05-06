@@ -48,7 +48,7 @@ class GoalForm(forms.ModelForm):
         widgets = {
             'scorer': forms.Select(attrs={'class': 'form-select'}),
             'assist': forms.Select(attrs={'class': 'form-select'}),
-            'minute': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 120}),
+            'minute': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 120, 'placeholder': 'Optional'}),
             'goal_type': forms.Select(attrs={'class': 'form-select'}),
             'screenshot': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
@@ -63,8 +63,10 @@ class GoalForm(forms.ModelForm):
             self.fields['assist'].queryset = players
             self.fields['assist'].label_from_instance = lambda obj: f"{obj.name} ({obj.team.name})"
             self.fields['assist'].required = False
-        # Screenshot always optional for goals (was already blank=True on model)
+        # Screenshot and minute always optional for goals
         self.fields['screenshot'].required = False
+        self.fields['minute'].required = False
+        self.fields['minute'].help_text = 'Optional'
 
 
 class CardForm(forms.ModelForm):
@@ -74,7 +76,7 @@ class CardForm(forms.ModelForm):
         widgets = {
             'player': forms.Select(attrs={'class': 'form-select'}),
             'card_type': forms.Select(attrs={'class': 'form-select'}),
-            'minute': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 120}),
+            'minute': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 120, 'placeholder': 'Optional'}),
             'screenshot': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
@@ -85,8 +87,10 @@ class CardForm(forms.ModelForm):
             players = Player.objects.filter(team__in=[fixture.home_team, fixture.away_team], is_active=True).order_by('team__name', 'name')
             self.fields['player'].queryset = players
             self.fields['player'].label_from_instance = lambda obj: f"{obj.name} ({obj.team.name})"
-        # Screenshot always optional for cards (was already blank=True on model)
+        # Screenshot and minute always optional for cards
         self.fields['screenshot'].required = False
+        self.fields['minute'].required = False
+        self.fields['minute'].help_text = 'Optional'
 
 
 class PlayerRatingForm(forms.ModelForm):

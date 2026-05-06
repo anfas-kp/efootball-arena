@@ -62,7 +62,7 @@ class Goal(models.Model):
     assist = models.ForeignKey(
         Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='assists'
     )
-    minute = models.PositiveIntegerField(help_text='Minute of the goal')
+    minute = models.PositiveIntegerField(null=True, blank=True, help_text='Minute of the goal (optional)')
     goal_type = models.CharField(max_length=20, choices=GOAL_TYPE_CHOICES, default='open_play')
     screenshot = models.ImageField(upload_to='goal_screenshots/', blank=True, null=True)
 
@@ -70,7 +70,8 @@ class Goal(models.Model):
         ordering = ['minute']
 
     def __str__(self):
-        return f"⚽ {self.scorer.name} ({self.minute}')"
+        minute_str = f" ({self.minute}')" if self.minute else ""
+        return f"⚽ {self.scorer.name}{minute_str}"
 
 
 class Card(models.Model):
@@ -85,7 +86,7 @@ class Card(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='cards')
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     card_type = models.CharField(max_length=10, choices=CARD_CHOICES)
-    minute = models.PositiveIntegerField()
+    minute = models.PositiveIntegerField(null=True, blank=True)
     screenshot = models.ImageField(
         upload_to='card_screenshots/', blank=True, null=True,
         help_text='Screenshot proof (mandatory for red cards)'
@@ -96,7 +97,8 @@ class Card(models.Model):
 
     def __str__(self):
         emoji = '🟨' if self.card_type == 'yellow' else '🟥'
-        return f"{emoji} {self.player.name} ({self.minute}')"
+        minute_str = f" ({self.minute}')" if self.minute else ""
+        return f"{emoji} {self.player.name}{minute_str}"
 
 
 class PlayerRating(models.Model):

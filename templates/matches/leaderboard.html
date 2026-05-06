@@ -37,8 +37,9 @@
         <!-- Top Scorers (Golden Boot) -->
         <div class="col-lg-6">
             <div class="leaderboard-card h-100">
-                <div class="leaderboard-header" style="background: linear-gradient(135deg, rgba(255,170,0,0.12), rgba(255,100,0,0.05));">
+                <div class="leaderboard-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, rgba(255,170,0,0.12), rgba(255,100,0,0.05));">
                     <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;"><i class="fas fa-futbol me-2" style="color: #ffaa00;"></i>Top Goals</h5>
+                    <button onclick="downloadGraphic('export-goals', 'top-scorers')" class="btn btn-sm btn-outline-secondary py-0 px-2 border-0 hover-text-white transition-all" style="font-size: 0.75rem;"><i class="fas fa-download me-1"></i> Image</button>
                 </div>
                 <div class="leaderboard-body">
                     {% for p in top_scorers %}
@@ -83,8 +84,9 @@
         <!-- Top Assists (Playmaker) -->
         <div class="col-lg-6">
             <div class="leaderboard-card h-100">
-                <div class="leaderboard-header" style="background: linear-gradient(135deg, rgba(0,180,255,0.12), rgba(0,100,255,0.05));">
+                <div class="leaderboard-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, rgba(0,180,255,0.12), rgba(0,100,255,0.05));">
                     <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;"><i class="fas fa-hands-helping me-2" style="color: #00b4ff;"></i>Top Assists</h5>
+                    <button onclick="downloadGraphic('export-assists', 'top-assists')" class="btn btn-sm btn-outline-secondary py-0 px-2 border-0 hover-text-white transition-all" style="font-size: 0.75rem;"><i class="fas fa-download me-1"></i> Image</button>
                 </div>
                 <div class="leaderboard-body">
                     {% for p in top_assists %}
@@ -129,8 +131,9 @@
         <!-- Highest Rated -->
         <div class="col-lg-6">
             <div class="leaderboard-card h-100">
-                <div class="leaderboard-header" style="background: linear-gradient(135deg, rgba(255,200,0,0.12), rgba(255,150,0,0.05));">
+                <div class="leaderboard-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, rgba(255,200,0,0.12), rgba(255,150,0,0.05));">
                     <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;"><i class="fas fa-star me-2" style="color: #ffc800;"></i>Highest Rated</h5>
+                    <button onclick="downloadGraphic('export-ratings', 'top-rated')" class="btn btn-sm btn-outline-secondary py-0 px-2 border-0 hover-text-white transition-all" style="font-size: 0.75rem;"><i class="fas fa-download me-1"></i> Image</button>
                 </div>
                 <div class="leaderboard-body">
                     {% for p in top_rated %}
@@ -439,6 +442,237 @@
     .hover-text-white:hover { color: #fff !important; }
 
     /* ===== Selector ===== */
+    /* ===== Selector ===== */
     #leagueSelector:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0, 255, 135, 0.15); }
+
+    /* ===== Export Graphics ===== */
+    .export-graphic {
+        width: 800px;
+        background: #0f1722;
+        padding: 30px;
+        font-family: 'Orbitron', sans-serif;
+        color: white;
+        box-sizing: border-box;
+    }
+    .export-title {
+        text-align: center;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        margin-bottom: 30px;
+        color: white;
+        text-transform: uppercase;
+    }
+    .export-row {
+        display: flex;
+        align-items: center;
+        height: 120px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        position: relative;
+        overflow: hidden;
+    }
+    .export-stat-box {
+        flex: 0 0 40%;
+        padding-left: 30px;
+        z-index: 2;
+    }
+    .export-stat {
+        font-size: 60px;
+        font-weight: 900;
+        line-height: 1;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    .export-substat {
+        font-size: 14px;
+        font-weight: 700;
+        margin-top: 5px;
+        opacity: 0.9;
+        font-family: sans-serif;
+    }
+    .export-player-box {
+        flex: 1;
+        position: relative;
+        height: 100%;
+        display: flex;
+        justify-content: flex-end;
+        align-items: flex-end;
+        padding-right: 20px;
+    }
+    .export-photo {
+        height: 140%;
+        object-fit: contain;
+        transform: translateY(10px);
+        filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+    }
+    .export-photo-bg {
+        /* If no bg removed, we round it a bit */
+        height: 90%;
+        border-radius: 50%;
+        transform: translateY(-5%);
+        aspect-ratio: 1;
+        object-fit: cover;
+    }
+    .export-team-box {
+        flex: 0 0 25%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        height: 100%;
+        color: black;
+        z-index: 2;
+    }
+    .export-name {
+        font-weight: 800;
+        font-size: 16px;
+        text-align: center;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        position: absolute;
+        right: 10px;
+        height: 100%;
+        padding: 10px 0;
+    }
+    .export-logo {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+    }
+    .export-footer {
+        text-align: center;
+        font-size: 14px;
+        margin-top: 20px;
+        font-weight: bold;
+        color: var(--accent);
+    }
+    
+    /* Export Row Gradients */
+    .export-row-1 { background: linear-gradient(90deg, #b71c1c, #d32f2f); }
+    .export-row-2 { background: linear-gradient(90deg, #e65100, #f57c00); }
+    .export-row-3 { background: linear-gradient(90deg, #1b5e20, #388e3c); }
+    .export-row-4 { background: linear-gradient(90deg, #3e2723, #5d4037); }
+    .export-row-default { background: linear-gradient(90deg, #0d47a1, #1976d2); }
 </style>
+
+<!-- Hidden Export Container -->
+<div id="export-container" style="position: absolute; left: -9999px; top: -9999px;">
+    <!-- Goals Export -->
+    <div id="export-goals" class="export-graphic">
+        <div class="export-title">TOP SCORERS</div>
+        {% for p in top_scorers|slice:":5" %}
+        <div class="export-row {% if forloop.counter <= 4 %}export-row-{{ forloop.counter }}{% else %}export-row-default{% endif %}">
+            <div class="export-stat-box">
+                <div class="export-stat">{% if selected_league %}{{ p.league_goals }}{% else %}{{ p.total_goals }}{% endif %} <span style="font-size: 0.5em">GOALS</span></div>
+                <div class="export-substat">IN {{ p.matches_played }} MATCHES</div>
+            </div>
+            <div class="export-player-box">
+                {% if p.photo_no_bg %}
+                <img src="{{ p.photo_no_bg.url }}" crossorigin="anonymous" class="export-photo">
+                {% elif p.photo %}
+                <img src="{{ p.photo.url }}" crossorigin="anonymous" class="export-photo export-photo-bg">
+                {% endif %}
+            </div>
+            <div class="export-team-box">
+                {% if p.team.logo %}
+                <img src="{{ p.team.logo.url }}" crossorigin="anonymous" class="export-logo">
+                {% else %}
+                <div style="font-weight:bold; font-size: 24px;">{{ p.team.name|first }}</div>
+                {% endif %}
+                <div class="export-name">{{ p.name }}</div>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="export-footer">EFOOTBALL ARENA</div>
+    </div>
+
+    <!-- Assists Export -->
+    <div id="export-assists" class="export-graphic">
+        <div class="export-title">TOP ASSISTS</div>
+        {% for p in top_assists|slice:":5" %}
+        <div class="export-row {% if forloop.counter <= 4 %}export-row-{{ forloop.counter }}{% else %}export-row-default{% endif %}">
+            <div class="export-stat-box">
+                <div class="export-stat">{% if selected_league %}{{ p.league_assists }}{% else %}{{ p.total_assists }}{% endif %} <span style="font-size: 0.5em">ASSISTS</span></div>
+                <div class="export-substat">IN {{ p.matches_played }} MATCHES</div>
+            </div>
+            <div class="export-player-box">
+                {% if p.photo_no_bg %}
+                <img src="{{ p.photo_no_bg.url }}" crossorigin="anonymous" class="export-photo">
+                {% elif p.photo %}
+                <img src="{{ p.photo.url }}" crossorigin="anonymous" class="export-photo export-photo-bg">
+                {% endif %}
+            </div>
+            <div class="export-team-box">
+                {% if p.team.logo %}
+                <img src="{{ p.team.logo.url }}" crossorigin="anonymous" class="export-logo">
+                {% else %}
+                <div style="font-weight:bold; font-size: 24px;">{{ p.team.name|first }}</div>
+                {% endif %}
+                <div class="export-name">{{ p.name }}</div>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="export-footer">EFOOTBALL ARENA</div>
+    </div>
+
+    <!-- Rating Export -->
+    <div id="export-ratings" class="export-graphic">
+        <div class="export-title">HIGHEST RATED PLAYERS</div>
+        {% for p in top_rated|slice:":5" %}
+        <div class="export-row {% if forloop.counter <= 4 %}export-row-{{ forloop.counter }}{% else %}export-row-default{% endif %}">
+            <div class="export-stat-box">
+                <div class="export-stat">{% if selected_league %}{{ p.league_avg_rating|floatformat:1 }}{% else %}{{ p.avg_rating }}{% endif %} <span style="font-size: 0.5em">/ 10</span></div>
+                <div class="export-substat">RATING</div>
+            </div>
+            <div class="export-player-box">
+                {% if p.photo_no_bg %}
+                <img src="{{ p.photo_no_bg.url }}" crossorigin="anonymous" class="export-photo">
+                {% elif p.photo %}
+                <img src="{{ p.photo.url }}" crossorigin="anonymous" class="export-photo export-photo-bg">
+                {% endif %}
+            </div>
+            <div class="export-team-box">
+                {% if p.team.logo %}
+                <img src="{{ p.team.logo.url }}" crossorigin="anonymous" class="export-logo">
+                {% else %}
+                <div style="font-weight:bold; font-size: 24px;">{{ p.team.name|first }}</div>
+                {% endif %}
+                <div class="export-name">{{ p.name }}</div>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="export-footer">EFOOTBALL ARENA</div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+function downloadGraphic(id, filename) {
+    const el = document.getElementById(id);
+    // temporarily make it visible but off-screen
+    el.parentElement.style.left = '0';
+    el.parentElement.style.top = '0';
+    el.parentElement.style.zIndex = '-1000';
+    
+    html2canvas(el, {
+        useCORS: true,
+        scale: 2,
+        backgroundColor: '#0f1722',
+        logging: false
+    }).then(canvas => {
+        // Hide again
+        el.parentElement.style.left = '-9999px';
+        el.parentElement.style.top = '-9999px';
+        
+        // Download
+        const link = document.createElement('a');
+        link.download = filename + '.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+}
+</script>
 {% endblock %}

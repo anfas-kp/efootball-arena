@@ -312,3 +312,40 @@ def download_team_roster_pdf(request, pk):
         'team': team,
         'players': players
     })
+
+
+@login_required
+def admin_add_player(request, team_pk):
+    """Admin view to add a player to any team."""
+    if not request.user.is_admin_user:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    team = get_object_or_404(Team, pk=team_pk)
+
+    if request.method == 'POST':
+        form = PlayerForm(request.POST, request.FILES)
+        if form.is_valid():
+            player = form.save(commit=False)
+            player.team = team
+            
+            # Auto-generate gaming ID if blank
+            if not player.gaming_id:
+                base_id = slugify(f"{team.name}_{player.name}").replace('-', '_')
+                unique_id = base_id
+                while Player.objects.filter(gaming_id=unique_id).exists():
+                    suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
+                    unique_id = f"{base_id}_{suffix}"
+                player.gaming_id = unique_id
+                
+            player.save()
+            messages.success(request, f'✅ {player.name} added to {team.name} roster!')
+            return redirect('teams:admin_verify')
+    else:
+        form = PlayerForm()
+
+    return render(request, 'teams/add_player.html', {
+        'form': form, 
+        'team': team,
+        'is_admin': True
+    })

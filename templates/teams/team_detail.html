@@ -41,9 +41,13 @@
         {% endif %}
     </div>
 
-    <!-- Squad Table -->
     <div class="mt-5">
-        <h2 class="section-title mb-4">TEAM <span class="text-accent">SQUAD</span></h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title mb-0">TEAM <span class="text-accent">SQUAD</span></h2>
+            {% if user.is_admin_user %}
+            <a href="{% url 'teams:admin_add_player' team.pk %}" class="btn-glow btn-sm"><i class="fas fa-plus me-1"></i> Add Player</a>
+            {% endif %}
+        </div>
         
         {% if players %}
         <div class="table-responsive">

@@ -73,6 +73,7 @@ class Player(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
     name = models.CharField(max_length=100)
     photo = models.ImageField(upload_to='player_photos/', blank=True, null=True)
+    photo_no_bg = models.ImageField(upload_to='player_photos_nobg/', blank=True, null=True)
     gaming_id = models.CharField(max_length=100, unique=True, blank=True, help_text='PSN ID / Xbox Gamertag / Steam ID')
     jersey_number = models.PositiveIntegerField(null=True, blank=True)
     position = models.CharField(max_length=3, choices=POSITION_CHOICES, blank=True)
@@ -93,3 +94,36 @@ class Player(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.team.name})"
+
+    def save(self, *args, **kwargs):
+        # Handle background removal if photo is uploaded and photo_no_bg is empty
+        super().save(*args, **kwargs)
+        if self.photo and not self.photo_no_bg:
+            try:
+                import rembg
+                from PIL import Image
+                import io
+                from django.core.files.base import ContentFile
+
+                input_image = Image.open(self.photo.path)
+                
+                # Resize if too large to save memory
+                input_image.thumbnail((800, 800))
+
+                # Process with rembg
+                output_image = rembg.remove(input_image)
+                
+                # Save to a BytesIO object
+                img_io = io.BytesIO()
+                output_image.save(img_io, format='PNG')
+                
+                # Create a Django ContentFile
+                filename = f"{self.pk}_nobg.png"
+                self.photo_no_bg.save(filename, ContentFile(img_io.getvalue()), save=False)
+                
+                # Save again to update the photo_no_bg field
+                super().save(update_fields=['photo_no_bg'])
+            except ImportError:
+                print("WARNING: 'rembg' or 'Pillow' is not installed. Background removal skipped. Please run: pip install rembg Pillow")
+            except Exception as e:
+                print(f"Error removing background: {e}")
