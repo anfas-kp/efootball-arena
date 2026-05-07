@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ player.name }} Player Card{% endblock %}
+
+{% block content %}
+<div class="container d-flex flex-column align-items-center" style="margin-top: 100px; padding-bottom: 100px;">
+    
+    <div class="mb-4 text-center">
+        <h1 class="display-6 fw-bold mb-3 font-orbitron text-white">E-SPORTS <span class="text-accent">PLAYER CARD</span></h1>
+        <button onclick="downloadCard()" class="btn-glow">
+            <i class="fas fa-download me-2"></i> Download Graphic
+        </button>
+    </div>
+
+    <!-- The FUT Card -->
+    <div id="fut-card" class="fut-card">
+        <div class="fc-bg"></div>
+        
+        <div class="fc-top-left">
+            <div class="fc-rating">{{ player.avg_rating|floatformat:0|default:"75" }}</div>
+            <div class="fc-position">{{ player.position|default:"FW"|upper }}</div>
+            {% if player.team.logo %}
+                <img src="{{ player.team.logo.url }}" crossorigin="anonymous" class="fc-logo">
+            {% endif %}
+        </div>
+        
+        <div class="fc-photo-box">
+            {% if player.photo_no_bg %}
+                <img src="{{ player.photo_no_bg.url }}" crossorigin="anonymous" class="fc-photo">
+            {% elif player.photo %}
+                <img src="{{ player.photo.url }}" crossorigin="anonymous" class="fc-photo" style="border-radius: 50%; object-fit: cover; aspect-ratio: 1;">
+            {% endif %}
+        </div>
+        
+        <div class="fc-bottom">
+            <div class="fc-name">{{ player.name|truncatechars:15 }}</div>
+            <div class="fc-stats">
+                <div class="fc-stat-col">
+                    <div class="fc-stat">
+                        <span class="fc-stat-val">{{ player.total_goals|default:0 }}</span>
+                        <span class="fc-stat-lbl">GLS</span>
+                    </div>
+                    <div class="fc-stat">
+                        <span class="fc-stat-val">{{ player.matches_played|default:0 }}</span>
+                        <span class="fc-stat-lbl">APP</span>
+                    </div>
+                </div>
+                <div class="fc-stat-col">
+                    <div class="fc-stat">
+                        <span class="fc-stat-val">{{ player.total_assists|default:0 }}</span>
+                        <span class="fc-stat-lbl">AST</span>
+                    </div>
+                    <div class="fc-stat">
+                        <span class="fc-stat-val">{{ player.avg_rating|floatformat:1|default:"0.0" }}</span>
+                        <span class="fc-stat-lbl">RTG</span>
+                    </div>
+                </div>
+            </div>
+            <div style="font-size: 0.6rem; margin-top: 10px; color: rgba(252, 236, 161, 0.5); letter-spacing: 2px;">EFOOTBALL ARENA</div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    function downloadCard() {
+        const element = document.getElementById('fut-card');
+        
+        html2canvas(element, { 
+            scale: 3, 
+            useCORS: true, 
+            backgroundColor: null 
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = '{{ player.name|slugify }}_card.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    }
+</script>
+
+<style>
+    .font-orbitron { font-family: 'Orbitron', sans-serif; }
+    
+    .fut-card {
+        width: 320px;
+        height: 480px;
+        position: relative;
+        background: linear-gradient(135deg, #111 0%, #1a1a1a 100%);
+        border: 2px solid #d4af37;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(212, 175, 55, 0.2);
+        overflow: hidden;
+        font-family: 'Orbitron', sans-serif;
+        color: #d4af37;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .fut-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.3) 0%, rgba(0,0,0,0) 60%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .fc-top-left {
+        position: absolute;
+        top: 30px;
+        left: 20px;
+        text-align: center;
+        z-index: 2;
+    }
+    .fc-rating {
+        font-size: 3rem;
+        font-weight: 900;
+        line-height: 1;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    }
+    .fc-position {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    }
+    .fc-logo {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.8));
+    }
+    .fc-photo-box {
+        position: absolute;
+        bottom: 140px;
+        right: -20px;
+        width: 280px;
+        height: 280px;
+        z-index: 1;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+    }
+    .fc-photo {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
+    }
+    .fc-bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 160px;
+        text-align: center;
+        z-index: 2;
+        padding-top: 15px;
+        background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 15%, #000 100%);
+        color: #fceca1;
+    }
+    .fc-name {
+        font-size: 1.6rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        letter-spacing: 2px;
+        border-bottom: 1px solid rgba(252, 236, 161, 0.3);
+        padding-bottom: 5px;
+        width: 85%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .fc-stats {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+    }
+    .fc-stat-col {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .fc-stat {
+        display: flex;
+        gap: 8px;
+        font-size: 1.1rem;
+        font-weight: 800;
+    }
+    .fc-stat-val {
+        width: 35px;
+        text-align: right;
+    }
+    .fc-stat-lbl {
+        font-weight: 400;
+    }
+</style>
+{% endblock %}

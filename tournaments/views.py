@@ -124,7 +124,7 @@ def apply_tournament(request, pk):
 
 def all_standings(request):
     """View standings for all leagues across all active tournaments."""
-    leagues = League.objects.select_related('tournament').filter(
+    leagues = League.objects.select_related('tournament').prefetch_related('teams', 'fixtures__result').filter(
         tournament__is_active=True
     ).order_by('tournament__name', 'name')
 
@@ -514,8 +514,10 @@ def admin_dashboard(request):
         return redirect('core:home')
 
     from matches.models import MatchResult
+    from teams.models import TransferWindow
 
     pending_applications = TournamentApplication.objects.filter(status='pending').count()
+    current_transfer_window = TransferWindow.objects.last()
 
     context = {
         'total_tournaments': Tournament.objects.count(),
@@ -527,8 +529,9 @@ def admin_dashboard(request):
         'total_fixtures': Fixture.objects.count(),
         'completed_fixtures': Fixture.objects.filter(status='completed').count(),
         'recent_tournaments': Tournament.objects.all()[:5],
-        'recent_pending_teams': Team.objects.filter(status='pending')[:5],
-        'recent_pending_results': MatchResult.objects.filter(status='pending')[:5],
+        'recent_pending_teams': Team.objects.filter(status='pending').select_related('captain')[:5],
+        'recent_pending_results': MatchResult.objects.filter(status='pending').select_related('fixture__home_team', 'fixture__away_team', 'fixture__league__tournament')[:5],
         'recent_applications': TournamentApplication.objects.filter(status='pending').select_related('team', 'tournament')[:5],
+        'transfer_window': current_transfer_window,
     }
     return render(request, 'tournaments/admin_dashboard.html', context)

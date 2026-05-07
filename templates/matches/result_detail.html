@@ -18,10 +18,10 @@
                 <div class="fw-bold">{{ result.fixture.home_team.name }}</div>
             </div>
             <div class="text-center">
-                <div style="font-family: 'Orbitron', sans-serif; font-size: 3rem; font-weight: 900; letter-spacing: 4px;">
-                    <span class="text-white">{{ result.home_score }}</span>
+                <div id="mainScoreDisplay" style="font-family: 'Orbitron', sans-serif; font-size: 3rem; font-weight: 900; letter-spacing: 4px;">
+                    <span class="text-white score-animate">{{ result.home_score }}</span>
                     <span class="text-muted mx-2" style="font-size: 1.5rem;">-</span>
-                    <span class="text-white">{{ result.away_score }}</span>
+                    <span class="text-white score-animate">{{ result.away_score }}</span>
                 </div>
                 <div class="text-accent small fw-bold text-uppercase mt-1">Full Time</div>
                 <div class="text-muted mt-1" style="font-size: 0.65rem;">Score auto-calculated from goals</div>
@@ -237,4 +237,33 @@
     .last-child-no-border:last-child { border-bottom: none !important; }
     .fw-900 { font-weight: 900; }
 </style>
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const messages = document.querySelectorAll('.alert-success');
+        let hasGoal = false;
+        messages.forEach(m => {
+            if (m.innerText.toLowerCase().includes('goal')) {
+                hasGoal = true;
+            }
+        });
+
+        if (hasGoal) {
+            // Trigger Confetti
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#00ff87', '#00d2ff', '#ffffff']
+            });
+
+            // Trigger Animation on Score
+            const scoreDisplay = document.getElementById('mainScoreDisplay');
+            if (scoreDisplay) {
+                scoreDisplay.classList.add('goal-animate');
+            }
+        }
+    });
+</script>
+{% endblock %}
 {% endblock %}

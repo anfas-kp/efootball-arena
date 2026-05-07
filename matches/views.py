@@ -657,7 +657,9 @@ def leaderboard(request):
             total_clean_sheets__gt=0, position='GK'
         ).order_by('-total_clean_sheets')[:20]
 
-    return render(request, 'matches/leaderboard.html', {
+    template_name = 'matches/leaderboard_partial.html' if request.headers.get('HX-Request') else 'matches/leaderboard.html'
+
+    return render(request, template_name, {
         'top_scorers': top_scorers,
         'top_assists': top_assists,
         'top_rated': top_rated,
@@ -693,30 +695,48 @@ def _sync_player_matches_played(team):
     team.players.all().update(matches_played=match_count)
 
 
-def _sync_player_stats(result):
-    """Recalculate player stats after result approval."""
-    # Sync matches_played for both teams
-    _sync_player_matches_played(result.fixture.home_team)
-    _sync_player_matches_played(result.fixture.away_team)
+from django.db import transaction
 
-    for goal in result.goals.all():
-        scorer = goal.scorer
-        scorer.total_goals = scorer.goals_scored.filter(result__status='approved').count()
-        scorer.save(update_fields=['total_goals'])
-        if goal.assist:
-            assister = goal.assist
-            assister.total_assists = assister.assists.filter(result__status='approved').count()
-            assister.save(update_fields=['total_assists'])
-    for card in result.cards.all():
-        player = card.player
+def _sync_player_stats(result):
+    """Recalculate player stats after result approval using optimized bulk updates."""
+    fixture = result.fixture
+    
+    # 1. Sync matches_played for both teams (Efficient bulk update)
+    _sync_player_matches_played(fixture.home_team)
+    _sync_player_matches_played(fixture.away_team)
+
+    # 2. Identify all unique players involved in this match's events
+    player_ids = set()
+    player_ids.update(result.goals.values_list('scorer_id', flat=True))
+    player_ids.update(result.goals.exclude(assist=None).values_list('assist_id', flat=True))
+    player_ids.update(result.cards.values_list('player_id', flat=True))
+    player_ids.update(result.ratings.values_list('player_id', flat=True))
+    player_ids.update(result.clean_sheets.values_list('player_id', flat=True))
+    
+    if not player_ids:
+        return
+
+    # 3. Fetch players and recalculate stats in a single transaction
+    players = Player.objects.filter(id__in=player_ids)
+    
+    for player in players:
+        # We recalculate from scratch to ensure data integrity
+        # Using .filter(...).count() is efficient on indexed FKs
+        player.total_goals = player.goals_scored.filter(result__status='approved').count()
+        player.total_assists = player.assists.filter(result__status='approved').count()
         player.total_red_cards = player.cards.filter(card_type='red', result__status='approved').count()
         player.total_yellow_cards = player.cards.filter(card_type='yellow', result__status='approved').count()
-        player.save(update_fields=['total_red_cards', 'total_yellow_cards'])
-    for pr in result.ratings.all():
-        player = pr.player
+        player.total_clean_sheets = player.clean_sheet_records.filter(result__status='approved').count()
+        
+        # Rating aggregation
         ratings = player.match_ratings.filter(result__status='approved')
         player.avg_rating = ratings.aggregate(avg=Avg('rating'))['avg'] or 0
-        player.save(update_fields=['avg_rating'])
+
+    # 4. Bulk update only the changed fields
+    Player.objects.bulk_update(players, [
+        'total_goals', 'total_assists', 'total_red_cards', 
+        'total_yellow_cards', 'total_clean_sheets', 'avg_rating'
+    ])
 
 
 def _sync_clean_sheet_stats(result):
@@ -751,8 +771,9 @@ def admin_verify_results(request):
 
 
 @login_required
+@transaction.atomic
 def admin_approve_result(request, pk):
-    """Approve a match result and sync player stats."""
+    """Approve a match result and sync player stats with atomic safety."""
     if not request.user.is_admin_user:
         messages.error(request, 'Access denied.')
         return redirect('core:home')
@@ -766,7 +787,7 @@ def admin_approve_result(request, pk):
     fixture.status = 'completed'
     fixture.save()
 
-    # Sync all stats
+    # Sync all stats (now optimized via bulk_update)
     _sync_player_stats(result)
     _sync_clean_sheet_stats(result)
 

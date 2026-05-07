@@ -20,7 +20,7 @@ class MatchResult(models.Model):
     submitted_by = models.ForeignKey(
         'accounts.User', on_delete=models.SET_NULL, null=True, related_name='submitted_results'
     )
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)
     admin_notes = models.TextField(blank=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
     verified_at = models.DateTimeField(null=True, blank=True)

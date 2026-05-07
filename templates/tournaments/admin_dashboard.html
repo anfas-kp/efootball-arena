@@ -95,6 +95,26 @@
 
         <!-- Activity Feed / Secondary Stats -->
         <div class="col-lg-4">
+            <!-- Transfer Window Toggle -->
+            <div class="glass-card mb-4 border-{% if transfer_window and transfer_window.is_active %}success{% else %}danger{% endif %} border-opacity-25 text-center">
+                <h5 class="section-title mb-3" style="font-size: 1rem;"><i class="fas fa-store me-2"></i>TRANSFER WINDOW</h5>
+                {% if transfer_window %}
+                    <div class="mb-3">
+                        <span class="badge bg-{% if transfer_window.is_active %}success{% else %}danger{% endif %} bg-opacity-25 text-{% if transfer_window.is_active %}success{% else %}danger{% endif %} border border-{% if transfer_window.is_active %}success{% else %}danger{% endif %} px-3 py-2">
+                            STATUS: {% if transfer_window.is_active %}OPEN{% else %}CLOSED{% endif %}
+                        </span>
+                    </div>
+                    <form method="post" action="{% url 'teams:admin_toggle_transfer_window' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-{% if transfer_window.is_active %}danger-glow{% else %}glow{% endif %} btn-sm w-100">
+                            {% if transfer_window.is_active %}Close Window{% else %}Open Window{% endif %}
+                        </button>
+                    </form>
+                {% else %}
+                    <p class="text-muted small mb-0">No transfer window created.</p>
+                {% endif %}
+            </div>
+
             <div class="glass-card mb-4 border-warning border-opacity-10">
                 <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-user-check me-2 text-warning"></i>NEW TEAMS</h5>
                 {% for t in recent_pending_teams %}

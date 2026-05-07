@@ -1,0 +1,255 @@
+<!-- Header -->
+<div id="leaderboard-header" hx-swap-oob="true">
+    <div>
+        <h1 class="display-5 fw-bold mb-1 font-orbitron text-accent">STATISTICAL <span class="text-white">LEADERS</span></h1>
+        <p class="text-muted mb-0 small text-uppercase fw-bold letter-spacing-1">
+            {% if selected_league %}{{ selected_league.tournament.name }} — {{ selected_league.name }}{% else %}All Leagues Combined{% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Top Scorers (Golden Boot) -->
+    <div class="col-lg-6">
+        <div class="leaderboard-card h-100">
+            <div class="leaderboard-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, rgba(255,170,0,0.12), rgba(255,100,0,0.05));">
+                <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;"><i class="fas fa-futbol me-2" style="color: #ffaa00;"></i>Top Goals</h5>
+                <button onclick="downloadGraphic('export-goals', 'top-scorers')" class="btn btn-sm btn-outline-secondary py-0 px-2 border-0 hover-text-white transition-all" style="font-size: 0.75rem;"><i class="fas fa-download me-1"></i> Image</button>
+            </div>
+            <div class="leaderboard-body">
+                {% for p in top_scorers %}
+                <div class="lb-row {% if forloop.first %}lb-row-highlight{% endif %} {% if not forloop.last %}lb-row-border{% endif %}">
+                    <div class="d-flex align-items-center gap-3 flex-grow-1">
+                        <span class="lb-rank {% if forloop.counter == 1 %}rank-gold{% elif forloop.counter == 2 %}rank-silver{% elif forloop.counter == 3 %}rank-bronze{% endif %}">{{ forloop.counter }}</span>
+                        {% if p.photo %}
+                        <img src="{{ p.photo.url }}" class="lb-avatar">
+                        {% else %}
+                        <div class="lb-avatar lb-avatar-placeholder" style="color: #ffaa00;">{{ p.name|first }}</div>
+                        {% endif %}
+                        <div class="lb-info">
+                            <div class="lb-name">{{ p.name }}</div>
+                            <div class="lb-meta">
+                                {% if p.team.logo %}<img src="{{ p.team.logo.url }}" class="lb-team-logo">{% endif %}
+                                <span>{{ p.team.name }}</span>
+                                {% if p.position %}<span class="lb-position">{{ p.position }}</span>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="lb-stat" style="color: #ffaa00;">{% if selected_league %}{{ p.league_goals }}{% else %}{{ p.total_goals }}{% endif %}</div>
+                        {% if user.is_authenticated and user.is_admin_user %}
+                        <div class="lb-actions d-flex gap-2 opacity-50" style="font-size: 0.85rem;">
+                            <a href="{% url 'teams:edit_player' p.pk %}?next={{ request.get_full_path|urlencode }}" class="text-info hover-text-white transition-all"><i class="fas fa-edit"></i></a>
+                            <form method="post" action="{% url 'teams:delete_player' p.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ p.name }} completely?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit" class="btn btn-link p-0 text-danger hover-text-white transition-all border-0"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4"><p class="text-muted small mb-0">No goals recorded yet.</p></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Assists (Playmaker) -->
+    <div class="col-lg-6">
+        <div class="leaderboard-card h-100">
+            <div class="leaderboard-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, rgba(0,180,255,0.12), rgba(0,100,255,0.05));">
+                <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;"><i class="fas fa-hands-helping me-2" style="color: #00b4ff;"></i>Top Assists</h5>
+                <button onclick="downloadGraphic('export-assists', 'top-assists')" class="btn btn-sm btn-outline-secondary py-0 px-2 border-0 hover-text-white transition-all" style="font-size: 0.75rem;"><i class="fas fa-download me-1"></i> Image</button>
+            </div>
+            <div class="leaderboard-body">
+                {% for p in top_assists %}
+                <div class="lb-row {% if forloop.first %}lb-row-highlight{% endif %} {% if not forloop.last %}lb-row-border{% endif %}">
+                    <div class="d-flex align-items-center gap-3 flex-grow-1">
+                        <span class="lb-rank {% if forloop.counter == 1 %}rank-gold{% elif forloop.counter == 2 %}rank-silver{% elif forloop.counter == 3 %}rank-bronze{% endif %}">{{ forloop.counter }}</span>
+                        {% if p.photo %}
+                        <img src="{{ p.photo.url }}" class="lb-avatar">
+                        {% else %}
+                        <div class="lb-avatar lb-avatar-placeholder" style="color: #00b4ff;">{{ p.name|first }}</div>
+                        {% endif %}
+                        <div class="lb-info">
+                            <div class="lb-name">{{ p.name }}</div>
+                            <div class="lb-meta">
+                                {% if p.team.logo %}<img src="{{ p.team.logo.url }}" class="lb-team-logo">{% endif %}
+                                <span>{{ p.team.name }}</span>
+                                {% if p.position %}<span class="lb-position">{{ p.position }}</span>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="lb-stat" style="color: #00b4ff;">{% if selected_league %}{{ p.league_assists }}{% else %}{{ p.total_assists }}{% endif %}</div>
+                        {% if user.is_authenticated and user.is_admin_user %}
+                        <div class="lb-actions d-flex gap-2 opacity-50" style="font-size: 0.85rem;">
+                            <a href="{% url 'teams:edit_player' p.pk %}?next={{ request.get_full_path|urlencode }}" class="text-info hover-text-white transition-all"><i class="fas fa-edit"></i></a>
+                            <form method="post" action="{% url 'teams:delete_player' p.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ p.name }} completely?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit" class="btn btn-link p-0 text-danger hover-text-white transition-all border-0"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4"><p class="text-muted small mb-0">No assists recorded yet.</p></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Highest Rated -->
+    <div class="col-lg-6">
+        <div class="leaderboard-card h-100">
+            <div class="leaderboard-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, rgba(255,200,0,0.12), rgba(255,150,0,0.05));">
+                <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;"><i class="fas fa-star me-2" style="color: #ffc800;"></i>Highest Rated</h5>
+                <button onclick="downloadGraphic('export-ratings', 'top-rated')" class="btn btn-sm btn-outline-secondary py-0 px-2 border-0 hover-text-white transition-all" style="font-size: 0.75rem;"><i class="fas fa-download me-1"></i> Image</button>
+            </div>
+            <div class="leaderboard-body">
+                {% for p in top_rated %}
+                <div class="lb-row {% if forloop.first %}lb-row-highlight{% endif %} {% if not forloop.last %}lb-row-border{% endif %}">
+                    <div class="d-flex align-items-center gap-3 flex-grow-1">
+                        <span class="lb-rank {% if forloop.counter == 1 %}rank-gold{% elif forloop.counter == 2 %}rank-silver{% elif forloop.counter == 3 %}rank-bronze{% endif %}">{{ forloop.counter }}</span>
+                        {% if p.photo %}
+                        <img src="{{ p.photo.url }}" class="lb-avatar">
+                        {% else %}
+                        <div class="lb-avatar lb-avatar-placeholder" style="color: #ffc800;">{{ p.name|first }}</div>
+                        {% endif %}
+                        <div class="lb-info">
+                            <div class="lb-name">{{ p.name }}</div>
+                            <div class="lb-meta">
+                                {% if p.team.logo %}<img src="{{ p.team.logo.url }}" class="lb-team-logo">{% endif %}
+                                <span>{{ p.team.name }}</span>
+                                {% if p.position %}<span class="lb-position">{{ p.position }}</span>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="lb-stat" style="color: #ffc800;">{% if selected_league %}{{ p.league_avg_rating|floatformat:1 }}{% else %}{{ p.avg_rating|floatformat:1 }}{% endif %}</div>
+                        {% if user.is_authenticated and user.is_admin_user %}
+                        <div class="lb-actions d-flex gap-2 opacity-50" style="font-size: 0.85rem;">
+                            <a href="{% url 'teams:edit_player' p.pk %}?next={{ request.get_full_path|urlencode }}" class="text-info hover-text-white transition-all"><i class="fas fa-edit"></i></a>
+                            <form method="post" action="{% url 'teams:delete_player' p.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ p.name }} completely?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit" class="btn btn-link p-0 text-danger hover-text-white transition-all border-0"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4"><p class="text-muted small mb-0">No ratings evaluated yet.</p></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Golden Glove (Clean Sheets) -->
+    <div class="col-lg-6">
+        <div class="leaderboard-card h-100">
+            <div class="leaderboard-header" style="background: linear-gradient(135deg, rgba(0,200,100,0.12), rgba(0,150,80,0.05));">
+                <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;"><i class="fas fa-shield-alt me-2" style="color: #00c864;"></i>Golden Glove</h5>
+            </div>
+            <div class="leaderboard-body">
+                {% for p in top_clean_sheets %}
+                <div class="lb-row {% if forloop.first %}lb-row-highlight{% endif %} {% if not forloop.last %}lb-row-border{% endif %}">
+                    <div class="d-flex align-items-center gap-3 flex-grow-1">
+                        <span class="lb-rank {% if forloop.counter == 1 %}rank-gold{% elif forloop.counter == 2 %}rank-silver{% elif forloop.counter == 3 %}rank-bronze{% endif %}">{{ forloop.counter }}</span>
+                        {% if p.photo %}
+                        <img src="{{ p.photo.url }}" class="lb-avatar">
+                        {% else %}
+                        <div class="lb-avatar lb-avatar-placeholder" style="color: #00c864;">{{ p.name|first }}</div>
+                        {% endif %}
+                        <div class="lb-info">
+                            <div class="lb-name">{{ p.name }}</div>
+                            <div class="lb-meta">
+                                {% if p.team.logo %}<img src="{{ p.team.logo.url }}" class="lb-team-logo">{% endif %}
+                                <span>{{ p.team.name }}</span>
+                                <span class="lb-position" style="color: #00c864; border-color: rgba(0,200,100,0.3);">GK</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="lb-stat" style="color: #00c864;">{% if selected_league %}{{ p.league_clean_sheets }}{% else %}{{ p.total_clean_sheets }}{% endif %}</div>
+                        {% if user.is_authenticated and user.is_admin_user %}
+                        <div class="lb-actions d-flex gap-2 opacity-50" style="font-size: 0.85rem;">
+                            <a href="{% url 'teams:edit_player' p.pk %}?next={{ request.get_full_path|urlencode }}" class="text-info hover-text-white transition-all"><i class="fas fa-edit"></i></a>
+                            <form method="post" action="{% url 'teams:delete_player' p.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ p.name }} completely?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit" class="btn btn-link p-0 text-danger hover-text-white transition-all border-0"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4"><p class="text-muted small mb-0">No clean sheets recorded yet.</p></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Disciplinary Record -->
+    <div class="col-lg-12">
+        <div class="leaderboard-card">
+            <div class="leaderboard-header" style="background: linear-gradient(135deg, rgba(255,60,60,0.12), rgba(200,0,0,0.05));">
+                <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;"><i class="fas fa-gavel me-2" style="color: #ff4444;"></i>Disciplinary Record</h5>
+            </div>
+            <div class="leaderboard-body">
+                <div class="row">
+                {% for p in most_cards %}
+                <div class="col-lg-6">
+                    <div class="lb-row {% if not forloop.last %}lb-row-border{% endif %}">
+                        <div class="d-flex align-items-center gap-3 flex-grow-1">
+                            <span class="lb-rank">{{ forloop.counter }}</span>
+                            {% if p.photo %}
+                            <img src="{{ p.photo.url }}" class="lb-avatar">
+                            {% else %}
+                            <div class="lb-avatar lb-avatar-placeholder" style="color: #ff4444;">{{ p.name|first }}</div>
+                            {% endif %}
+                            <div class="lb-info">
+                                <div class="lb-name">{{ p.name }}</div>
+                                <div class="lb-meta">
+                                    {% if p.team.logo %}<img src="{{ p.team.logo.url }}" class="lb-team-logo">{% endif %}
+                                    <span>{{ p.team.name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-3 align-items-center">
+                            <div class="d-flex gap-2 align-items-center">
+                                {% if selected_league %}
+                                    {% if p.league_yellow_cards %}<span class="card-badge card-yellow">{{ p.league_yellow_cards }}</span>{% endif %}
+                                    {% if p.league_red_cards %}<span class="card-badge card-red">{{ p.league_red_cards }}</span>{% endif %}
+                                {% else %}
+                                    {% if p.total_yellow_cards %}<span class="card-badge card-yellow">{{ p.total_yellow_cards }}</span>{% endif %}
+                                    {% if p.total_red_cards %}<span class="card-badge card-red">{{ p.total_red_cards }}</span>{% endif %}
+                                {% endif %}
+                            </div>
+                            {% if user.is_authenticated and user.is_admin_user %}
+                            <div class="lb-actions d-flex gap-2 opacity-50" style="font-size: 0.85rem;">
+                                <a href="{% url 'teams:edit_player' p.pk %}?next={{ request.get_full_path|urlencode }}" class="text-info hover-text-white transition-all"><i class="fas fa-edit"></i></a>
+                                <form method="post" action="{% url 'teams:delete_player' p.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ p.name }} completely?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" class="btn btn-link p-0 text-danger hover-text-white transition-all border-0"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-4"><p class="text-muted small mb-0">No cards recorded.</p></div>
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -30,7 +30,11 @@
                             {% endif %}
                             <div>
                                 <div class="fw-bold text-white mb-0">{{ t.name }} <span class="badge-status badge-{{ t.status }} ms-2" style="font-size: 0.55rem;">{{ t.get_status_display }}</span></div>
-                                <div class="text-muted small">Captain: {{ t.captain.username }} · {{ t.player_count }} Players · {{ t.get_platform_display }}</div>
+                                <div class="text-muted small mb-1">Captain: {{ t.captain.username }} · {{ t.player_count }} Players · {{ t.get_platform_display }}</div>
+                                <div class="text-muted x-small">
+                                    <span class="text-accent me-2">Budget: ${{ t.budget|floatformat:0 }}</span>
+                                    <span class="{% if t.remaining_budget < 0 %}text-danger{% else %}text-success{% endif %}">Balance: ${{ t.remaining_budget|floatformat:0 }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>

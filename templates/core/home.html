@@ -76,7 +76,7 @@
             <a href="{% url 'tournaments:tournament_list' %}" class="text-accent text-decoration-none small fw-bold">VIEW ALL <i class="fas fa-chevron-right ms-1"></i></a>
         </div>
         
-        <div class="row g-4">
+        <div class="row g-4 scroll-snap-x">
             {% for t in active_tournaments %}
             <div class="col-md-6 col-lg-4">
                 <div class="glass-card h-100 p-0 overflow-hidden">

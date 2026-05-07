@@ -94,6 +94,20 @@
                     </div>
 
                     <div class="mt-4 pt-3 border-top border-white border-opacity-5">
+                        <!-- H2H Stats -->
+                        {% with h2h=f.h2h_stats %}
+                        {% if h2h.total > 0 %}
+                        <div class="h2h-box mb-3 p-2 rounded" style="background: rgba(0,0,0,0.2); font-size: 0.7rem; text-align: center;">
+                            <div class="text-accent fw-bold text-uppercase mb-1" style="letter-spacing: 1px;"><i class="fas fa-history me-1"></i> Head-to-Head (Last {{ h2h.total }})</div>
+                            <div class="d-flex justify-content-between text-muted px-3">
+                                <span>{{ f.home_team.name|truncatechars:8 }} W: <strong class="text-white">{{ h2h.home_wins }}</strong></span>
+                                <span>Draws: <strong class="text-white">{{ h2h.draws }}</strong></span>
+                                <span>{{ f.away_team.name|truncatechars:8 }} W: <strong class="text-white">{{ h2h.away_wins }}</strong></span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+                        
                         {% if f.status == 'completed' and f.result %}
                             <a href="{% url 'matches:result_detail' f.result.pk %}" class="btn-outline-glow w-100 justify-content-center py-2" style="font-size: 0.8rem;">
                                 <i class="fas fa-info-circle me-1"></i> Match Details

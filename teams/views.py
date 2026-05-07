@@ -5,12 +5,16 @@ from django.contrib import messages
 from django.db import IntegrityError
 from django.db.models import Sum, Max, Q
 from django.utils.text import slugify
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 import random
 import string
-from .models import Team, Player
+from .models import Team, Player, Trophy, TransferWindow, TransferRequest, TransferHistory
 from .forms import TeamForm, PlayerForm
 
+def player_card(request, pk):
+    """View to generate an E-Sports style Player Card."""
+    player = get_object_or_404(Player, pk=pk)
+    return render(request, 'teams/player_card.html', {'player': player})
 
 @login_required
 def register_team(request):
@@ -349,3 +353,157 @@ def admin_add_player(request, team_pk):
         'team': team,
         'is_admin': True
     })
+
+# ===== Transfer System Views =====
+
+@login_required
+def transfer_hub(request):
+    """Transfer Market Dashboard"""
+    window = TransferWindow.objects.filter(is_active=True).first()
+    
+    # All players
+    players = Player.objects.filter(is_active=True).select_related('team')
+    
+    incoming_requests = []
+    outgoing_requests = []
+    user_team = getattr(request.user, 'team', None)
+    
+    if user_team:
+        incoming_requests = user_team.incoming_transfers.all()
+        outgoing_requests = user_team.outgoing_transfers.all()
+        
+    admin_pending = TransferRequest.objects.filter(status='CURRENT_CAPTAIN_APPROVED') if request.user.is_admin_user else []
+        
+    return render(request, 'teams/transfer_hub.html', {
+        'window': window,
+        'players': players,
+        'user_team': user_team,
+        'incoming_requests': incoming_requests,
+        'outgoing_requests': outgoing_requests,
+        'admin_pending': admin_pending,
+    })
+
+@login_required
+def request_transfer(request, player_id):
+    """Initiate a transfer request."""
+    if request.method != 'POST':
+        return redirect('teams:transfer_hub')
+        
+    window = TransferWindow.objects.filter(is_active=True).first()
+    if not window:
+        messages.error(request, 'Transfer window is closed.')
+        return redirect('teams:transfer_hub')
+        
+    user_team = getattr(request.user, 'team', None)
+    if not user_team:
+        messages.error(request, 'Only team captains can request transfers.')
+        return redirect('teams:transfer_hub')
+        
+    player = get_object_or_404(Player, pk=player_id)
+    if player.team == user_team:
+        messages.error(request, 'Player is already on your team.')
+        return redirect('teams:transfer_hub')
+        
+    fee = request.POST.get('fee', 0)
+    
+    # Check for active request
+    if TransferRequest.objects.filter(player=player, to_team=user_team, status__in=['PENDING', 'CURRENT_CAPTAIN_APPROVED']).exists():
+        messages.warning(request, 'You already have an active request for this player.')
+        return redirect('teams:transfer_hub')
+        
+    TransferRequest.objects.create(
+        player=player,
+        from_team=player.team,
+        to_team=user_team,
+        requested_by=request.user,
+        transfer_fee=fee,
+        new_captain_approved=True
+    )
+    
+    messages.success(request, f'Transfer request sent for {player.name}!')
+    return redirect('teams:transfer_hub')
+
+@login_required
+def transfer_action(request, request_id, action):
+    """Approve or reject transfer."""
+    transfer = get_object_or_404(TransferRequest, pk=request_id)
+    user_team = getattr(request.user, 'team', None)
+    
+    if action == 'reject':
+        if request.user.is_admin_user or user_team == transfer.from_team or user_team == transfer.to_team:
+            transfer.status = 'REJECTED'
+            transfer.save()
+            messages.info(request, 'Transfer request rejected.')
+        return redirect('teams:transfer_hub')
+        
+    if action == 'approve':
+        if user_team == transfer.from_team and transfer.status == 'PENDING':
+            transfer.current_captain_approved = True
+            transfer.status = 'CURRENT_CAPTAIN_APPROVED'
+            transfer.save()
+            messages.success(request, 'You approved the transfer. Awaiting Admin final approval.')
+            
+        elif request.user.is_admin_user and transfer.status == 'CURRENT_CAPTAIN_APPROVED':
+            buyer = transfer.to_team
+            seller = transfer.from_team
+            fee = transfer.transfer_fee
+            
+            buyer.budget -= fee
+            seller.budget += fee
+            buyer.save()
+            seller.save()
+            
+            player = transfer.player
+            player.team = buyer
+            player.save()
+            
+            transfer.admin_approved = True
+            transfer.status = 'COMPLETED'
+            transfer.save()
+            
+            TransferHistory.objects.create(player=player, from_team=seller, to_team=buyer, transfer_fee=fee)
+            messages.success(request, f'Transfer of {player.name} completed successfully.')
+            
+    return redirect('teams:transfer_hub')
+
+@login_required
+def admin_toggle_transfer_window(request):
+    """Admin action to open/close the latest transfer window."""
+    if not request.user.is_admin_user:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+        
+    window = TransferWindow.objects.last()
+    if not window:
+        messages.error(request, 'No transfer windows exist. Please create one in the Admin Panel first.')
+    else:
+        window.is_active = not window.is_active
+        window.save()
+        status = 'OPENED' if window.is_active else 'CLOSED'
+        messages.success(request, f'Transfer Window {status} successfully.')
+        
+    return redirect(request.META.get('HTTP_REFERER', 'tournaments:admin_dashboard'))
+
+@login_required
+def api_notifications(request):
+    """Returns JSON payload with user notifications for JS polling."""
+    data = {'transfers': 0, 'results': 0, 'messages': []}
+    
+    if not hasattr(request.user, 'team'):
+        return JsonResponse(data)
+        
+    team = request.user.team
+    
+    # Check pending incoming transfers
+    pending_transfers = TransferRequest.objects.filter(
+        from_team=team, 
+        status='PENDING'
+    ).count()
+    
+    if pending_transfers > 0:
+        data['transfers'] = pending_transfers
+        data['messages'].append(f'You have {pending_transfers} pending transfer requests.')
+        
+    # We can also check pending match results that require approval if needed.
+    
+    return JsonResponse(data)

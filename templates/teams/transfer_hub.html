@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+{% block title %}Transfer Hub - eFootball Arena{% endblock %}
+{% block content %}
+{% if not window %}
+<!-- Ultra Premium Closed Window Experience -->
+<div id="transfer-closed-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1000; background: #000; overflow: hidden;">
+    <canvas id="webgl-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;"></canvas>
+    
+    <div class="ui-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
+        <div class="glassmorphism-card" style="background: rgba(10, 15, 25, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(0, 255, 255, 0.1); padding: 4rem; border-radius: 24px; box-shadow: 0 0 40px rgba(0, 255, 255, 0.05), inset 0 0 20px rgba(255, 255, 255, 0.02); text-align: center; max-width: 600px; transform: translateY(20px); opacity: 0;" id="premium-card">
+            <h1 class="display-4 fw-bold font-orbitron mb-3" style="color: #fff; text-shadow: 0 0 20px rgba(0, 255, 255, 0.5); letter-spacing: 2px;" id="premium-title">
+                TRANSFER WINDOW<br><span style="color: #00ffff;">OPENS SOON</span>
+            </h1>
+            <p class="text-muted mb-4" style="font-size: 1.1rem; letter-spacing: 1px;" id="premium-subtitle">Negotiations are currently locked by league management. The market will reopen shortly.</p>
+            
+            <div class="pulse-indicator" style="display: inline-flex; align-items: center; gap: 10px; background: rgba(0, 255, 255, 0.1); padding: 8px 16px; border-radius: 50px; border: 1px solid rgba(0, 255, 255, 0.2);">
+                <div class="dot" style="width: 8px; height: 8px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 10px #00ffff; animation: pulse 1.5s infinite;"></div>
+                <span style="color: #00ffff; font-size: 0.8rem; font-weight: bold; letter-spacing: 2px;">SYSTEM LOCKED</span>
+            </div>
+        </div>
+        
+        <a href="{% url 'core:home' %}" class="btn-outline-glow mt-5" style="pointer-events: auto; opacity: 0; background: rgba(0,0,0,0.5); border-color: #00ffff; color: #00ffff; text-decoration: none;" id="premium-btn">RETURN TO DASHBOARD</a>
+    </div>
+</div>
+
+<style>
+@keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.5; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.5; }
+}
+body { overflow: hidden; }
+.navbar { display: none !important; }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+    // WebGL Fluid & Three.js Core Experience
+    const canvas = document.getElementById('webgl-canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x050510, 0.002);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 30;
+
+    // Centerpiece
+    const geometry = new THREE.IcosahedronGeometry(10, 1);
+    const material = new THREE.MeshStandardMaterial({
+        color: 0x00ffff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.8,
+        emissive: 0x0088ff,
+        emissiveIntensity: 0.5
+    });
+    
+    const coreGeo = new THREE.IcosahedronGeometry(7, 2);
+    const coreMat = new THREE.MeshPhongMaterial({
+        color: 0x0055ff,
+        emissive: 0x002288,
+        shininess: 100
+    });
+
+    const outerMesh = new THREE.Mesh(geometry, material);
+    const innerMesh = new THREE.Mesh(coreGeo, coreMat);
+    scene.add(outerMesh);
+    scene.add(innerMesh);
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0x111122));
+    const pointLight = new THREE.PointLight(0x00ffff, 2, 100);
+    pointLight.position.set(0, 0, 0);
+    scene.add(pointLight);
+
+    // Particle System
+    const particlesGeo = new THREE.BufferGeometry();
+    const particlesCount = 2000;
+    const posArray = new Float32Array(particlesCount * 3);
+    for(let i=0; i < particlesCount * 3; i++) {
+        posArray[i] = (Math.random() - 0.5) * 100;
+    }
+    particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    const particlesMat = new THREE.PointsMaterial({
+        size: 0.2,
+        color: 0x00ffff,
+        transparent: true,
+        opacity: 0.6,
+        blending: THREE.AdditiveBlending
+    });
+    const particlesMesh = new THREE.Points(particlesGeo, particlesMat);
+    scene.add(particlesMesh);
+
+    let mouseX = 0;
+    let mouseY = 0;
+    let targetX = 0;
+    let targetY = 0;
+
+    document.addEventListener('mousemove', (event) => {
+        mouseX = (event.clientX - window.innerWidth / 2);
+        mouseY = (event.clientY - window.innerHeight / 2);
+    });
+
+    const clock = new THREE.Clock();
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const elapsedTime = clock.getElapsedTime();
+
+        targetX = mouseX * 0.001;
+        targetY = mouseY * 0.001;
+        
+        outerMesh.rotation.y += 0.005;
+        outerMesh.rotation.x += 0.002;
+        
+        innerMesh.rotation.y -= 0.01;
+        innerMesh.rotation.z += 0.005;
+
+        particlesMesh.rotation.y += 0.001;
+        particlesMesh.rotation.x += 0.0005;
+        
+        outerMesh.position.y = Math.sin(elapsedTime) * 1.5;
+        innerMesh.position.y = Math.sin(elapsedTime) * 1.5;
+
+        scene.rotation.x += 0.05 * (targetY - scene.rotation.x);
+        scene.rotation.y += 0.05 * (targetX - scene.rotation.y);
+
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // GSAP Reveal
+    gsap.to("#premium-card", { y: 0, opacity: 1, duration: 1.5, ease: "power3.out", delay: 0.5 });
+    gsap.to("#premium-btn", { opacity: 1, duration: 1, ease: "power2.inOut", delay: 1.5 });
+</script>
+
+{% else %}
+
+<div class="container" style="padding-bottom: 50px;">
+    <!-- Transfer Window Status -->
+    <div class="glass-card mb-5 text-center p-5 border-success border-opacity-50">
+        <h1 class="display-5 fw-bold font-orbitron mb-2 text-success">
+            TRANSFER WINDOW OPEN
+        </h1>
+        <p class="text-white mb-0">Season: <span class="text-accent">{{ window.season }}</span></p>
+        <p class="text-muted small">Closes: {{ window.end_date|date:"F j, Y, g:i a" }}</p>
+    </div>
+
+    <!-- Active Requests for user -->
+    {% if user_team and window %}
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="glass-card h-100 border-info border-opacity-25">
+                <h5 class="section-title mb-4"><i class="fas fa-arrow-right me-2 text-info"></i>OUTGOING REQUESTS</h5>
+                {% for req in outgoing_requests %}
+                <div class="p-3 mb-2 bg-secondary bg-opacity-10 border border-white border-opacity-10 rounded">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong class="text-white">{{ req.player.name }}</strong>
+                        <span class="badge-status badge-{{ req.status|lower }}">{{ req.get_status_display }}</span>
+                    </div>
+                    <div class="small text-muted mb-2">Target Team: <span class="text-white">{{ req.to_team.name }}</span></div>
+                    <div class="small text-muted mb-2">Fee: <span class="text-success font-orbitron fw-bold">${{ req.transfer_fee|floatformat:0 }}</span></div>
+                    
+                    {% if req.status == 'PENDING' %}
+                    <div class="d-flex gap-2 mt-2">
+                        <form method="post" action="{% url 'teams:transfer_action' req.id 'approve' %}" class="flex-grow-1">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-glow btn-sm w-100">Approve</button>
+                        </form>
+                        <form method="post" action="{% url 'teams:transfer_action' req.id 'reject' %}" class="flex-grow-1">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-danger-glow btn-sm w-100">Reject</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="empty-state-container py-5">
+                    <i class="fas fa-paper-plane empty-state-icon"></i>
+                    <h6 class="empty-state-title">No Outgoing Offers</h6>
+                    <p class="empty-state-text mb-0">You haven't made any transfer offers yet. Browse the market below to find talent.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="glass-card h-100 border-warning border-opacity-25">
+                <h5 class="section-title mb-4"><i class="fas fa-arrow-left me-2 text-warning"></i>INCOMING REQUESTS</h5>
+                {% for req in incoming_requests %}
+                <div class="p-3 mb-2 bg-secondary bg-opacity-10 border border-white border-opacity-10 rounded">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong class="text-white">{{ req.player.name }}</strong>
+                        <span class="badge-status badge-{{ req.status|lower }}">{{ req.get_status_display }}</span>
+                    </div>
+                    <div class="small text-muted mb-2">From Team: <span class="text-white">{{ req.from_team.name }}</span></div>
+                    <div class="small text-muted">Fee Offered: <span class="text-success font-orbitron fw-bold">${{ req.transfer_fee|floatformat:0 }}</span></div>
+                    
+                    {% if req.status == 'PENDING' %}
+                        <div class="text-warning small mt-2"><i class="fas fa-hourglass-half me-1"></i>Awaiting Current Captain's Approval</div>
+                    {% elif req.status == 'CURRENT_CAPTAIN_APPROVED' %}
+                        <div class="text-info small mt-2"><i class="fas fa-check-circle me-1"></i>Awaiting Admin Final Approval</div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="empty-state-container py-5">
+                    <i class="fas fa-inbox empty-state-icon"></i>
+                    <h6 class="empty-state-title">No Incoming Bids</h6>
+                    <p class="empty-state-text mb-0">No teams have placed a bid for your players.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Admin Center -->
+    {% if user.is_admin_user and admin_pending %}
+    <div class="glass-card mb-5 border-danger border-opacity-50">
+        <h5 class="section-title mb-4"><i class="fas fa-gavel me-2 text-danger"></i>ADMIN APPROVAL CENTER</h5>
+        <div class="table-responsive">
+            <table class="table table-dark-custom">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Fee</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in admin_pending %}
+                    <tr>
+                        <td class="fw-bold">{{ req.player.name }}</td>
+                        <td>{{ req.from_team.name }}</td>
+                        <td>{{ req.to_team.name }}</td>
+                        <td class="text-success font-orbitron fw-bold">${{ req.transfer_fee|floatformat:0 }}</td>
+                        <td class="text-end">
+                            <form method="post" action="{% url 'teams:transfer_action' req.id 'approve' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-glow btn-sm py-1 px-3">Finalize</button>
+                            </form>
+                            <form method="post" action="{% url 'teams:transfer_action' req.id 'reject' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-danger-glow btn-sm py-1 px-3">Reject</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Transfer Market -->
+    <div class="glass-card">
+        <h2 class="section-title mb-4"><i class="fas fa-store me-2 text-accent"></i>TRANSFER <span class="text-white">MARKET</span></h2>
+        
+        <div class="table-responsive">
+            <table class="table table-dark-custom">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Current Team</th>
+                        <th>Position</th>
+                        <th>Market Value</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in players %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if p.photo_no_bg %}<img src="{{ p.photo_no_bg.url }}" style="height:40px;">{% endif %}
+                                <div class="fw-bold text-white">{{ p.name }}</div>
+                            </div>
+                        </td>
+                        <td>{{ p.team.name }}</td>
+                        <td><span class="badge-status badge-completed">{{ p.position|default:"-" }}</span></td>
+                        <td class="text-success font-orbitron fw-bold">${{ p.value|floatformat:0 }}</td>
+                        <td class="text-end">
+                            {% if window and user_team and p.team != user_team %}
+                                <button class="btn-glow btn-sm py-1 px-3" data-bs-toggle="modal" data-bs-target="#buyModal{{ p.id }}">Make Offer</button>
+                            {% else %}
+                                <button class="btn-outline-glow btn-sm py-1 px-3" disabled>Unavailable</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    <!-- Buy Modal -->
+                    <div class="modal fade" id="buyModal{{ p.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content glass-card border-accent border-opacity-25">
+                                <div class="modal-header border-0">
+                                    <h5 class="modal-title font-orbitron text-white">Transfer Request: {{ p.name }}</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="post" action="{% url 'teams:request_transfer' p.id %}">
+                                    {% csrf_token %}
+                                    <div class="modal-body text-start">
+                                        <p class="text-muted small mb-4">You are initiating a transfer request to <strong class="text-white">{{ p.team.name }}</strong> for <strong class="text-white">{{ p.name }}</strong>.</p>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label text-accent small fw-bold">Transfer Fee Offer ($)</label>
+                                            <input type="number" name="fee" class="form-control bg-dark text-white border-secondary" value="{{ p.value|floatformat:0 }}" min="0" {% if user_team %}max="{{ user_team.remaining_budget }}"{% endif %} required>
+                                            {% if user_team %}
+                                            <div class="form-text text-muted small mt-1">Your remaining budget: <span class="text-success font-orbitron">${{ user_team.remaining_budget|floatformat:0 }}</span></div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-0">
+                                        <button type="submit" class="btn-glow w-100">Send Offer</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}

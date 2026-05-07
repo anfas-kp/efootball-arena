@@ -22,14 +22,22 @@
                 </div>
             </div>
             
-            <div class="d-flex gap-3 text-center">
+            <div class="d-flex gap-3 text-center flex-wrap">
                 <div class="px-3">
                     <div class="h3 fw-bold mb-0 font-orbitron text-accent">{{ players|length }}</div>
                     <div class="x-small text-muted text-uppercase fw-bold">Squad Size</div>
                 </div>
                 <div class="px-3 border-start border-white border-opacity-10">
-                    <div class="h3 fw-bold mb-0 font-orbitron text-white">{{ team.captain.username|truncatechars:10 }}</div>
-                    <div class="x-small text-muted text-uppercase fw-bold">Captain</div>
+                    <div class="h3 fw-bold mb-0 font-orbitron text-white">${{ team.budget|floatformat:0 }}</div>
+                    <div class="x-small text-muted text-uppercase fw-bold">Budget</div>
+                </div>
+                <div class="px-3 border-start border-white border-opacity-10">
+                    <div class="h3 fw-bold mb-0 font-orbitron text-white">${{ team.total_player_value|floatformat:0 }}</div>
+                    <div class="x-small text-muted text-uppercase fw-bold">Squad Value</div>
+                </div>
+                <div class="px-3 border-start border-white border-opacity-10">
+                    <div class="h3 fw-bold mb-0 font-orbitron {% if team.remaining_budget < 0 %}text-danger{% else %}text-success{% endif %}">${{ team.remaining_budget|floatformat:0 }}</div>
+                    <div class="x-small text-muted text-uppercase fw-bold">Balance</div>
                 </div>
             </div>
         </div>
@@ -58,6 +66,7 @@
                         <th>Player Name</th>
                         <th>Gaming ID</th>
                         <th>Position</th>
+                        <th>Value</th>
                         <th class="text-end">Stats</th>
                     </tr>
                 </thead>
@@ -71,6 +80,9 @@
                         <td class="small text-muted">{{ p.gaming_id }}</td>
                         <td>
                             <span class="badge-status badge-completed" style="font-size: 0.6rem;">{{ p.get_position_display|default:"-" }}</span>
+                        </td>
+                        <td>
+                            <span class="text-success fw-bold font-orbitron">${{ p.value|floatformat:0 }}</span>
                         </td>
                         <td class="text-end">
                             <span class="text-accent small fw-bold">{{ p.total_goals }} Goals</span>

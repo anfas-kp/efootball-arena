@@ -1,57 +1,86 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="E-Football Tournament Management Platform - Organize, compete, and track your e-football tournaments">
+    <meta name="description"
+        content="E-Football Tournament Management Platform - Organize, compete, and track your e-football tournaments">
     <title>{% block title %}eFootball Arena{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap"
+        rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+
+<body class="{% if request.resolver_match.url_name == 'home' %}is-home{% endif %}" data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}"
+    data-notification-url="{% url 'teams:api_notifications' %}">
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark-custom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-arena fixed-top" id="mainNavbar">
         <div class="container">
             <a class="navbar-brand" href="{% url 'core:home' %}">
-                <i class="fas fa-gamepad me-2 text-accent"></i>eFOOTBALL <span class="text-white">ARENA</span>
+                <div class="logo-icon">
+                    <i class="fas fa-gamepad"></i>
+                </div>
+                <span>eFOOTBALL <span style="color: var(--accent-2);">ARENA</span></span>
             </a>
-            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+                <i class="fas fa-bars text-white"></i>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'core:home' %}">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'tournaments:tournament_list' %}">Tournaments</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'teams:team_list' %}">Teams</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'matches:result_list' %}">Results</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'matches:leaderboard' %}">Leaderboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'tournaments:all_standings' %}">Standings</a></li>
+            <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
+                <ul class="navbar-nav mx-auto gap-1">
+                    <li class="nav-item"><a class="nav-link px-3 {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'core:home' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link px-3" href="{% url 'tournaments:tournament_list' %}">Tournaments</a></li>
+                    <li class="nav-item"><a class="nav-link px-3" href="{% url 'teams:team_list' %}">Teams</a></li>
+                    <li class="nav-item"><a class="nav-link px-3" href="{% url 'matches:result_list' %}">Results</a></li>
+                    <li class="nav-item"><a class="nav-link px-3" href="{% url 'matches:leaderboard' %}">Leaderboard</a></li>
+                    <li class="nav-item"><a class="nav-link px-3" href="{% url 'tournaments:all_standings' %}">Standings</a></li>
+                    <li class="nav-item"><a class="nav-link px-3" href="{% url 'teams:transfer_hub' %}">Transfer Hub</a></li>
                     {% if user.is_authenticated and not user.is_admin_user %}
-                        <li class="nav-item"><a class="nav-link text-accent fw-bold" href="{% url 'teams:my_team' %}">My Team</a></li>
+                    <li class="nav-item"><a class="nav-link px-3" href="{% url 'teams:my_team' %}" style="color: var(--accent-2) !important;">My Team</a></li>
                     {% endif %}
                 </ul>
                 <div class="d-flex align-items-center gap-3">
                     {% if user.is_authenticated %}
-                        <div class="dropdown">
-                            <a class="btn-outline-glow dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user-circle me-1"></i> {{ user.username }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end border-0 shadow" style="background: var(--bg-card);">
-                                {% if user.is_admin_user %}
-                                    <li><a class="dropdown-item py-2" href="{% url 'tournaments:admin_dashboard' %}"><i class="fas fa-chart-line me-2 text-accent"></i>Admin Dashboard</a></li>
-                                {% else %}
-                                    <li><a class="dropdown-item py-2" href="{% url 'teams:my_team' %}"><i class="fas fa-shield-halved me-2 text-accent"></i>My Team</a></li>
-                                {% endif %}
-                                <li><hr class="dropdown-divider opacity-10"></li>
-                                <li><a class="dropdown-item py-2 text-danger" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
-                            </ul>
+                    <div class="dropdown">
+                        <div class="profile-pill dropdown-toggle" data-bs-toggle="dropdown">
+                            <div class="profile-avatar">
+                                {{ user.username|first|upper }}
+                            </div>
+                            <span class="text-white small fw-bold d-none d-sm-block">{{ user.username }}</span>
                         </div>
+                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end border-0 shadow-lg p-2"
+                            style="background: var(--bg-card); min-width: 200px; border: 1px solid var(--glass-border) !important;">
+                            {% if user.is_admin_user %}
+                            <li><a class="dropdown-item rounded-3 py-2" href="{% url 'tournaments:admin_dashboard' %}"><i
+                                         class="fas fa-chart-line me-2 text-accent-2"></i>Admin Dashboard</a></li>
+                            {% else %}
+                            <li><a class="dropdown-item rounded-3 py-2" href="{% url 'teams:my_team' %}"><i
+                                         class="fas fa-shield-halved me-2 text-accent-2"></i>My Team</a></li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider opacity-10"></li>
+                            <li>
+                                <form action="{% url 'accounts:logout' %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item rounded-3 py-2 text-danger">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
                     {% else %}
-                        <a class="nav-link" href="{% url 'accounts:login' %}">Login</a>
-                        <a class="btn-glow" href="{% url 'accounts:register' %}">Join Now</a>
+                    <a href="{% url 'accounts:login' %}" class="btn-outline-glow btn-sm px-4">Login</a>
+                    <a href="{% url 'accounts:register' %}" class="btn-glow btn-sm px-4">Join Now</a>
                     {% endif %}
                 </div>
             </div>
@@ -60,12 +89,13 @@
 
     <!-- Messages -->
     {% if messages %}
-    <div class="container" style="margin-top:100px; position: relative; z-index: 1050;">
+    <div class="container" style="position: relative; z-index: 1050;">
         {% for message in messages %}
         <div class="alert alert-custom alert-{{ message.tags }} alert-dismissible fade show shadow-lg" role="alert">
             <div class="d-flex align-items-center gap-3">
                 {% if message.tags == 'success' %}<i class="fas fa-check-circle text-accent"></i>
-                {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="fas fa-exclamation-circle text-accent-3"></i>
+                {% elif message.tags == 'error' or message.tags == 'danger' %}<i
+                    class="fas fa-exclamation-circle text-accent-3"></i>
                 {% else %}<i class="fas fa-info-circle text-info"></i>{% endif %}
                 <span class="fw-bold small">{{ message }}</span>
             </div>
@@ -94,6 +124,50 @@
         </div>
     </footer>
 
+    <!-- Toast Notification Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1060; margin-bottom: 70px;">
+        <div id="liveToast" class="toast glass-card border-accent border-opacity-50" role="alert" aria-live="assertive"
+            aria-atomic="true" data-bs-delay="5000">
+            <div class="toast-header bg-transparent border-0 text-white">
+                <i class="fas fa-bell text-accent me-2"></i>
+                <strong class="me-auto font-orbitron">Transfer Hub</strong>
+                <small class="text-muted">Just now</small>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+            <div class="toast-body text-light" id="toastMessage">
+                <!-- Message injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav d-md-none">
+        <a href="{% url 'core:home' %}" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="{% url 'tournaments:all_standings' %}" class="nav-item">
+            <i class="fas fa-trophy"></i>
+            <span>Standings</span>
+        </a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'teams:transfer_hub' %}" class="nav-item position-relative">
+            <i class="fas fa-exchange-alt"></i>
+            <span>Transfer Hub</span>
+        </a>
+        <a href="{% url 'teams:my_team' %}" class="nav-item">
+            <i class="fas fa-shield-alt"></i>
+            <span>My Team</span>
+        </a>
+        {% else %}
+        <a href="{% url 'accounts:login' %}" class="nav-item">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>Login</span>
+        </a>
+        {% endif %}
+    </nav>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Smooth scroll for anchors
@@ -105,7 +179,50 @@
                 });
             });
         });
+
+        // HTMX Loading States
+        document.body.addEventListener('htmx:beforeRequest', function (evt) {
+            document.body.classList.add('htmx-requesting');
+        });
+        document.body.addEventListener('htmx:afterRequest', function (evt) {
+            document.body.classList.remove('htmx-requesting');
+        });
+
+        const body = document.body;
+        const isAuthenticated = body.dataset.isAuthenticated === "true";
+        const notificationUrl = body.dataset.notificationUrl;
+
+        if (isAuthenticated && notificationUrl) {
+            // Lightweight Polling Engine for Real-Time notifications
+            let lastTransferCount = null;
+
+            function checkNotifications() {
+                fetch(notificationUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (lastTransferCount === null) {
+                            lastTransferCount = data.transfers;
+                        } else if (data.transfers > lastTransferCount) {
+                            // New transfer received
+                            document.getElementById('toastMessage').innerText = "New Transfer Activity! You have " + data.transfers + " pending incoming transfer requests.";
+                            const toastElement = document.getElementById('liveToast');
+                            const toast = new bootstrap.Toast(toastElement);
+                            toast.show();
+                            lastTransferCount = data.transfers;
+                        } else if (data.transfers < lastTransferCount) {
+                            // Transfer resolved
+                            lastTransferCount = data.transfers;
+                        }
+                    })
+                    .catch(error => console.log('Polling error:', error));
+            }
+
+            // Poll every 15 seconds
+            setInterval(checkNotifications, 15000);
+            setTimeout(checkNotifications, 2000);
+        }
     </script>
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>

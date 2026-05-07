@@ -2,7 +2,7 @@
 {% block title %}My Team - {{ team.name }}{% endblock %}
 {% block content %}
 
-<div class="container" style="margin-top: 100px; padding-bottom: 50px;">
+<div class="container" style="padding-bottom: 50px;">
     <!-- Team Header -->
     <div class="glass-card mb-4 overflow-hidden p-0">
         <div class="bg-secondary p-4 d-flex flex-wrap align-items-center justify-content-between gap-3 border-bottom border-white border-opacity-10">
@@ -52,6 +52,34 @@
     <div class="row g-4">
         <!-- Main Content -->
         <div class="col-lg-8">
+            <!-- Captain Onboarding -->
+            {% if not team.logo or players.count < 5 %}
+            <div class="glass-card mb-4 border-info border-opacity-50">
+                <h5 class="section-title mb-4 text-info"><i class="fas fa-clipboard-check me-2"></i>CAPTAIN ONBOARDING</h5>
+                <p class="text-muted small mb-4">Complete these steps to get your team ready for competitive play.</p>
+                <div class="d-flex flex-column gap-3">
+                    {% if not team.logo %}
+                    <div class="d-flex justify-content-between align-items-center p-3 bg-dark rounded border border-secondary border-opacity-25">
+                        <div>
+                            <i class="fas fa-image text-muted me-2"></i> <strong class="text-white">Upload Team Identity</strong>
+                            <div class="small text-muted mt-1">Upload a team logo for the leaderboards.</div>
+                        </div>
+                        <span class="badge bg-secondary">Pending</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if players.count < 5 %}
+                    <div class="d-flex justify-content-between align-items-center p-3 bg-dark rounded border border-secondary border-opacity-25">
+                        <div>
+                            <i class="fas fa-users text-muted me-2"></i> <strong class="text-white">Sign Players ({{ players.count }}/5)</strong>
+                            <div class="small text-muted mt-1">You need at least 5 players to compete.</div>
+                        </div>
+                        <a href="{% url 'teams:add_player' %}" class="btn-glow btn-sm">Add Players</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
             <!-- Performance Trend Chart -->
             {% if performance_data.labels %}
             <div class="glass-card mb-4 border-accent border-opacity-20">
@@ -242,6 +270,23 @@
             </div>
             {% endif %}
 
+            {% if team.trophies.exists %}
+            <div class="glass-card mb-4 border-warning border-opacity-50" style="border-width: 1px;">
+                <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-medal me-2" style="color: #d4af37;"></i>TROPHY CABINET</h5>
+                <div class="row g-2">
+                    {% for trophy in team.trophies.all %}
+                    <div class="col-6">
+                        <div class="p-3 text-center rounded bg-secondary bg-opacity-10 border border-white border-opacity-5 h-100 d-flex flex-column justify-content-center hover-lift">
+                            <i class="{{ trophy.icon }} fa-2x mb-2" style="--t-color: {{ trophy.color }}; color: var(--t-color); text-shadow: 0 0 10px var(--t-color);"></i>
+                            <div class="fw-bold text-white" style="font-size: 0.75rem;">{{ trophy.name }}</div>
+                            <div class="text-muted mt-1" style="font-size: 0.65rem;">{{ trophy.date_awarded|date:"Y" }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
             <div class="glass-card">
                 <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-info-circle me-2 text-accent"></i>TEAM DETAILS</h5>
                 <div class="small mb-3">
@@ -251,6 +296,18 @@
                 <div class="small mb-3">
                     <span class="text-muted d-block mb-1">Captain</span>
                     <span class="text-white">{{ team.captain.username }}</span>
+                </div>
+                <div class="small mb-3">
+                    <span class="text-muted d-block mb-1">Total Budget</span>
+                    <span class="text-white fw-bold font-orbitron">${{ team.budget|floatformat:0 }}</span>
+                </div>
+                <div class="small mb-3">
+                    <span class="text-muted d-block mb-1">Squad Value</span>
+                    <span class="text-white fw-bold font-orbitron">${{ team.total_player_value|floatformat:0 }}</span>
+                </div>
+                <div class="small mb-3">
+                    <span class="text-muted d-block mb-1">Remaining Balance</span>
+                    <span class="fw-bold font-orbitron {% if team.remaining_budget < 0 %}text-danger{% else %}text-success{% endif %}">${{ team.remaining_budget|floatformat:0 }}</span>
                 </div>
                 <div class="small mb-0">
                     <span class="text-muted d-block mb-1">Bio</span>
@@ -273,7 +330,22 @@
                     <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-4 border border-accent border-4 fw-bold text-accent h1" style="width: 120px; height: 120px;">{{ p.name|first }}</div>
                 {% endif %}
                 <h3 class="fw-bold mb-1">{{ p.name }}</h3>
-                <p class="text-accent small font-orbitron mb-4">#{{ p.jersey_number|default:"0" }} · {{ p.get_position_display }}</p>
+                <p class="text-accent small font-orbitron mb-2">#{{ p.jersey_number|default:"0" }} · {{ p.get_position_display }}</p>
+                <div class="mb-4">
+                    <span class="badge bg-success bg-opacity-25 border border-success text-success px-3 py-2 font-orbitron">
+                        Value: ${{ p.value|floatformat:0 }}
+                    </span>
+                </div>
+                
+                {% if p.badges.exists %}
+                <div class="d-flex justify-content-center flex-wrap gap-2 mb-4">
+                    {% for badge in p.badges.all %}
+                    <div class="badge bg-black bg-opacity-50 border border-warning border-opacity-50 px-3 py-2 text-white" title="{{ badge.name }}">
+                        <i class="{{ badge.icon }} me-1" style="--b-color: {{ badge.color }}; color: var(--b-color);"></i> {{ badge.name }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
                 
                 <div class="row g-2 mb-4">
                     <div class="col-6"><div class="stat-box p-2"><span class="number" style="font-size: 1.1rem;">{{ p.matches_played }}</span><span class="label" style="font-size: 0.6rem;">Matches</span></div></div>
@@ -288,7 +360,8 @@
                     <canvas id="playerChart{{ p.id }}" class="player-form-chart" data-ratings="{{ p.ratings_history|safe }}"></canvas>
                 </div>
                 
-                <button type="button" class="btn btn-outline-glow w-100 mt-4" data-bs-dismiss="modal">Close Profile</button>
+                <a href="{% url 'teams:player_card' p.pk %}" class="btn-glow w-100 mb-3"><i class="fas fa-id-card me-2"></i> View Player Card</a>
+                <button type="button" class="btn btn-outline-glow w-100" data-bs-dismiss="modal">Close Profile</button>
             </div>
         </div>
     </div>

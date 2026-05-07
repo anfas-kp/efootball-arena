@@ -142,9 +142,9 @@ class Fixture(models.Model):
     league = models.ForeignKey(League, on_delete=models.CASCADE, related_name='fixtures')
     home_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='home_fixtures')
     away_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='away_fixtures')
-    matchday = models.PositiveIntegerField(default=1)
+    matchday = models.PositiveIntegerField(default=1, db_index=True)
     match_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled', db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -152,3 +152,35 @@ class Fixture(models.Model):
 
     def __str__(self):
         return f"MD{self.matchday}: {self.home_team.name} vs {self.away_team.name}"
+
+    @property
+    def h2h_stats(self):
+        """Calculates Head-to-Head stats for the two teams in this fixture."""
+        from matches.models import MatchResult
+        
+        # Get all completed matches between these two teams
+        past_results = MatchResult.objects.filter(
+            status='approved'
+        ).filter(
+            models.Q(fixture__home_team=self.home_team, fixture__away_team=self.away_team) |
+            models.Q(fixture__home_team=self.away_team, fixture__away_team=self.home_team)
+        ).exclude(fixture=self) # Exclude the current fixture's result if it exists
+        
+        home_wins = 0
+        away_wins = 0
+        draws = 0
+        
+        for r in past_results:
+            if r.is_draw:
+                draws += 1
+            elif r.winner == self.home_team:
+                home_wins += 1
+            elif r.winner == self.away_team:
+                away_wins += 1
+                
+        return {
+            'home_wins': home_wins,
+            'away_wins': away_wins,
+            'draws': draws,
+            'total': past_results.count(),
+        }
