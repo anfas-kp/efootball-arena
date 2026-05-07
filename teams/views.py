@@ -475,7 +475,17 @@ def admin_toggle_transfer_window(request):
         
     window = TransferWindow.objects.last()
     if not window:
-        messages.error(request, 'No transfer windows exist. Please create one in the Admin Panel first.')
+        messages.error(request, 'No transfer windows exist. Creating a default one...')
+        from django.utils import timezone
+        from datetime import timedelta
+        now = timezone.now()
+        window = TransferWindow.objects.create(
+            season="Default Season",
+            start_date=now,
+            end_date=now + timedelta(days=30),
+            is_active=True
+        )
+        messages.success(request, 'Default Transfer Window created and opened!')
     else:
         window.is_active = not window.is_active
         window.save()
@@ -483,6 +493,27 @@ def admin_toggle_transfer_window(request):
         messages.success(request, f'Transfer Window {status} successfully.')
         
     return redirect(request.META.get('HTTP_REFERER', 'tournaments:admin_dashboard'))
+
+@login_required
+def admin_initialize_transfer_window(request):
+    """Explicitly create a new transfer window."""
+    if not request.user.is_admin_user:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+    
+    if request.method == 'POST':
+        from django.utils import timezone
+        from datetime import timedelta
+        now = timezone.now()
+        TransferWindow.objects.create(
+            season=request.POST.get('season', 'New Season'),
+            start_date=now,
+            end_date=now + timedelta(days=30),
+            is_active=True
+        )
+        messages.success(request, 'New Transfer Window initialized!')
+        
+    return redirect('tournaments:admin_dashboard')
 
 @login_required
 def api_notifications(request):

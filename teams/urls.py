@@ -24,6 +24,7 @@ urlpatterns = [
     path('transfers/request/<int:player_id>/', views.request_transfer, name='request_transfer'),
     path('transfers/action/<int:request_id>/<str:action>/', views.transfer_action, name='transfer_action'),
     path('admin/transfer-window/toggle/', views.admin_toggle_transfer_window, name='admin_toggle_transfer_window'),
+    path('admin/transfer-window/initialize/', views.admin_initialize_transfer_window, name='admin_initialize_transfer_window'),
     
     # API
     path('api/notifications/', views.api_notifications, name='api_notifications'),
