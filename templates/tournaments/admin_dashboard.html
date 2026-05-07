@@ -141,7 +141,7 @@
                 {% endfor %}
             </div>
 
-            <div class="glass-card border-danger border-opacity-10">
+            <div class="glass-card border-danger border-opacity-10 mb-4">
                 <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-file-invoice me-2 text-danger"></i>RECENT RESULTS</h5>
                 {% for r in recent_pending_results %}
                 <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom border-white border-opacity-5 last-child-no-border">
@@ -154,6 +154,18 @@
                 {% empty %}
                 <p class="text-muted small mb-0">No pending match results.</p>
                 {% endfor %}
+            </div>
+
+            <!-- System Maintenance -->
+            <div class="glass-card border-accent border-opacity-10">
+                <h5 class="section-title mb-3" style="font-size: 1rem;"><i class="fas fa-tools me-2 text-accent"></i>SYSTEM TOOLS</h5>
+                <p class="text-muted x-small mb-3">Force recalculate all player goals, assists, and clean sheets from scratch.</p>
+                <form method="post" action="{% url 'tournaments:admin_repair_stats' %}" onsubmit="return confirm('Are you sure? This will recalculate stats for EVERY player in the database.')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-accent btn-sm w-100 x-small fw-bold">
+                        <i class="fas fa-sync-alt me-2"></i>REPAIR ALL STATS
+                    </button>
+                </form>
             </div>
         </div>
     </div>

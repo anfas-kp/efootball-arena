@@ -535,3 +535,30 @@ def admin_dashboard(request):
         'transfer_window': current_transfer_window,
     }
     return render(request, 'tournaments/admin_dashboard.html', context)
+
+
+@login_required
+def admin_repair_stats(request):
+    """Admin tool to force-recalculate all player and team stats from scratch."""
+    if not request.user.is_admin_user:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    from django.db.models import Avg
+    from teams.models import Player
+    from matches.models import MatchResult
+
+    players = Player.objects.all()
+    for p in players:
+        p.total_goals = p.goals_scored.filter(result__status='approved').count()
+        p.total_assists = p.assists.filter(result__status='approved').count()
+        p.total_red_cards = p.cards.filter(card_type='red', result__status='approved').count()
+        p.total_yellow_cards = p.cards.filter(card_type='yellow', result__status='approved').count()
+        p.total_clean_sheets = p.clean_sheet_records.filter(result__status='approved').count()
+        
+        ratings = p.match_ratings.filter(result__status='approved')
+        p.avg_rating = ratings.aggregate(avg=Avg('rating'))['avg'] or 0
+        p.save()
+
+    messages.success(request, '⚙️ All player stats have been recalculated and repaired!')
+    return redirect('tournaments:admin_dashboard')
