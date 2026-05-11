@@ -184,7 +184,7 @@ def add_goal(request, result_pk):
 
             if result.status == 'approved':
                 from .tasks import sync_match_stats_task
-                sync_match_stats_task.delay(result.id)
+                sync_match_stats_task(result.id)
 
             messages.success(request, f'⚽ Goal by {goal.scorer.name} added! Score updated to {result.home_score}-{result.away_score}.')
             return redirect('matches:result_detail', pk=result_pk)
@@ -238,7 +238,7 @@ def add_card(request, result_pk):
             card.save()
             if result.status == 'approved':
                 from .tasks import sync_match_stats_task
-                sync_match_stats_task.delay(result.id)
+                sync_match_stats_task(result.id)
             emoji = '🟨' if card.card_type == 'yellow' else '🟥'
             messages.success(request, f'{emoji} {card.get_card_type_display()} for {card.player.name} added!')
             return redirect('matches:result_detail', pk=result_pk)
@@ -748,3 +748,21 @@ def admin_reject_result(request, pk):
         result.save()
         messages.success(request, f'❌ Result rejected.')
     return redirect('matches:admin_verify')
+
+
+def _sync_player_stats(result):
+    """Helper to sync all stats for a match result."""
+    from .tasks import sync_match_stats_task
+    sync_match_stats_task(result.id)
+
+
+def _sync_clean_sheet_stats(result):
+    """Helper to sync clean sheet stats for a match result."""
+    from .tasks import sync_match_stats_task
+    sync_match_stats_task(result.id)
+
+
+def _sync_clean_sheet_stats_for_player(player):
+    """Helper to sync clean sheets for a specific player."""
+    player.total_clean_sheets = player.clean_sheet_records.filter(result__status='approved').count()
+    player.save(update_fields=['total_clean_sheets'])
