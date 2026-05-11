@@ -14,8 +14,18 @@
                     {% csrf_token %}
                     {% for field in form %}
                     <div class="mb-3" id="div_{{ field.name }}">
-                        <label class="form-label">{{ field.label }}</label>
-                        {{ field }}
+                        {% if field.field.widget.input_type == 'checkbox' %}
+                            <div class="form-check form-switch p-0" style="margin-left: 0;">
+                                <label class="form-label d-block mb-2">{{ field.label }}</label>
+                                <div class="glass-card p-3 d-flex align-items-center justify-content-between">
+                                    <span class="text-muted small">Enable this option</span>
+                                    {{ field }}
+                                </div>
+                            </div>
+                        {% else %}
+                            <label class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                        {% endif %}
                         {% for e in field.errors %}<small class="text-danger d-block mt-1">{{ e }}</small>{% endfor %}
                         {% if field.help_text %}<small class="text-muted d-block mt-1">{{ field.help_text }}</small>{% endif %}
                     </div>

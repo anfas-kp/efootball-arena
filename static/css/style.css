@@ -314,18 +314,42 @@ a:hover { color: #fff; }
 
 /* ===== Forms ===== */
 input, select, textarea, .form-control, .form-select {
-  background: var(--bg-secondary) !important;
-  border: 1px solid #1F2937 !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #fff !important;
-  border-radius: var(--radius-sm) !important;
-  padding: 0.75rem 1rem !important;
-  font-size: 0.95rem;
-  transition: var(--transition);
+  border-radius: 10px !important;
+  padding: 12px 16px !important;
+  transition: all 0.3s ease !important;
 }
-input:focus, select:focus, textarea:focus, .form-control:focus, .form-select:focus {
-  border-color: var(--accent-2) !important;
-  box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.1) !important;
+
+.form-control:focus, .form-select:focus {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.2) !important;
   outline: none !important;
+}
+
+/* Premium Form Switch */
+.form-check-input {
+  cursor: pointer;
+  width: 3em !important;
+  height: 1.5em !important;
+  background-color: rgba(255,255,255,0.1) !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(255,255,255,0.5)'/%3e%3c/svg%3e") !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  transition: background-position 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+}
+
+.form-check-input:checked {
+  background-color: var(--accent-2) !important;
+  border-color: var(--accent-2) !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23000'/%3e%3c/svg%3e") !important;
+  box-shadow: 0 0 15px rgba(var(--accent-2-rgb), 0.4) !important;
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.25rem rgba(var(--accent-2-rgb), 0.25) !important;
+  border-color: var(--accent-2) !important;
 }
 .form-label {
   color: #F3F4F6;
@@ -774,11 +798,107 @@ body::before {
   to { transform: rotate(360deg); }
 }
 
-/* 6. Glowing Connectors for Brackets */
-.bracket-match-node::after, .bracket-match-node::before {
-  transition: all 0.6s ease;
+/* ===== Phase 5: Cinematic Bracket & Esports UX ===== */
+
+:root {
+  --gold-neon: #FFD700;
+  --gold-glow: rgba(255, 215, 0, 0.4);
+  --cyan-neon: #0FFCBE;
+  --cyan-glow: rgba(15, 252, 190, 0.4);
+  --path-active: var(--cyan-neon);
 }
-.bracket-match-node:hover::after, .bracket-match-node:hover::before {
-  background: #0FFCBE !important;
-  box-shadow: 0 0 10px #0FFCBE;
+
+/* 1. Glowing BYE Badge */
+.bye-badge {
+  background: linear-gradient(90deg, #B8860B, #FFD700);
+  color: #000;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  box-shadow: 0 0 10px var(--gold-glow);
+  animation: byePulse 2s infinite ease-in-out;
+  letter-spacing: 1px;
+}
+
+@keyframes byePulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 10px var(--gold-glow); }
+  50% { transform: scale(1.05); box-shadow: 0 0 20px var(--gold-glow); }
+}
+
+/* 2. Advanced Bracket Connectors & Tracing */
+.bracket-match-node {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.bracket-match-node::after, .bracket-match-node::before {
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bracket-match-node.active-path::after, 
+.bracket-match-node.active-path::before,
+.bracket-match-node:hover::after, 
+.bracket-match-node:hover::before {
+  background: var(--cyan-neon) !important;
+  box-shadow: 0 0 15px var(--cyan-glow);
+  z-index: 10;
+}
+
+/* 3. Match Card Upgrades */
+.bracket-match {
+  position: relative;
+  z-index: 2;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.bracket-match.winner-glow {
+  border-color: var(--cyan-neon) !important;
+  box-shadow: 0 0 25px var(--cyan-glow);
+}
+
+.bracket-match:hover {
+  border-color: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.05) !important;
+}
+
+/* 4. Progression Placeholders */
+.progression-placeholder {
+  font-style: italic;
+  opacity: 0.5;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-family: 'Inter', sans-serif;
+}
+
+/* 5. Bracket Legend & Tooltips */
+.bracket-info-card {
+  background: rgba(10, 15, 25, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-left: 4px solid var(--accent);
+}
+
+/* Mobile Swiper Layout */
+.bracket-container-mobile {
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2rem;
+}
+
+.bracket-container-mobile::-webkit-scrollbar {
+  height: 4px;
+}
+
+.bracket-container-mobile::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+}
+
+.bracket-container-mobile::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 10px;
 }

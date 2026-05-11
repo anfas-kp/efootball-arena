@@ -31,6 +31,14 @@ def get_second_leg(fixtures, fixture):
 def multiply(value, arg):
     """Multiplies the value by the argument."""
     try:
-        return float(value) * float(arg)
+        return int(float(value) * float(arg))
+    except (ValueError, TypeError):
+        return 0
+
+@register.filter
+def subtract(value, arg):
+    """Subtracts the argument from the value."""
+    try:
+        return int(float(value) - float(arg))
     except (ValueError, TypeError):
         return 0
