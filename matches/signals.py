@@ -1,6 +1,6 @@
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-from django.db.models import Avg
+from django.db.models import Avg, Sum
 from .models import Goal, Card, PlayerRating, CleanSheet, MatchResult
 from django.db.models import Q
 
@@ -55,8 +55,10 @@ def recalc_on_rating_delete(sender, instance, **kwargs):
     try:
         player = instance.player
         ratings = player.match_ratings.filter(result__status='approved')
-        player.avg_rating = ratings.aggregate(avg=Avg('rating'))['avg'] or 0
-        player.save(update_fields=['avg_rating'])
+        stats = ratings.aggregate(avg=Avg('rating'), total=Sum('rating'))
+        player.avg_rating = stats['avg'] or 0
+        player.total_rating = stats['total'] or 0
+        player.save(update_fields=['avg_rating', 'total_rating'])
     except Exception:
         pass
 

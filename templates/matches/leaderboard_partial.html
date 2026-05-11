@@ -107,7 +107,7 @@
     <div class="col-lg-6">
         <div class="leaderboard-card h-100">
             <div class="leaderboard-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, rgba(255,200,0,0.12), rgba(255,150,0,0.05));">
-                <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;"><i class="fas fa-star me-2" style="color: #ffc800;"></i>Highest Rated</h5>
+                <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;"><i class="fas fa-star me-2" style="color: #ffc800;"></i>Top Rated (Total)</h5>
                 <button onclick="downloadGraphic('export-ratings', 'top-rated')" class="btn btn-sm btn-outline-secondary py-0 px-2 border-0 hover-text-white transition-all" style="font-size: 0.75rem;"><i class="fas fa-download me-1"></i> Image</button>
             </div>
             <div class="leaderboard-body">
@@ -130,7 +130,7 @@
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-3">
-                        <div class="lb-stat" style="color: #ffc800;">{% if selected_league %}{{ p.league_avg_rating|floatformat:1 }}{% else %}{{ p.avg_rating|floatformat:1 }}{% endif %}</div>
+                        <div class="lb-stat" style="color: #ffc800;">{% if selected_league %}{{ p.league_total_rating|floatformat:1 }}{% else %}{{ p.total_rating|floatformat:1 }}{% endif %}</div>
                         {% if user.is_authenticated and user.is_admin_user %}
                         <div class="lb-actions d-flex gap-2 opacity-50" style="font-size: 0.85rem;">
                             <a href="{% url 'teams:edit_player' p.pk %}?next={{ request.get_full_path|urlencode }}" class="text-info hover-text-white transition-all"><i class="fas fa-edit"></i></a>

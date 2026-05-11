@@ -18,7 +18,7 @@
         <div class="fc-bg"></div>
         
         <div class="fc-top-left">
-            <div class="fc-rating">{{ player.avg_rating|floatformat:0|default:"75" }}</div>
+            <div class="fc-rating">{{ player.total_rating|floatformat:0|default:"0" }}</div>
             <div class="fc-position">{{ player.position|default:"FW"|upper }}</div>
             {% if player.team.logo %}
                 <img src="{{ player.team.logo.url }}" crossorigin="anonymous" class="fc-logo">
@@ -52,8 +52,8 @@
                         <span class="fc-stat-lbl">AST</span>
                     </div>
                     <div class="fc-stat">
-                        <span class="fc-stat-val">{{ player.avg_rating|floatformat:1|default:"0.0" }}</span>
-                        <span class="fc-stat-lbl">RTG</span>
+                        <span class="fc-stat-val">{{ player.total_rating|floatformat:1|default:"0.0" }}</span>
+                        <span class="fc-stat-lbl">TRT</span>
                     </div>
                 </div>
             </div>

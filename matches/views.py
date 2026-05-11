@@ -2,6 +2,7 @@ import csv
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import transaction
 from django.utils import timezone
 from django.db.models import Sum, Avg, Count, Q
 from django.http import HttpResponse
@@ -182,7 +183,8 @@ def add_goal(request, result_pk):
             _recalculate_score(result)
 
             if result.status == 'approved':
-                _sync_player_stats(result)
+                from .tasks import sync_match_stats_task
+                sync_match_stats_task.delay(result.id)
 
             messages.success(request, f'⚽ Goal by {goal.scorer.name} added! Score updated to {result.home_score}-{result.away_score}.')
             return redirect('matches:result_detail', pk=result_pk)
@@ -235,7 +237,8 @@ def add_card(request, result_pk):
             card.team = card.player.team
             card.save()
             if result.status == 'approved':
-                _sync_player_stats(result)
+                from .tasks import sync_match_stats_task
+                sync_match_stats_task.delay(result.id)
             emoji = '🟨' if card.card_type == 'yellow' else '🟥'
             messages.success(request, f'{emoji} {card.get_card_type_display()} for {card.player.name} added!')
             return redirect('matches:result_detail', pk=result_pk)
@@ -487,8 +490,10 @@ def delete_rating(request, rating_pk):
 
         # ALWAYS recalculate player stats
         ratings = player.match_ratings.filter(result__status='approved')
-        player.avg_rating = ratings.aggregate(avg=Avg('rating'))['avg'] or 0
-        player.save(update_fields=['avg_rating'])
+        stats = ratings.aggregate(avg=Avg('rating'), total=Sum('rating'))
+        player.avg_rating = stats['avg'] or 0
+        player.total_rating = stats['total'] or 0
+        player.save(update_fields=['avg_rating', 'total_rating'])
 
         messages.success(request, f'🗑️ Rating for {player_name} deleted.')
     return redirect('matches:result_detail', pk=result.pk)
@@ -627,8 +632,8 @@ def leaderboard(request):
         # Top rated
         ratings_filter = Q(match_ratings__result__fixture__league=selected_league, match_ratings__result__status='approved')
         top_rated = Player.objects.select_related('team').filter(ratings_filter).annotate(
-            league_avg_rating=Avg('match_ratings__rating', filter=ratings_filter)
-        ).filter(league_avg_rating__gt=0).order_by('-league_avg_rating')[:20]
+            league_total_rating=Sum('match_ratings__rating', filter=ratings_filter)
+        ).filter(league_total_rating__gt=0).order_by('-league_total_rating')[:20]
 
         # Most cards
         cards_filter = Q(cards__result__fixture__league=selected_league, cards__result__status='approved')
@@ -649,7 +654,7 @@ def leaderboard(request):
         # Global stats: use cached fields on Player
         top_scorers = Player.objects.select_related('team').filter(total_goals__gt=0).order_by('-total_goals')[:20]
         top_assists = Player.objects.select_related('team').filter(total_assists__gt=0).order_by('-total_assists')[:20]
-        top_rated = Player.objects.select_related('team').filter(avg_rating__gt=0).order_by('-avg_rating')[:20]
+        top_rated = Player.objects.select_related('team').filter(total_rating__gt=0).order_by('-total_rating')[:20]
         most_cards = Player.objects.select_related('team').filter(
             Q(total_red_cards__gt=0) | Q(total_yellow_cards__gt=0)
         ).order_by('-total_red_cards', '-total_yellow_cards')[:20]
@@ -686,73 +691,6 @@ def download_top_scorers_pdf(request):
 
 # ===== Admin Views & Stats Sync =====
 
-def _sync_player_matches_played(team):
-    """Update matches_played for all players in a team based on approved results."""
-    match_count = MatchResult.objects.filter(
-        Q(fixture__home_team=team) | Q(fixture__away_team=team),
-        status='approved'
-    ).count()
-    team.players.all().update(matches_played=match_count)
-
-
-from django.db import transaction
-
-def _sync_player_stats(result):
-    """Recalculate player stats after result approval using optimized bulk updates."""
-    fixture = result.fixture
-    
-    # 1. Sync matches_played for both teams (Efficient bulk update)
-    _sync_player_matches_played(fixture.home_team)
-    _sync_player_matches_played(fixture.away_team)
-
-    # 2. Identify all unique players involved in this match's events
-    player_ids = set()
-    player_ids.update(result.goals.values_list('scorer_id', flat=True))
-    player_ids.update(result.goals.exclude(assist=None).values_list('assist_id', flat=True))
-    player_ids.update(result.cards.values_list('player_id', flat=True))
-    player_ids.update(result.ratings.values_list('player_id', flat=True))
-    player_ids.update(result.clean_sheets.values_list('player_id', flat=True))
-    
-    if not player_ids:
-        return
-
-    # 3. Fetch players and recalculate stats in a single transaction
-    players = Player.objects.filter(id__in=player_ids)
-    
-    for player in players:
-        # We recalculate from scratch to ensure data integrity
-        # Using .filter(...).count() is efficient on indexed FKs
-        player.total_goals = player.goals_scored.filter(result__status='approved').count()
-        player.total_assists = player.assists.filter(result__status='approved').count()
-        player.total_red_cards = player.cards.filter(card_type='red', result__status='approved').count()
-        player.total_yellow_cards = player.cards.filter(card_type='yellow', result__status='approved').count()
-        player.total_clean_sheets = player.clean_sheet_records.filter(result__status='approved').count()
-        
-        # Rating aggregation
-        ratings = player.match_ratings.filter(result__status='approved')
-        player.avg_rating = ratings.aggregate(avg=Avg('rating'))['avg'] or 0
-
-    # 4. Bulk update only the changed fields
-    Player.objects.bulk_update(players, [
-        'total_goals', 'total_assists', 'total_red_cards', 
-        'total_yellow_cards', 'total_clean_sheets', 'avg_rating'
-    ])
-
-
-def _sync_clean_sheet_stats(result):
-    """Recalculate clean sheet counts for all GKs involved in this result."""
-    for cs in result.clean_sheets.all():
-        _sync_clean_sheet_stats_for_player(cs.player)
-
-
-def _sync_clean_sheet_stats_for_player(player):
-    """Recalculate total_clean_sheets for a specific player from CleanSheet records."""
-    player.total_clean_sheets = player.clean_sheet_records.filter(
-        result__status='approved'
-    ).count()
-    player.save(update_fields=['total_clean_sheets'])
-
-
 @login_required
 def admin_verify_results(request):
     """Admin view pending results."""
@@ -773,7 +711,7 @@ def admin_verify_results(request):
 @login_required
 @transaction.atomic
 def admin_approve_result(request, pk):
-    """Approve a match result and sync player stats with atomic safety."""
+    """Approve a match result and sync player stats with background worker."""
     if not request.user.is_admin_user:
         messages.error(request, 'Access denied.')
         return redirect('core:home')
@@ -787,11 +725,11 @@ def admin_approve_result(request, pk):
     fixture.status = 'completed'
     fixture.save()
 
-    # Sync all stats (now optimized via bulk_update)
-    _sync_player_stats(result)
-    _sync_clean_sheet_stats(result)
+    # Trigger background sync
+    from .tasks import sync_match_stats_task
+    sync_match_stats_task.delay(result.id)
 
-    messages.success(request, f'✅ Result approved: {result}')
+    messages.success(request, f'✅ Result approved! Stats are being updated in the background.')
     return redirect('matches:admin_verify')
 
 

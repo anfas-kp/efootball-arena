@@ -462,7 +462,7 @@
     <div id="export-ratings" class="export-graphic">
         <div class="export-header">
             <div class="eh-top">TOP 10</div>
-            <div class="eh-title">RATED PLAYERS</div>
+            <div class="eh-title">TOP RATED (TOTAL)</div>
             <div class="eh-subtitle">{{ selected_league.name|default:"ALL LEAGUES" }}</div>
         </div>
         <div class="export-table">
@@ -496,7 +496,7 @@
                     {% endif %}
                     <div class="et-team-name">{{ p.team.name }}</div>
                 </div>
-                <div class="et-stat">{% if selected_league %}{{ p.league_avg_rating|floatformat:1 }}{% else %}{{ p.avg_rating|floatformat:1 }}{% endif %}</div>
+                <div class="et-stat">{% if selected_league %}{{ p.league_total_rating|floatformat:1 }}{% else %}{{ p.total_rating|floatformat:1 }}{% endif %}</div>
             </div>
             {% endfor %}
         </div>

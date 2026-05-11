@@ -30,6 +30,8 @@
                         <th class="text-center">W</th>
                         <th class="text-center">D</th>
                         <th class="text-center">L</th>
+                        <th class="text-center d-none d-lg-table-cell">GF</th>
+                        <th class="text-center d-none d-lg-table-cell">GA</th>
                         <th class="text-center d-none d-md-table-cell">GD</th>
                         <th class="text-center">PTS</th>
                         <th class="text-center d-none d-md-table-cell">FORM</th>
@@ -57,6 +59,8 @@
                         <td class="text-center">{{ s.won }}</td>
                         <td class="text-center">{{ s.drawn }}</td>
                         <td class="text-center">{{ s.lost }}</td>
+                        <td class="text-center d-none d-lg-table-cell">{{ s.gf }}</td>
+                        <td class="text-center d-none d-lg-table-cell">{{ s.ga }}</td>
                         <td class="text-center d-none d-md-table-cell">
                             <span class="{% if s.gd > 0 %}text-success{% elif s.gd < 0 %}text-danger{% else %}text-muted{% endif %} fw-bold">
                                 {{ s.gd|default:0 }}
@@ -80,7 +84,7 @@
     <div class="mt-4 p-3 glass-card bg-secondary bg-opacity-20">
         <div class="d-flex gap-4 small">
             <div class="d-flex align-items-center gap-2"><span class="bg-accent" style="width: 12px; height: 12px; border-radius: 2px;"></span> <span class="text-muted">Qualification Zone</span></div>
-            <div class="text-muted"><span class="fw-bold text-white">P</span>: Played · <span class="fw-bold text-white">W</span>: Won · <span class="fw-bold text-white">D</span>: Drawn · <span class="fw-bold text-white">L</span>: Lost · <span class="fw-bold text-white">PTS</span>: Points</div>
+            <div class="text-muted"><span class="fw-bold text-white">P</span>: Played · <span class="fw-bold text-white">W</span>: Won · <span class="fw-bold text-white">D</span>: Drawn · <span class="fw-bold text-white">L</span>: Lost · <span class="fw-bold text-white">GF</span>: Goals For · <span class="fw-bold text-white">GA</span>: Goals Against · <span class="fw-bold text-white">GD</span>: Goal Difference · <span class="fw-bold text-white">PTS</span>: Points</div>
         </div>
     </div>
 

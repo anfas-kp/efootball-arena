@@ -47,35 +47,42 @@ Because free hosts delete files every time the server sleeps, we need Cloudinary
 
 ---
 
-### Step 4: Deploy on Render
-1. Go to [Render.com](https://render.com/) and sign up using your GitHub account.
-2. Click **New** -> **Web Service**.
-3. Select **"Build and deploy from a Git repository"** and connect the `efootball-arena` repository you made in Step 1.
-4. Fill out the deployment details:
-   - **Name**: `efootball-arena`
-   - **Language**: `Python 3`
-   - **Branch**: `main`
+### Step 4: Setup Redis (For Fast Background Tasks)
+1. In Render, click **New** -> **Redis**.
+2. Name it `efootball-redis`.
+3. Select **"Free"** and click **Create Redis**.
+4. Once created, copy the **Internal Redis URL** (e.g., `redis://red-xxx:6379`).
+
+---
+
+### Step 5: Deploy on Render
+1. Go to [Render.com](https://render.com/) and click **New** -> **Web Service**.
+2. Connect your repository.
+3. Fill out the details:
    - **Build Command**: `bash build.sh`
-   - **Start Command**: `gunicorn efootball_project.wsgi:application`
+   - **Start Command**: `bash run.sh`
    - **Instance Type**: `Free`
-5. Scroll down and click **Advanced** -> **Add Environment Variable**. Add the following exactly:
+4. Click **Advanced** -> **Add Environment Variable**:
 
 | Key | Value |
 | :--- | :--- |
 | `PYTHON_VERSION` | `3.11.0` |
 | `DEBUG` | `False` |
-| `SECRET_KEY` | *(Type any random long password here)* |
+| `SECRET_KEY` | *(Any random text)* |
 | `ALLOWED_HOSTS` | `*` |
-| `DATABASE_URL` | *(Paste your Neon.tech URL from Step 3 here)* |
-| `CLOUDINARY_CLOUD_NAME` | *(Paste your Cloud Name from Step 2)* |
-| `CLOUDINARY_API_KEY` | *(Paste your API Key from Step 2)* |
-| `CLOUDINARY_API_SECRET` | *(Paste your API Secret from Step 2)* |
+| `DATABASE_URL` | *(Your Neon.tech URL)* |
+| `REDIS_URL` | *(Your Internal Redis URL from Step 4)* |
+| `CLOUDINARY_CLOUD_NAME` | *(Your Cloud Name)* |
+| `CLOUDINARY_API_KEY` | *(Your API Key)* |
+| `CLOUDINARY_API_SECRET` | *(Your API Secret)* |
+
+5. Click **Create Web Service**.
 
 6. Click **Create Web Service**.
 
 ---
 
-### Step 5: You're Live! 🚀
+### Step 6: You're Live! 🚀
 Render will now read your `build.sh` file, install all the packages, connect to Neon and Cloudinary, and start the server. 
 
 **Wait 3-5 minutes**, and Render will give you a live URL at the top left (e.g., `https://efootball-arena.onrender.com`). 

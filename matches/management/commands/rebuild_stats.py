@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from django.db.models import Avg
+from django.db.models import Avg, Sum
 from teams.models import Player
 
 
@@ -19,7 +19,9 @@ class Command(BaseCommand):
             player.total_yellow_cards = player.cards.filter(card_type='yellow', result__status='approved').count()
 
             ratings = player.match_ratings.filter(result__status='approved')
-            player.avg_rating = ratings.aggregate(avg=Avg('rating'))['avg'] or 0
+            stats = ratings.aggregate(avg=Avg('rating'), total=Sum('rating'))
+            player.avg_rating = stats['avg'] or 0
+            player.total_rating = stats['total'] or 0
 
             player.total_clean_sheets = player.clean_sheet_records.filter(
                 result__status='approved'
@@ -28,7 +30,7 @@ class Command(BaseCommand):
             player.save(update_fields=[
                 'total_goals', 'total_assists',
                 'total_red_cards', 'total_yellow_cards',
-                'avg_rating', 'total_clean_sheets',
+                'avg_rating', 'total_rating', 'total_clean_sheets',
             ])
 
             if i % 50 == 0:

@@ -57,17 +57,20 @@ def my_team(request):
         return redirect('teams:register_team')
 
     players = team.players.all()
-
-    team_stats = players.aggregate(
-        total_goals=Sum('total_goals'),
-        total_assists=Sum('total_assists'),
-        total_yellow_cards=Sum('total_yellow_cards'),
-        total_red_cards=Sum('total_red_cards'),
-        max_matches=Max('matches_played')
-    )
-    for key in team_stats:
-        if team_stats[key] is None:
-            team_stats[key] = 0
+    from matches.models import Goal, Card, MatchResult
+    from tournaments.models import Fixture
+    
+    # Accurate Team Stats (Calculated from match events where this team was involved)
+    team_stats = {
+        'total_goals': Goal.objects.filter(team=team, result__status='approved').count(),
+        'total_assists': Goal.objects.filter(team=team, result__status='approved').exclude(assist=None).count(),
+        'total_yellow_cards': Card.objects.filter(team=team, card_type='yellow', result__status='approved').count(),
+        'total_red_cards': Card.objects.filter(team=team, card_type='red', result__status='approved').count(),
+        'max_matches': Fixture.objects.filter(
+            Q(home_team=team) | Q(away_team=team),
+            status='completed'
+        ).count(),
+    }
 
     # Tournament applications
     applications = team.tournament_applications.select_related(

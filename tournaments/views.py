@@ -544,21 +544,9 @@ def admin_repair_stats(request):
         messages.error(request, 'Access denied.')
         return redirect('core:home')
 
-    from django.db.models import Avg
-    from teams.models import Player
-    from matches.models import MatchResult
+    from teams.tasks import repair_all_stats_task
+    # Run in background
+    repair_all_stats_task.delay()
 
-    players = Player.objects.all()
-    for p in players:
-        p.total_goals = p.goals_scored.filter(result__status='approved').count()
-        p.total_assists = p.assists.filter(result__status='approved').count()
-        p.total_red_cards = p.cards.filter(card_type='red', result__status='approved').count()
-        p.total_yellow_cards = p.cards.filter(card_type='yellow', result__status='approved').count()
-        p.total_clean_sheets = p.clean_sheet_records.filter(result__status='approved').count()
-        
-        ratings = p.match_ratings.filter(result__status='approved')
-        p.avg_rating = ratings.aggregate(avg=Avg('rating'))['avg'] or 0
-        p.save()
-
-    messages.success(request, '⚙️ All player stats have been recalculated and repaired!')
+    messages.success(request, '⚙️ Stats repair started in the background. Please refresh in a few seconds!')
     return redirect('tournaments:admin_dashboard')
