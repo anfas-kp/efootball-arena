@@ -725,11 +725,11 @@ def admin_approve_result(request, pk):
     fixture.status = 'completed'
     fixture.save()
 
-    # Trigger background sync
+    # Trigger sync (Synchronous for Render Free Tier)
     from .tasks import sync_match_stats_task
-    sync_match_stats_task.delay(result.id)
+    sync_match_stats_task(result.id)
 
-    messages.success(request, f'✅ Result approved! Stats are being updated in the background.')
+    messages.success(request, f'✅ Result approved and statistics updated!')
     return redirect('matches:admin_verify')
 
 

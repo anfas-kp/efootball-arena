@@ -545,8 +545,8 @@ def admin_repair_stats(request):
         return redirect('core:home')
 
     from teams.tasks import repair_all_stats_task
-    # Run in background
-    repair_all_stats_task.delay()
+    # Run synchronously to support environments without Celery workers
+    repair_all_stats_task()
 
-    messages.success(request, '⚙️ Stats repair started in the background. Please refresh in a few seconds!')
+    messages.success(request, '⚙️ Stats have been successfully recalculated and updated!')
     return redirect('tournaments:admin_dashboard')

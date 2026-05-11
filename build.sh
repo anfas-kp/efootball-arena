@@ -11,6 +11,9 @@ python manage.py collectstatic --no-input
 echo "Running migrations..."
 python manage.py migrate
 
+echo "Rebuilding statistics..."
+python manage.py rebuild_stats
+
 # Create superuser if env vars are provided
 if [ "$DJANGO_SUPERUSER_USERNAME" ]; then
   echo "Creating superuser..."
