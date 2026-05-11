@@ -32,22 +32,26 @@ class TournamentForm(forms.ModelForm):
 class LeagueForm(forms.ModelForm):
     class Meta:
         model = League
-        fields = ['name', 'format', 'knockout_legs', 'max_teams']
+        fields = ['name', 'format', 'knockout_legs', 'away_goals_rule', 'third_place_match', 'max_teams']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., League 1, UCL, UEL'}),
             'format': forms.Select(attrs={'class': 'form-select'}),
             'knockout_legs': forms.Select(attrs={'class': 'form-select'}),
+            'away_goals_rule': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+            'third_place_match': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
             'max_teams': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
 class FixtureForm(forms.ModelForm):
     class Meta:
         model = Fixture
-        fields = ['home_team', 'away_team', 'matchday', 'match_date', 'status']
+        fields = ['home_team', 'away_team', 'matchday', 'round_type', 'bracket_index', 'match_date', 'status']
         widgets = {
             'home_team': forms.Select(attrs={'class': 'form-select'}),
             'away_team': forms.Select(attrs={'class': 'form-select'}),
             'matchday': forms.NumberInput(attrs={'class': 'form-control'}),
+            'round_type': forms.Select(attrs={'class': 'form-select'}),
+            'bracket_index': forms.NumberInput(attrs={'class': 'form-control'}),
             'match_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
         }

@@ -34,18 +34,19 @@
 document.addEventListener('DOMContentLoaded', function() {
     const formatSelect = document.querySelector('select[name="format"]');
     const knockoutLegsDiv = document.getElementById('div_knockout_legs');
+    const awayGoalsDiv = document.getElementById('div_away_goals_rule');
+    const thirdPlaceDiv = document.getElementById('div_third_place_match');
     
-    function toggleKnockoutLegs() {
-        if (formatSelect.value === 'knockout') {
-            knockoutLegsDiv.style.display = 'block';
-        } else {
-            knockoutLegsDiv.style.display = 'none';
-        }
+    function toggleKnockoutFields() {
+        const isKnockout = formatSelect.value === 'knockout';
+        if (knockoutLegsDiv) knockoutLegsDiv.style.display = isKnockout ? 'block' : 'none';
+        if (awayGoalsDiv) awayGoalsDiv.style.display = isKnockout ? 'block' : 'none';
+        if (thirdPlaceDiv) thirdPlaceDiv.style.display = isKnockout ? 'block' : 'none';
     }
     
-    if (formatSelect && knockoutLegsDiv) {
-        formatSelect.addEventListener('change', toggleKnockoutLegs);
-        toggleKnockoutLegs(); // Initial state
+    if (formatSelect) {
+        formatSelect.addEventListener('change', toggleKnockoutFields);
+        toggleKnockoutFields(); // Initial state
     }
 });
 </script>

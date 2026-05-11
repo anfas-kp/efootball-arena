@@ -109,6 +109,8 @@ class League(models.Model):
     name = models.CharField(max_length=100)
     format = models.CharField(max_length=20, choices=FORMAT_CHOICES, default='round_robin')
     knockout_legs = models.PositiveIntegerField(default=1, choices=[(1, 'Single Leg'), (2, 'Two Legs')], help_text='Only applicable for Knockout format')
+    away_goals_rule = models.BooleanField(default=False, help_text='Enable away goals rule for two-legged ties')
+    third_place_match = models.BooleanField(default=False, help_text='Generate a third-place match for knockout tournaments')
     max_teams = models.PositiveIntegerField(default=16)
     teams = models.ManyToManyField(Team, blank=True, related_name='leagues')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -140,12 +142,29 @@ class Fixture(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
+    ROUND_CHOICES = [
+        ('round_32', 'Round of 32'),
+        ('round_16', 'Round of 16'),
+        ('quarter_final', 'Quarter Final'),
+        ('semi_final', 'Semi Final'),
+        ('final', 'Final'),
+        ('third_place', 'Third Place Match'),
+    ]
+
     league = models.ForeignKey(League, on_delete=models.CASCADE, related_name='fixtures')
-    home_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='home_fixtures')
-    away_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='away_fixtures')
+    home_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='home_fixtures', null=True, blank=True)
+    away_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='away_fixtures', null=True, blank=True)
     matchday = models.PositiveIntegerField(default=1, db_index=True)
     match_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled', db_index=True)
+    
+    # Knockout Fields
+    round_type = models.CharField(max_length=20, choices=ROUND_CHOICES, null=True, blank=True)
+    bracket_index = models.PositiveIntegerField(null=True, blank=True, help_text='Position in the bracket for this round')
+    next_fixture = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='previous_fixtures')
+    is_placeholder = models.BooleanField(default=False)
+    winner = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True, related_name='fixtures_won')
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load tournament_tags %}
 {% block title %}{{ league.name }} Fixtures - eFootball Arena{% endblock %}
 
 {% block content %}
@@ -39,43 +40,86 @@
     <!-- Bracket View Section -->
     <div id="bracket-view" class="view-section d-none">
         <div class="bracket-wrapper overflow-auto pb-5">
-            <div class="bracket-container d-flex gap-5">
+            <div class="bracket-container d-flex gap-5 px-4" style="min-width: max-content;">
                 {% for round in bracket_data %}
-                <div class="bracket-round">
-                    <div class="round-title font-orbitron text-accent mb-4 text-center">Round {{ round.round_num }}</div>
-                    <div class="round-matches d-flex flex-column justify-content-around h-100 gap-4">
+                <div class="bracket-round d-flex flex-column justify-content-around">
+                    <div class="round-title font-orbitron text-accent mb-4 text-center">{{ round.round_name }}</div>
+                    <div class="round-matches d-flex flex-column justify-content-around h-100 gap-5">
                         {% for f in round.fixtures %}
-                        <div class="bracket-match glass-card p-3 border-opacity-10" style="min-width: 220px;">
-                            <!-- Home Team -->
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="d-flex align-items-center gap-2 overflow-hidden">
-                                    {% if f.home_team.logo %}
-                                        <img src="{{ f.home_team.logo.url }}" class="logo-xs">
-                                    {% else %}
-                                        <div class="logo-xs logo-placeholder" style="font-size: 0.5rem;">{{ f.home_team.name|first }}</div>
-                                    {% endif %}
-                                    <span class="small text-white text-truncate {% if f.status == 'completed' and f.result.home_score < f.result.away_score %}opacity-50{% endif %}">{{ f.home_team.name }}</span>
+                            {% if f.matchday == f.league.fixtures.filter|first_leg_for_fixture:f %} {# Show only first leg or single leg in bracket #}
+                            <div class="bracket-match-node">
+                                <div class="bracket-match glass-card p-0 border-opacity-10 overflow-hidden hover-lift" style="width: 260px;">
+                                    <!-- Home Team -->
+                                    <div class="p-2 d-flex justify-content-between align-items-center {% if f.winner == f.home_team %}bg-accent bg-opacity-10{% endif %}">
+                                        <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                            {% if f.home_team %}
+                                                {% if f.home_team.logo %}
+                                                    <img src="{{ f.home_team.logo.url }}" class="logo-xs">
+                                                {% else %}
+                                                    <div class="logo-xs logo-placeholder">{{ f.home_team.name|first }}</div>
+                                                {% endif %}
+                                                <span class="small text-white text-truncate {% if f.status == 'completed' and f.winner != f.home_team and f.winner %}opacity-50{% endif %}">
+                                                    {{ f.home_team.name }}
+                                                </span>
+                                            {% else %}
+                                                <div class="logo-xs logo-placeholder bg-secondary bg-opacity-20">?</div>
+                                                <span class="small text-muted italic">TBD</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            {% if f.status == 'completed' and f.result %}
+                                                <span class="font-orbitron fw-bold text-accent small">{{ f.result.home_score }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="border-top border-white border-opacity-10"></div>
+
+                                    <!-- Away Team -->
+                                    <div class="p-2 d-flex justify-content-between align-items-center {% if f.winner == f.away_team %}bg-accent bg-opacity-10{% endif %}">
+                                        <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                            {% if f.away_team %}
+                                                {% if f.away_team.logo %}
+                                                    <img src="{{ f.away_team.logo.url }}" class="logo-xs">
+                                                {% else %}
+                                                    <div class="logo-xs logo-placeholder">{{ f.away_team.name|first }}</div>
+                                                {% endif %}
+                                                <span class="small text-white text-truncate {% if f.status == 'completed' and f.winner != f.away_team and f.winner %}opacity-50{% endif %}">
+                                                    {{ f.away_team.name }}
+                                                </span>
+                                            {% else %}
+                                                <div class="logo-xs logo-placeholder bg-secondary bg-opacity-20">?</div>
+                                                <span class="small text-muted italic">TBD</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            {% if f.status == 'completed' and f.result %}
+                                                <span class="font-orbitron fw-bold text-accent small">{{ f.result.away_score }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Footer info (Aggregate or Link) -->
+                                    {% with leg2=f.league.fixtures.filter|get_second_leg:f %}
+                                    <div class="x-small p-1 text-center bg-black bg-opacity-20 text-muted">
+                                        {% if f.league.knockout_legs == 2 and f.round_type != 'final' %}
+                                            {% if f.status == 'completed' and leg2 and leg2.status == 'completed' %}
+                                                <span class="text-accent">Agg: {{ f.result.home_score|add:leg2.away_score }} - {{ f.result.away_score|add:leg2.home_score }}</span>
+                                            {% else %}
+                                                2 Legs
+                                            {% endif %}
+                                        {% else %}
+                                            Single Leg
+                                        {% endif %}
+                                        
+                                        {% if not f.winner and f.home_team and f.away_team %}
+                                            <a href="{% url 'matches:submit_result' f.pk %}" class="text-accent ms-2 text-decoration-none">Play</a>
+                                        {% endif %}
+                                    </div>
+                                    {% endwith %}
                                 </div>
-                                <span class="font-orbitron fw-bold text-accent small">{% if f.status == 'completed' and f.result %}{{ f.result.home_score }}{% else %}-{% endif %}</span>
-                            </div>
-                            <!-- Away Team -->
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center gap-2 overflow-hidden">
-                                    {% if f.away_team.logo %}
-                                        <img src="{{ f.away_team.logo.url }}" class="logo-xs">
-                                    {% else %}
-                                        <div class="logo-xs logo-placeholder" style="font-size: 0.5rem;">{{ f.away_team.name|first }}</div>
-                                    {% endif %}
-                                    <span class="small text-white text-truncate {% if f.status == 'completed' and f.result.away_score < f.result.home_score %}opacity-50{% endif %}">{{ f.away_team.name }}</span>
-                                </div>
-                                <span class="font-orbitron fw-bold text-accent small">{% if f.status == 'completed' and f.result %}{{ f.result.away_score }}{% else %}-{% endif %}</span>
-                            </div>
-                            {% if f.status != 'completed' %}
-                            <div class="mt-2 text-center">
-                                <a href="{% url 'matches:submit_result' f.pk %}" class="text-accent x-small text-decoration-none">Submit</a>
                             </div>
                             {% endif %}
-                        </div>
                         {% endfor %}
                     </div>
                 </div>
@@ -231,59 +275,104 @@ function showView(view) {
 
     /* Bracket Styles */
     .btn-toggle {
-        background: transparent;
-        border: none;
-        color: #6c757d;
-        padding: 8px 20px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: rgba(255,255,255,0.6);
+        padding: 8px 24px;
         border-radius: 50px;
-        font-weight: bold;
+        font-weight: 600;
         font-size: 0.85rem;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(10px);
     }
     .btn-toggle.active {
         background: var(--accent);
         color: black;
+        border-color: var(--accent);
+        box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
     }
     .bracket-wrapper {
-        min-height: 400px;
-        background: rgba(0,0,0,0.2);
-        border-radius: 20px;
-        padding: 40px;
+        min-height: 600px;
+        background: linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 100%);
+        border-radius: 30px;
+        padding: 60px 40px;
         border: 1px solid rgba(255,255,255,0.05);
-    }
-    .bracket-round {
-        display: flex;
-        flex-direction: column;
-        flex-shrink: 0;
+        box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
     }
     .round-title {
-        font-size: 0.75rem;
-        letter-spacing: 2px;
-        background: rgba(255,255,255,0.05);
-        padding: 5px 15px;
+        font-size: 0.7rem;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        background: rgba(255,255,255,0.03);
+        padding: 8px 20px;
         border-radius: 50px;
+        display: inline-block;
+        margin: 0 auto;
+        color: rgba(255,255,255,0.5);
+        border: 1px solid rgba(255,255,255,0.05);
     }
     .bracket-match {
-        position: relative;
-        z-index: 2;
-        background: rgba(255,255,255,0.03);
+        transition: all 0.4s ease;
+        border: 1px solid rgba(255,255,255,0.05);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
     .logo-xs {
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         object-fit: contain;
     }
+    .logo-placeholder {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        background: rgba(255,255,255,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem;
+        font-weight: bold;
+    }
+
+    /* Connectors Logic */
+    .bracket-round {
+        position: relative;
+    }
+    .bracket-match-node {
+        position: relative;
+        padding: 20px 0;
+    }
     
-    /* Connectors (Simulated with simple vertical centering in columns) */
-    .bracket-round:not(:last-child) .bracket-match::after {
+    /* Outgoing connector */
+    .bracket-round:not(:last-child) .bracket-match-node::after {
         content: '';
         position: absolute;
         right: -50px;
         top: 50%;
         width: 50px;
-        height: 1px;
+        height: 2px;
         background: rgba(255,255,255,0.1);
-        z-index: 1;
+    }
+
+    /* Incoming connector for even/odd branching */
+    .bracket-round:not(:first-child) .bracket-match-node::before {
+        content: '';
+        position: absolute;
+        left: -50px;
+        top: 50%;
+        width: 50px;
+        height: 2px;
+        background: rgba(255,255,255,0.1);
+    }
+
+    /* Vertical bridge */
+    .bracket-round:not(:last-child) .bracket-match-node:nth-child(even)::before {
+        content: '';
+        position: absolute;
+        right: -50px;
+        top: -50%;
+        width: 2px;
+        height: 100%;
+        background: rgba(255,255,255,0.1);
     }
 </style>
 {% endblock %}

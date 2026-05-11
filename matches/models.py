@@ -22,6 +22,11 @@ class MatchResult(models.Model):
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)
     admin_notes = models.TextField(blank=True)
+    # Knockout/Two-Leg Fields
+    home_penalties = models.PositiveIntegerField(null=True, blank=True)
+    away_penalties = models.PositiveIntegerField(null=True, blank=True)
+    is_extra_time = models.BooleanField(default=False)
+    
     submitted_at = models.DateTimeField(auto_now_add=True)
     verified_at = models.DateTimeField(null=True, blank=True)
 

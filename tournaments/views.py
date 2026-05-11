@@ -201,20 +201,28 @@ def league_fixtures(request, pk):
 
     is_knockout = league.format == 'knockout'
     bracket_data = []
+    knockout_rounds = {}
+    
     if is_knockout:
-        # Group fixtures by matchday (as rounds)
-        for md in matchdays:
-            round_fixtures = fixtures.filter(matchday=md)
-            if round_fixtures.exists():
+        # Group knockout fixtures by round type
+        # Order: Final, Semi, Quarter, Round 16, Round 32
+        round_order = ['round_32', 'round_16', 'quarter_final', 'semi_final', 'final']
+        
+        for rt in round_order:
+            round_fixes = fixtures.filter(round_type=rt).order_by('bracket_index')
+            if round_fixes.exists():
+                knockout_rounds[rt] = round_fixes
                 bracket_data.append({
-                    'round_num': md,
-                    'fixtures': round_fixtures
+                    'round_type': rt,
+                    'round_name': rt.replace('_', ' ').title(),
+                    'fixtures': round_fixes
                 })
 
     return render(request, 'tournaments/league_fixtures.html', {
         'league': league,
         'fixtures_by_matchday': fixtures_by_matchday,
         'bracket_data': bracket_data,
+        'knockout_rounds': knockout_rounds,
         'is_knockout': is_knockout,
         'tournament': league.tournament,
     })
@@ -384,8 +392,17 @@ def admin_generate_fixtures(request, league_pk):
         return redirect('core:home')
 
     league = get_object_or_404(League, pk=league_pk)
+    if league.format == 'knockout':
+        from .services import KnockoutGenerator
+        success, message = KnockoutGenerator.generate_bracket(league)
+        if success:
+            messages.success(request, f'🏆 {message}')
+        else:
+            messages.error(request, f'❌ {message}')
+        return redirect('tournaments:league_fixtures', pk=league_pk)
+    
+    # Round-robin scheduling algorithm
     teams = list(league.teams.all())
-
     if len(teams) < 2:
         messages.error(request, 'Need at least 2 teams to generate fixtures.')
         return redirect('tournaments:admin_assign_teams', league_pk=league_pk)
@@ -403,74 +420,35 @@ def admin_generate_fixtures(request, league_pk):
     half = n // 2
 
     team_indices = list(range(n))
-    
-    if league.format == 'knockout':
-        import random
-        random.shuffle(teams)
-        
-        # Remove None (BYE) from shuffle and handle it
-        actual_teams = [t for t in teams if t is not None]
-        matchday = 1
-        num_actual = len(actual_teams)
-        
-        for i in range(0, num_actual, 2):
-            if i + 1 < num_actual:
-                t1 = actual_teams[i]
-                t2 = actual_teams[i+1]
-                
+    is_2leg = league.format == 'round_robin_2leg'
+
+    matchday = 1
+    for round_num in range(rounds):
+        for i in range(half):
+            t1 = team_indices[i]
+            t2 = team_indices[n - 1 - i]
+
+            if teams[t1] is not None and teams[t2] is not None:
                 # First leg
                 Fixture.objects.create(
                     league=league,
-                    home_team=t1,
-                    away_team=t2,
+                    home_team=teams[t1],
+                    away_team=teams[t2],
                     matchday=matchday,
                 )
                 
                 # Second leg
-                if league.knockout_legs == 2:
+                if is_2leg:
                     Fixture.objects.create(
                         league=league,
-                        home_team=t2,
-                        away_team=t1,
-                        matchday=matchday + 1,
+                        home_team=teams[t2],
+                        away_team=teams[t1],
+                        matchday=matchday + rounds,
                     )
-            else:
-                # BYE - The team automatically progresses or just has no fixture this round
-                messages.info(request, f'Team {actual_teams[i].name} has a BYE.')
-        
-    else:
-        # Round-robin scheduling algorithm
-        is_2leg = league.format == 'round_robin_2leg'
-        rounds = n - 1
-        half = n // 2
-        matchday = 1
-        
-        for round_num in range(rounds):
-            for i in range(half):
-                t1 = team_indices[i]
-                t2 = team_indices[n - 1 - i]
 
-                if teams[t1] is not None and teams[t2] is not None:
-                    # First leg
-                    Fixture.objects.create(
-                        league=league,
-                        home_team=teams[t1],
-                        away_team=teams[t2],
-                        matchday=matchday,
-                    )
-                    
-                    # Second leg
-                    if is_2leg:
-                        Fixture.objects.create(
-                            league=league,
-                            home_team=teams[t2],
-                            away_team=teams[t1],
-                            matchday=matchday + rounds,
-                        )
-
-            matchday += 1
-            # Rotate: fix first team, rotate rest
-            team_indices = [team_indices[0]] + [team_indices[-1]] + team_indices[1:-1]
+        matchday += 1
+        # Rotate: fix first team, rotate rest
+        team_indices = [team_indices[0]] + [team_indices[-1]] + team_indices[1:-1]
 
     messages.success(request, f'🎯 {league.fixtures.count()} fixtures generated!')
     return redirect('tournaments:league_fixtures', pk=league_pk)
@@ -627,3 +605,31 @@ def admin_repair_stats(request):
 
     messages.success(request, '⚙️ Stats have been successfully recalculated and updated!')
     return redirect('tournaments:admin_dashboard')
+
+
+@login_required
+def admin_add_fixture(request, league_pk):
+    """Admin manually adds a fixture to a league."""
+    if not request.user.is_admin_user:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    league = get_object_or_404(League, pk=league_pk)
+    from .forms import FixtureForm
+    
+    if request.method == 'POST':
+        form = FixtureForm(league, request.POST)
+        if form.is_valid():
+            fixture = form.save(commit=False)
+            fixture.league = league
+            fixture.save()
+            messages.success(request, f'✅ Fixture added to {league.name}.')
+            return redirect('tournaments:league_fixtures', pk=league.pk)
+    else:
+        form = FixtureForm(league)
+
+    return render(request, 'tournaments/admin_add_fixture.html', {
+        'league': league,
+        'form': form,
+        'tournament': league.tournament,
+    })

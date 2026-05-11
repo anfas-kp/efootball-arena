@@ -725,6 +725,10 @@ def admin_approve_result(request, pk):
     fixture.status = 'completed'
     fixture.save()
 
+    # Trigger Knockout Progression
+    from tournaments.services import ProgressionManager
+    ProgressionManager.handle_result_approval(result)
+
     # Trigger sync (Synchronous for Render Free Tier)
     from .tasks import sync_match_stats_task
     sync_match_stats_task(result.id)
