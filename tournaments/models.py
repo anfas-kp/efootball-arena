@@ -108,6 +108,7 @@ class League(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='leagues')
     name = models.CharField(max_length=100)
     format = models.CharField(max_length=20, choices=FORMAT_CHOICES, default='round_robin')
+    knockout_legs = models.PositiveIntegerField(default=1, choices=[(1, 'Single Leg'), (2, 'Two Legs')], help_text='Only applicable for Knockout format')
     max_teams = models.PositiveIntegerField(default=16)
     teams = models.ManyToManyField(Team, blank=True, related_name='leagues')
     created_at = models.DateTimeField(auto_now_add=True)

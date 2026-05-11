@@ -99,6 +99,7 @@
                     {% if user.is_authenticated and user.is_admin_user %}
                     <div class="w-100 mt-2 d-flex gap-2">
                         <a href="{% url 'tournaments:admin_assign_teams' league.pk %}" class="btn-outline-glow flex-grow-1 py-1 px-2 border-opacity-25" style="font-size: 0.7rem;"><i class="fas fa-users me-1 text-accent"></i> Assign</a>
+                        <a href="{% url 'tournaments:admin_edit_league' league.pk %}" class="btn-outline-glow flex-grow-1 py-1 px-2 border-opacity-25" style="font-size: 0.7rem;"><i class="fas fa-edit me-1 text-accent"></i> Edit</a>
                     </div>
                     {% endif %}
                 </div>

@@ -17,6 +17,7 @@ urlpatterns = [
     path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('admin/create/', views.admin_create_tournament, name='admin_create'),
     path('admin/<int:pk>/edit/', views.admin_edit_tournament, name='admin_edit'),
+    path('admin/league/<int:pk>/edit/', views.admin_edit_league, name='admin_edit_league'),
     path('admin/<int:tournament_pk>/add-league/', views.admin_add_league, name='admin_add_league'),
     path('admin/<int:tournament_pk>/applications/', views.admin_applications, name='admin_applications'),
     path('admin/application/<int:app_pk>/accept/', views.admin_accept_application, name='admin_accept_app'),

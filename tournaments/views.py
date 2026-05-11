@@ -292,6 +292,30 @@ def admin_add_league(request, tournament_pk):
 
 
 @login_required
+def admin_edit_league(request, pk):
+    """Admin edits an existing league."""
+    if not request.user.is_admin_user:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    league = get_object_or_404(League, pk=pk)
+    tournament = league.tournament
+
+    if request.method == 'POST':
+        form = LeagueForm(request.POST, instance=league)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'League "{league.name}" updated!')
+            return redirect('tournaments:tournament_detail', pk=tournament.pk)
+    else:
+        form = LeagueForm(instance=league)
+
+    return render(request, 'tournaments/admin_edit_league.html', {
+        'form': form, 'league': league, 'tournament': tournament
+    })
+
+
+@login_required
 def admin_assign_teams(request, league_pk):
     """Admin assigns teams to a league."""
     if not request.user.is_admin_user:
@@ -365,35 +389,74 @@ def admin_generate_fixtures(request, league_pk):
     half = n // 2
 
     team_indices = list(range(n))
-    is_2leg = league.format == 'round_robin_2leg'
-
-    matchday = 1
-    for round_num in range(rounds):
-        for i in range(half):
-            t1 = team_indices[i]
-            t2 = team_indices[n - 1 - i]
-
-            if teams[t1] is not None and teams[t2] is not None:
+    
+    if league.format == 'knockout':
+        import random
+        random.shuffle(teams)
+        
+        # Remove None (BYE) from shuffle and handle it
+        actual_teams = [t for t in teams if t is not None]
+        matchday = 1
+        num_actual = len(actual_teams)
+        
+        for i in range(0, num_actual, 2):
+            if i + 1 < num_actual:
+                t1 = actual_teams[i]
+                t2 = actual_teams[i+1]
+                
                 # First leg
                 Fixture.objects.create(
                     league=league,
-                    home_team=teams[t1],
-                    away_team=teams[t2],
+                    home_team=t1,
+                    away_team=t2,
                     matchday=matchday,
                 )
                 
                 # Second leg
-                if is_2leg:
+                if league.knockout_legs == 2:
                     Fixture.objects.create(
                         league=league,
-                        home_team=teams[t2],
-                        away_team=teams[t1],
-                        matchday=matchday + rounds,
+                        home_team=t2,
+                        away_team=t1,
+                        matchday=matchday + 1,
                     )
+            else:
+                # BYE - The team automatically progresses or just has no fixture this round
+                messages.info(request, f'Team {actual_teams[i].name} has a BYE.')
+        
+    else:
+        # Round-robin scheduling algorithm
+        is_2leg = league.format == 'round_robin_2leg'
+        rounds = n - 1
+        half = n // 2
+        matchday = 1
+        
+        for round_num in range(rounds):
+            for i in range(half):
+                t1 = team_indices[i]
+                t2 = team_indices[n - 1 - i]
 
-        matchday += 1
-        # Rotate: fix first team, rotate rest
-        team_indices = [team_indices[0]] + [team_indices[-1]] + team_indices[1:-1]
+                if teams[t1] is not None and teams[t2] is not None:
+                    # First leg
+                    Fixture.objects.create(
+                        league=league,
+                        home_team=teams[t1],
+                        away_team=teams[t2],
+                        matchday=matchday,
+                    )
+                    
+                    # Second leg
+                    if is_2leg:
+                        Fixture.objects.create(
+                            league=league,
+                            home_team=teams[t2],
+                            away_team=teams[t1],
+                            matchday=matchday + rounds,
+                        )
+
+            matchday += 1
+            # Rotate: fix first team, rotate rest
+            team_indices = [team_indices[0]] + [team_indices[-1]] + team_indices[1:-1]
 
     messages.success(request, f'🎯 {league.fixtures.count()} fixtures generated!')
     return redirect('tournaments:league_fixtures', pk=league_pk)

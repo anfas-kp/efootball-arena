@@ -32,10 +32,11 @@ class TournamentForm(forms.ModelForm):
 class LeagueForm(forms.ModelForm):
     class Meta:
         model = League
-        fields = ['name', 'format', 'max_teams']
+        fields = ['name', 'format', 'knockout_legs', 'max_teams']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., League 1, UCL, UEL'}),
             'format': forms.Select(attrs={'class': 'form-select'}),
+            'knockout_legs': forms.Select(attrs={'class': 'form-select'}),
             'max_teams': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
