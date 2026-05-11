@@ -90,9 +90,11 @@
                 </div>
                 
                 <div class="mt-auto pt-4 d-flex gap-2 flex-wrap">
+                    {% if league.format != 'knockout' %}
                     <a href="{% url 'tournaments:league_standings' league.pk %}" class="btn-glow flex-grow-1 justify-content-center py-2" style="font-size: 0.8rem;">
                         <i class="fas fa-table me-1"></i> Standings
                     </a>
+                    {% endif %}
                     <a href="{% url 'tournaments:league_fixtures' league.pk %}" class="btn-outline-glow flex-grow-1 justify-content-center py-2" style="font-size: 0.8rem;">
                         <i class="fas fa-calendar-alt me-1"></i> Fixtures
                     </a>

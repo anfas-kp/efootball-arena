@@ -322,6 +322,13 @@ input, select, textarea, .form-control, .form-select {
   transition: all 0.3s ease !important;
 }
 
+/* Fix for dropdown options visibility in dark mode */
+select option {
+  background-color: var(--bg-card) !important;
+  color: #fff !important;
+  padding: 10px !important;
+}
+
 .form-control:focus, .form-select:focus {
   background: rgba(255, 255, 255, 0.1) !important;
   border-color: var(--accent) !important;

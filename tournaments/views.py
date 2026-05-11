@@ -127,7 +127,7 @@ def all_standings(request):
     """View standings for all leagues across all active tournaments."""
     leagues = League.objects.select_related('tournament').prefetch_related('teams', 'fixtures__result').filter(
         tournament__is_active=True
-    ).order_by('tournament__name', 'name')
+    ).exclude(format='knockout').order_by('tournament__name', 'name')
 
     league_data = []
     for league in leagues:
