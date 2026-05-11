@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
 
 
@@ -42,30 +42,13 @@ class Team(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        # Optimize logo to WebP only if it's new or changed
-        if self.logo and not self.logo.name.lower().endswith('.webp'):
-            try:
-                from PIL import Image
-                import io
-                from django.core.files.base import ContentFile
-                
-                img = Image.open(self.logo)
-                # Skip if already a WebP image to save CPU
-                if img.format != 'WEBP':
-                    if img.mode in ("RGBA", "P"):
-                        img = img.convert("RGB")
-                    img.thumbnail((800, 800), Image.Resampling.LANCZOS)
-                    
-                    output = io.BytesIO()
-                    img.save(output, format='WebP', quality=85)
-                    output.seek(0)
-                    
-                    filename = self.logo.name.rsplit('.', 1)[0] + '.webp'
-                    self.logo.save(filename, ContentFile(output.read()), save=False)
-            except Exception as e:
-                print(f"Logo optimization failed: {e}")
-                
+        # Optimization is now handled in the background via Celery to avoid 502 timeouts
         super().save(*args, **kwargs)
+        
+        # Only trigger background optimization if logo is new or just uploaded
+        if self.logo and not self.logo.name.lower().endswith('.webp'):
+            from .tasks import optimize_team_logo
+            transaction.on_commit(lambda: optimize_team_logo.delay(self.pk))
 
     class Meta:
         ordering = ['-created_at']
@@ -135,29 +118,13 @@ class Player(models.Model):
         return f"{self.name} ({self.team.name})"
 
     def save(self, *args, **kwargs):
-        # Optimize primary photo to WebP if not already optimized
-        if self.photo and not self.photo.name.lower().endswith('.webp'):
-            try:
-                from PIL import Image
-                import io
-                from django.core.files.base import ContentFile
-                
-                img = Image.open(self.photo)
-                if img.format != 'WEBP':
-                    if img.mode in ("RGBA", "P"):
-                        img = img.convert("RGB")
-                    img.thumbnail((800, 800), Image.Resampling.LANCZOS)
-                    
-                    output = io.BytesIO()
-                    img.save(output, format='WebP', quality=85)
-                    output.seek(0)
-                    
-                    filename = self.photo.name.rsplit('.', 1)[0] + '.webp'
-                    self.photo.save(filename, ContentFile(output.read()), save=False)
-            except Exception as e:
-                print(f"Photo optimization failed: {e}")
-
+        # Optimization is now handled in the background via Celery to avoid timeouts
         super().save(*args, **kwargs)
+
+        # Only trigger background optimization if photo is new or just uploaded
+        if self.photo and not self.photo.name.lower().endswith('.webp'):
+            from .tasks import optimize_player_photo
+            transaction.on_commit(lambda: optimize_player_photo.delay(self.pk))
 
         # Handle background removal only if explicitly requested or needed
         # and not yet processed to save blocking time.

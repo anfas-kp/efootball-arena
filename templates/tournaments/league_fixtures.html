@@ -4,6 +4,7 @@
 {% block title %}{{ league.name }} Fixtures - eFootball Arena{% endblock %}
 
 {% block extra_js %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     {% if is_knockout and bracket_data %}
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -49,6 +50,42 @@
             });
         }
     });
+
+    function downloadBracketImage() {
+        const bracket = document.querySelector('.bracket-container');
+        if (!bracket) return;
+
+        const btn = document.getElementById('btn-download-img');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating...';
+        btn.disabled = true;
+
+        // Use html2canvas to capture the bracket
+        html2canvas(bracket, {
+            backgroundColor: '#0A0F1A', // Match site background
+            scale: 2, // Higher quality
+            useCORS: true,
+            logging: false,
+            onclone: (clonedDoc) => {
+                // Ensure the cloned element is visible even if the original is scrolled
+                const clonedBracket = clonedDoc.querySelector('.bracket-container');
+                clonedBracket.style.padding = '40px';
+                clonedBracket.style.width = 'max-content';
+            }
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = '{{ league.name|slugify }}_bracket.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }).catch(err => {
+            console.error('Bracket capture failed:', err);
+            btn.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> Error';
+            btn.disabled = false;
+        });
+    }
     </script>
     {% endif %}
 {% endblock %}
@@ -65,6 +102,14 @@
 
         {% if user.is_admin_user %}
         <div class="d-flex gap-2 mt-3 mt-md-0">
+            {% if league.format == 'knockout' %}
+                <a href="{% url 'tournaments:download_league_bracket_pdf' league.pk %}" class="btn-outline-glow btn-sm border-accent text-accent">
+                    <i class="fas fa-file-pdf me-1"></i> Download PDF
+                </a>
+                <button id="btn-download-img" onclick="downloadBracketImage()" class="btn-outline-glow btn-sm border-accent-2 text-accent-2">
+                    <i class="fas fa-image me-1"></i> Download Image
+                </button>
+            {% endif %}
             <a href="{% url 'tournaments:admin_add_fixture' league.pk %}" class="btn-outline-glow btn-sm">
                 <i class="fas fa-plus me-1"></i> Add Fixture
             </a>
@@ -299,6 +344,9 @@
                 <div class="flex-grow-1 bg-divider" style="height: 1px;"></div>
                 <div class="px-3 d-flex align-items-center gap-3">
                     <span class="small fw-bold text-accent text-uppercase letter-spacing-1">{{ round.round_name }}</span>
+                    <a href="{% url 'tournaments:download_stage_fixtures' league.pk round.round_type %}" class="text-accent hover-lift" title="Download Stage Fixtures">
+                        <i class="fas fa-download"></i>
+                    </a>
                 </div>
                 <div class="flex-grow-1 bg-divider" style="height: 1px;"></div>
             </div>

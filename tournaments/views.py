@@ -250,6 +250,44 @@ def download_matchday_fixtures(request, league_pk, matchday):
         return HttpResponse(f"Server Error: {str(e)}", status=500)
 
 
+def download_league_bracket_pdf(request, league_pk):
+    """Download the full bracket as a PDF/Printable view."""
+    league = get_object_or_404(League, pk=league_pk)
+    fixtures = league.fixtures.select_related('home_team', 'away_team', 'winner', 'result').all()
+    
+    round_order = ['preliminary', 'round_64', 'round_32', 'round_16', 'quarter_final', 'semi_final', 'final']
+    bracket_data = []
+    
+    for rt in round_order:
+        round_fixes = fixtures.filter(round_type=rt).order_by('bracket_index')
+        if round_fixes.exists():
+            bracket_data.append({
+                'round_type': rt,
+                'round_name': rt.replace('_', ' ').title(),
+                'fixtures': round_fixes
+            })
+
+    return render(request, 'tournaments/pdf_bracket.html', {
+        'league': league,
+        'tournament': league.tournament,
+        'bracket_data': bracket_data,
+    })
+
+
+def download_stage_fixtures(request, league_pk, round_type):
+    """Download fixtures for a specific knockout stage."""
+    league = get_object_or_404(League, pk=league_pk)
+    fixtures = league.fixtures.filter(round_type=round_type).select_related('home_team', 'away_team', 'result').order_by('bracket_index')
+    
+    return render(request, 'tournaments/pdf_matchday_fixtures.html', {
+        'league': league,
+        'tournament': league.tournament,
+        'matchday': round_type.replace('_', ' ').title(),
+        'fixtures': fixtures,
+        'is_knockout': True
+    })
+
+
 # ===== Admin Views =====
 
 @login_required

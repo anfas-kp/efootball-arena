@@ -1,49 +1,65 @@
+import io
 from celery import shared_task
-from django.db.models import Avg, Count, Q
-from .models import Player
-from matches.models import MatchResult, Goal, Card, PlayerRating, CleanSheet
+from PIL import Image
+from django.core.files.base import ContentFile
+from django.apps import apps
 
-@shared_task
-def repair_all_stats_task():
-    """Optimized background task to recalculate all player stats using bulk updates."""
-    players = list(Player.objects.all())
-    
-    # Pre-fetch all approved match results to avoid repetitive DB hits
-    approved_results = MatchResult.objects.filter(status='approved').values_list('id', flat=True)
-    approved_set = set(approved_results)
+@shared_task(bind=True, max_retries=3)
+def optimize_team_logo(self, team_id):
+    """Background task to optimize team logo to WebP."""
+    Team = apps.get_model('teams', 'Team')
+    try:
+        team = Team.objects.get(pk=team_id)
+        if not team.logo or team.logo.name.lower().endswith('.webp'):
+            return "Already optimized or no logo."
 
-    for p in players:
-        # Recalculate everything from scratch
-        # Use existing relationships but filter by approved status
-        p.total_goals = p.goals_scored.filter(result_id__in=approved_set).count()
-        p.total_assists = p.assists.filter(result_id__in=approved_set).count()
-        p.total_red_cards = p.cards.filter(card_type='red', result_id__in=approved_set).count()
-        p.total_yellow_cards = p.cards.filter(card_type='yellow', result_id__in=approved_set).count()
-        p.total_clean_sheets = p.clean_sheet_records.filter(result_id__in=approved_set).count()
-        
-        # Rating (Avoid complex aggregation in loop if possible, but this is okay for small sets)
-        ratings = p.match_ratings.filter(result_id__in=approved_set).values_list('rating', flat=True)
-        if ratings:
-            p.avg_rating = sum(ratings) / len(ratings)
-            p.total_rating = sum(ratings)
-        else:
-            p.avg_rating = 0
-            p.total_rating = 0
+        # Open image from storage
+        img_data = team.logo.read()
+        img = Image.open(io.BytesIO(img_data))
 
-        # Matches Played (Based on involvement)
-        played_ids = set()
-        played_ids.update(p.goals_scored.filter(result_id__in=approved_set).values_list('result_id', flat=True))
-        played_ids.update(p.assists.filter(result_id__in=approved_set).values_list('result_id', flat=True))
-        played_ids.update(p.cards.filter(result_id__in=approved_set).values_list('result_id', flat=True))
-        played_ids.update(p.match_ratings.filter(result_id__in=approved_set).values_list('result_id', flat=True))
-        played_ids.update(p.clean_sheet_records.filter(result_id__in=approved_set).values_list('result_id', flat=True))
-        p.matches_played = len(played_ids)
+        if img.format != 'WEBP':
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+            img.thumbnail((800, 800), Image.Resampling.LANCZOS)
+            
+            output = io.BytesIO()
+            img.save(output, format='WebP', quality=85)
+            output.seek(0)
+            
+            filename = team.logo.name.rsplit('.', 1)[0] + '.webp'
+            team.logo.save(filename, ContentFile(output.read()), save=False)
+            team.save(update_fields=['logo'])
+            return f"Logo optimized for team {team.name}"
+            
+    except Exception as e:
+        # Retry on network issues (like 502)
+        raise self.retry(exc=e, countdown=60)
 
-    # Single bulk update is MUCH faster and won't time out the worker
-    Player.objects.bulk_update(players, [
-        'total_goals', 'total_assists', 'total_red_cards', 
-        'total_yellow_cards', 'total_clean_sheets', 'avg_rating', 
-        'total_rating', 'matches_played'
-    ])
-    
-    return "Stats repaired successfully"
+@shared_task(bind=True, max_retries=3)
+def optimize_player_photo(self, player_id):
+    """Background task to optimize player photo to WebP."""
+    Player = apps.get_model('teams', 'Player')
+    try:
+        player = Player.objects.get(pk=player_id)
+        if not player.photo or player.photo.name.lower().endswith('.webp'):
+            return "Already optimized or no photo."
+
+        img_data = player.photo.read()
+        img = Image.open(io.BytesIO(img_data))
+
+        if img.format != 'WEBP':
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+            img.thumbnail((800, 800), Image.Resampling.LANCZOS)
+            
+            output = io.BytesIO()
+            img.save(output, format='WebP', quality=85)
+            output.seek(0)
+            
+            filename = player.photo.name.rsplit('.', 1)[0] + '.webp'
+            player.photo.save(filename, ContentFile(output.read()), save=False)
+            player.save(update_fields=['photo'])
+            return f"Photo optimized for player {player.name}"
+            
+    except Exception as e:
+        raise self.retry(exc=e, countdown=60)
