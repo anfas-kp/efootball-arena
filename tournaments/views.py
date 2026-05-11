@@ -199,9 +199,23 @@ def league_fixtures(request, pk):
     for md in matchdays:
         fixtures_by_matchday[md] = fixtures.filter(matchday=md)
 
+    is_knockout = league.format == 'knockout'
+    bracket_data = []
+    if is_knockout:
+        # Group fixtures by matchday (as rounds)
+        for md in matchdays:
+            round_fixtures = fixtures.filter(matchday=md)
+            if round_fixtures.exists():
+                bracket_data.append({
+                    'round_num': md,
+                    'fixtures': round_fixtures
+                })
+
     return render(request, 'tournaments/league_fixtures.html', {
         'league': league,
         'fixtures_by_matchday': fixtures_by_matchday,
+        'bracket_data': bracket_data,
+        'is_knockout': is_knockout,
         'tournament': league.tournament,
     })
 
