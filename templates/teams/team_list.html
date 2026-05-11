@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load tournament_tags %}
 {% block title %}Teams - eFootball Arena{% endblock %}
 {% block content %}
 
@@ -11,7 +12,7 @@
 
     <div class="row g-4">
         {% for t in teams %}
-        <div class="col-md-6 col-lg-4">
+        <div class="col-md-6 col-lg-4 stagger-item" style="--i: {{ forloop.counter0 }};">
             <a href="{% url 'teams:team_detail' t.pk %}" class="text-decoration-none d-block h-100">
                 <div class="glass-card text-center h-100 hover-lift d-flex flex-column justify-content-center py-5">
                     {% if t.logo %}
@@ -47,5 +48,6 @@
     .hover-lift { transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; }
     .hover-lift:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 10px 30px rgba(0, 242, 255, 0.15); }
     .font-orbitron { font-family: 'Orbitron', sans-serif; }
+    .stagger-item { animation-delay: calc(var(--i) * 0.05s); }
 </style>
 {% endblock %}

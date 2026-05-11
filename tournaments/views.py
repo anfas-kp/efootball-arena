@@ -1,5 +1,6 @@
 from itertools import combinations
 import csv
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -394,11 +395,15 @@ def admin_generate_fixtures(request, league_pk):
     league = get_object_or_404(League, pk=league_pk)
     if league.format == 'knockout':
         from .services import KnockoutGenerator
-        success, message = KnockoutGenerator.generate_bracket(league)
-        if success:
-            messages.success(request, f'🏆 {message}')
-        else:
-            messages.error(request, f'❌ {message}')
+        try:
+            success, message = KnockoutGenerator.generate_bracket(league)
+            if success:
+                messages.success(request, f'🏆 {message}')
+            else:
+                messages.error(request, f'❌ {message}')
+        except Exception as e:
+            messages.error(request, f'⚠️ Error generating knockout bracket: {str(e)}')
+            logging.error(f"Knockout generation failed: {e}", exc_info=True)
         return redirect('tournaments:league_fixtures', pk=league_pk)
     
     # Round-robin scheduling algorithm

@@ -28,6 +28,43 @@
         {% endif %}
     </div>
 
+    <!-- Tournament Intel / Rules -->
+    <div class="glass-card p-4 mb-5 stagger-item" style="--i: 1; --delay-unit: 0.1s; border-left: 4px solid var(--accent);">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h5 class="font-orbitron text-white mb-2"><i class="fas fa-info-circle text-accent me-2"></i> Competition Format</h5>
+                <p class="text-muted small mb-0">
+                    {% if league.format == 'knockout' %}
+                        This is a <strong>Knockout Tournament</strong>. 
+                        {% if league.knockout_legs == 2 %}
+                            Matches are played over <strong>2 legs (Home & Away)</strong>. The team with the highest aggregate score advances.
+                            {% if league.away_goals_rule %}The <strong>Away Goals Rule</strong> is active.{% else %}Away goals do not count extra.{% endif %}
+                            If aggregate scores are tied, a <strong>Penalty Shootout</strong> in the second leg will decide the winner.
+                        {% else %}
+                            Matches are <strong>Single Elimination</strong>. If a match ends in a draw, it proceeds to <strong>Extra Time</strong> and <strong>Penalties</strong>.
+                        {% endif %}
+                        Winners advance through the bracket until the Final. 
+                        {% if league.third_place_match %}A <strong>Third Place Match</strong> will be held for semi-finalists.{% endif %}
+                    {% else %}
+                        This is a <strong>Round Robin League</strong>.
+                        {% if league.format == 'round_robin_2leg' %}
+                            Every team plays each other <strong>twice (Home & Away)</strong>.
+                        {% else %}
+                            Every team plays each other <strong>once</strong>.
+                        {% endif %}
+                        The team at the top of the standings after all matchdays is declared the champion.
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <div class="d-inline-flex flex-column">
+                    <span class="x-small text-uppercase text-accent fw-bold letter-spacing-1 mb-1">Status</span>
+                    <span class="badge-status badge-{{ league.status }}" style="font-size: 0.7rem;">{{ league.get_status_display }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {% if is_knockout and bracket_data %}
     <!-- View Toggle -->
     <div class="d-flex justify-content-center mb-5">
@@ -42,12 +79,12 @@
         <div class="bracket-wrapper overflow-auto pb-5">
             <div class="bracket-container d-flex gap-5 px-4" style="min-width: max-content;">
                 {% for round in bracket_data %}
-                <div class="bracket-round d-flex flex-column justify-content-around">
+                <div class="bracket-round d-flex flex-column justify-content-around stagger-item" style="--i: {{ forloop.counter0|add:1 }}; --delay-unit: 0.1s;">
                     <div class="round-title font-orbitron text-accent mb-4 text-center">{{ round.round_name }}</div>
                     <div class="round-matches d-flex flex-column justify-content-around h-100 gap-5">
                         {% for f in round.fixtures %}
                             {% if f.matchday == f.league.fixtures.filter|first_leg_for_fixture:f %} {# Show only first leg or single leg in bracket #}
-                            <div class="bracket-match-node">
+                            <div class="bracket-match-node stagger-item" style="--i: {{ forloop.parentloop.counter0|add:forloop.counter0 }}; --delay-unit: 0.05s;">
                                 <div class="bracket-match glass-card p-0 border-opacity-10 overflow-hidden hover-lift" style="width: 260px;">
                                     <!-- Home Team -->
                                     <div class="p-2 d-flex justify-content-between align-items-center {% if f.winner == f.home_team %}bg-accent bg-opacity-10{% endif %}">
@@ -62,8 +99,16 @@
                                                     {{ f.home_team.name }}
                                                 </span>
                                             {% else %}
-                                                <div class="logo-xs logo-placeholder bg-secondary bg-opacity-20">?</div>
-                                                <span class="small text-muted italic">TBD</span>
+                                                <div class="logo-xs logo-placeholder bg-secondary bg-opacity-10">
+                                                    {% if not f.is_placeholder %}
+                                                        <i class="fas fa-skating fa-xs opacity-20"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-hourglass-half fa-xs opacity-20"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <span class="small text-muted italic opacity-50">
+                                                    {% if not f.is_placeholder %}BYE{% else %}TBD{% endif %}
+                                                </span>
                                             {% endif %}
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
@@ -88,8 +133,16 @@
                                                     {{ f.away_team.name }}
                                                 </span>
                                             {% else %}
-                                                <div class="logo-xs logo-placeholder bg-secondary bg-opacity-20">?</div>
-                                                <span class="small text-muted italic">TBD</span>
+                                                <div class="logo-xs logo-placeholder bg-secondary bg-opacity-10">
+                                                    {% if not f.is_placeholder %}
+                                                        <i class="fas fa-skating fa-xs opacity-20"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-hourglass-half fa-xs opacity-20"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <span class="small text-muted italic opacity-50">
+                                                    {% if not f.is_placeholder %}BYE{% else %}TBD{% endif %}
+                                                </span>
                                             {% endif %}
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
@@ -132,7 +185,7 @@
     <!-- Fixtures Grid (List View) -->
     <div id="list-view" class="view-section">
     {% for md, fixtures in fixtures_by_matchday.items %}
-    <div class="matchday-section mb-5">
+    <div class="matchday-section mb-5 stagger-item" style="--i: {{ forloop.counter0 }}; --delay-unit: 0.1s;">
         <div class="d-flex align-items-center mb-4">
             <div class="flex-grow-1 bg-divider" style="height: 1px;"></div>
             <div class="px-3 d-flex align-items-center gap-3">
@@ -177,6 +230,10 @@
                             {% if f.status == 'completed' and f.result %}
                                 <div class="font-orbitron fw-bold mb-0 text-white px-2 py-1 bg-secondary rounded" style="font-size: 0.9rem;">
                                     {{ f.result.home_score }} - {{ f.result.away_score }}
+                                </div>
+                            {% elif f.status == 'in_progress' %}
+                                <div class="font-orbitron fw-bold mb-0 text-accent px-2 py-1 bg-secondary rounded live-pulse" style="font-size: 0.9rem;">
+                                    LIVE
                                 </div>
                             {% else %}
                                 <div class="font-orbitron text-accent fw-bold small opacity-50">VS</div>
@@ -374,5 +431,7 @@ function showView(view) {
         height: 100%;
         background: rgba(255,255,255,0.1);
     }
+
+    .stagger-item { animation-delay: calc(var(--i) * var(--delay-unit, 0.05s)); }
 </style>
 {% endblock %}
