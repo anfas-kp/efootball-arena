@@ -52,25 +52,56 @@
     });
 
     function downloadBracketImage() {
+        const bracketView = document.getElementById('bracket-view');
         const bracket = document.querySelector('.bracket-container');
-        if (!bracket) return;
+        if (!bracket || !bracketView) return;
 
         const btn = document.getElementById('btn-download-img');
         const originalText = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating...';
         btn.disabled = true;
 
+        // CRITICAL: If bracket view is hidden (d-none), html2canvas will return a blank image.
+        // We must temporarily show it, but we can do it off-screen.
+        const wasHidden = bracketView.classList.contains('d-none');
+        if (wasHidden) {
+            bracketView.classList.remove('d-none');
+            // Ensure it's rendered before capture
+        }
+
+        // Force visibility of all elements in case they are still animating
+        const staggerItems = bracket.querySelectorAll('.stagger-item');
+        staggerItems.forEach(item => {
+            item.style.opacity = '1';
+            item.style.transform = 'none';
+        });
+
         // Use html2canvas to capture the bracket
         html2canvas(bracket, {
             backgroundColor: '#0A0F1A', // Match site background
             scale: 2, // Higher quality
             useCORS: true,
+            allowTaint: true,
             logging: false,
+            scrollX: 0,
+            scrollY: 0,
+            width: bracket.scrollWidth,
+            height: bracket.scrollHeight,
             onclone: (clonedDoc) => {
-                // Ensure the cloned element is visible even if the original is scrolled
                 const clonedBracket = clonedDoc.querySelector('.bracket-container');
-                clonedBracket.style.padding = '40px';
+                clonedBracket.style.padding = '50px';
+                clonedBracket.style.display = 'flex';
                 clonedBracket.style.width = 'max-content';
+                clonedBracket.style.background = '#0A0F1A';
+                
+                // Fix potential blank nodes by forcing opacity
+                const clonedItems = clonedBracket.querySelectorAll('.stagger-item');
+                clonedItems.forEach(item => {
+                    item.style.opacity = '1';
+                    item.style.visibility = 'visible';
+                    item.style.transform = 'none';
+                    item.style.display = 'block';
+                });
             }
         }).then(canvas => {
             const link = document.createElement('a');
@@ -78,10 +109,13 @@
             link.href = canvas.toDataURL('image/png');
             link.click();
             
+            // Restore state
+            if (wasHidden) bracketView.classList.add('d-none');
             btn.innerHTML = originalText;
             btn.disabled = false;
         }).catch(err => {
             console.error('Bracket capture failed:', err);
+            if (wasHidden) bracketView.classList.add('d-none');
             btn.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> Error';
             btn.disabled = false;
         });
