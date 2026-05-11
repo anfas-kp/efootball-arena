@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Advanced Bracket Generation - {{ league.name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 100px; padding-bottom: 100px;">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <a href="{% url 'tournaments:league_fixtures' league.pk %}" class="btn-outline-glow btn-sm">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="h3 mb-0 font-orbitron text-accent text-uppercase">Advanced <span class="text-white">Seeding</span></h1>
+                    <p class="text-muted small mb-0">{{ league.name }} — Knockout Configuration</p>
+                </div>
+            </div>
+
+            <div class="glass-card p-5 stagger-item" style="--i: 1;">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="logo-sm bg-accent bg-opacity-20 d-flex align-items-center justify-content-center rounded-circle">
+                        <i class="fas fa-sitemap text-accent"></i>
+                    </div>
+                    <h5 class="text-white mb-0 font-orbitron">Preliminary Selection</h5>
+                </div>
+
+                <div class="alert alert-info bg-black bg-opacity-30 border-accent border-opacity-20 text-muted small mb-5">
+                    <i class="fas fa-info-circle text-accent me-2"></i>
+                    <strong>How this works:</strong> Based on the <strong>{{ league.teams.count }}</strong> teams in this league, the engine will create a tight bracket. 
+                    If you want specific teams to play in the <strong>Preliminary (Play-in)</strong> round, select them below. 
+                    If you leave this empty, the engine will pick teams randomly.
+                </div>
+
+                <form method="post" id="generation-form">
+                    {% csrf_token %}
+                    
+                    <div class="row g-4 mb-5">
+                        <div class="col-12">
+                            <label class="text-accent x-small text-uppercase fw-bold mb-3 letter-spacing-1 d-block">Select Preliminary Teams</label>
+                            <div class="team-selection-grid p-4 rounded bg-black bg-opacity-20 border border-white border-opacity-5">
+                                <div class="row g-3">
+                                    {% for team in form.preliminary_teams.field.queryset %}
+                                    <div class="col-md-6">
+                                        <div class="form-check custom-team-check p-3 rounded border border-white border-opacity-10 hover-lift">
+                                            <input class="form-check-input" type="checkbox" name="preliminary_teams" value="{{ team.id }}" id="team-{{ team.id }}">
+                                            <label class="form-check-label d-flex align-items-center gap-3 ms-2" for="team-{{ team.id }}">
+                                                {% if team.logo %}
+                                                    <img src="{{ team.logo.url }}" class="logo-xs">
+                                                {% else %}
+                                                    <div class="logo-xs logo-placeholder">{{ team.name|first }}</div>
+                                                {% endif %}
+                                                <span class="text-white small fw-bold">{{ team.name }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="mt-2 text-muted x-small">
+                                <i class="fas fa-lightbulb me-1 text-accent"></i> Tip: Select an <strong>even number</strong> of teams for the play-ins.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">
+                            <span id="selected-count" class="text-accent fw-bold">0</span> teams selected for Play-ins
+                        </div>
+                        <div class="d-flex gap-3">
+                            <button type="submit" name="auto" class="btn-outline-glow">
+                                <i class="fas fa-random me-2"></i> Randomize All
+                            </button>
+                            <button type="submit" class="btn-glow">
+                                <i class="fas fa-check-circle me-2"></i> Generate Bracket
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('input[name="preliminary_teams"]');
+    const countDisplay = document.getElementById('selected-count');
+    
+    function updateCount() {
+        const checkedCount = document.querySelectorAll('input[name="preliminary_teams"]:checked').length;
+        countDisplay.textContent = checkedCount;
+        
+        // Highlight selected
+        checkboxes.forEach(cb => {
+            const parent = cb.closest('.custom-team-check');
+            if (cb.checked) {
+                parent.classList.add('selected-team');
+            } else {
+                parent.classList.remove('selected-team');
+            }
+        });
+    }
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateCount);
+    });
+});
+</script>
+
+<style>
+    .font-orbitron { font-family: 'Orbitron', sans-serif; }
+    .letter-spacing-1 { letter-spacing: 1.5px; }
+    .x-small { font-size: 0.65rem; }
+    .logo-xs { width: 24px; height: 24px; object-fit: contain; }
+    .logo-placeholder { 
+        width: 24px; height: 24px; border-radius: 4px; 
+        background: rgba(255,255,255,0.1); display: flex; 
+        align-items: center; justify-content: center; font-size: 0.6rem; 
+    }
+    
+    .custom-team-check {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .custom-team-check:hover {
+        background: rgba(255,255,255,0.05);
+    }
+    .selected-team {
+        background: rgba(6, 214, 160, 0.1) !important;
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 15px rgba(6, 214, 160, 0.1);
+    }
+    .form-check-input:checked {
+        background-color: var(--accent);
+        border-color: var(--accent);
+    }
+    .team-selection-grid {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .team-selection-grid::-webkit-scrollbar {
+        width: 5px;
+    }
+    .team-selection-grid::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}

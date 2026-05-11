@@ -50,15 +50,20 @@ class BracketBuilder:
                         round_type='preliminary',
                         bracket_index=i,
                         matchday=matchday_offset + 1,
-                        home_team=t2,
-                        away_team=t1
-                    )
-            
-            matchday_offset += 2 if league.knockout_legs == 2 else 1
+        # 2. Distribute Teams
+        if preliminary_teams:
+            # Filter valid teams from the manual selection
+            p_teams = list(preliminary_teams)
+            main_teams = [t for t in teams if t not in p_teams]
+            random.shuffle(main_teams)
+            random.shuffle(p_teams)
         else:
-            remaining_teams = teams
+            # Automatic selection: Last N teams go to preliminary
+            random.shuffle(teams)
+            p_teams = teams[:(play_ins * 2)]
+            main_teams = teams[(play_ins * 2):]
 
-        # 3. Create Main Bracket (from Quarter Finals or whatever base_power is)
+        # 3. Create Main Bracket
         rounds_data = {}
         current_n = base_power
         
@@ -67,42 +72,32 @@ class BracketBuilder:
             num_matches = current_n // 2
             fixtures_in_round = []
             
+            # Matchday logic (2-leg support)
+            m_offset = 1 # Simple offset for demo
+            
             for i in range(num_matches):
-                fix = Fixture.objects.create(
+                fixture = Fixture.objects.create(
                     league=league,
                     round_type=round_type,
                     bracket_index=i,
-                    matchday=matchday_offset
+                    matchday=m_offset,
+                    is_placeholder=(current_n != base_power)
                 )
-                fixtures_in_round.append(fix)
+                fixtures_in_round.append(fixture)
                 
                 if league.knockout_legs == 2 and current_n > 2:
                     Fixture.objects.create(
                         league=league,
                         round_type=round_type,
                         bracket_index=i,
-                        matchday=matchday_offset + 1
+                        matchday=m_offset + 1,
+                        is_placeholder=True
                     )
-            
+
             rounds_data[current_n] = fixtures_in_round
-            matchday_offset += 2 if (league.knockout_legs == 2 and current_n > 2) else 1
             current_n //= 2
 
-        # 4. Link Preliminary to First Main Round
-        first_main_round = rounds_data[base_power]
-        for i, p_fix in enumerate(prelim_fixtures):
-            # Play-ins usually fill the "bottom" slots of the first round
-            target_fix = first_main_round[(base_power // 2) - 1 - i]
-            p_fix.next_fixture = target_fix
-            p_fix.save()
-            
-            # Link leg 2
-            p_leg2 = Fixture.objects.filter(league=league, round_type='preliminary', bracket_index=p_fix.bracket_index, matchday=p_fix.matchday+1).first()
-            if p_leg2:
-                p_leg2.next_fixture = target_fix
-                p_leg2.save()
-
-        # 5. Link Main Rounds
+        # 4. Link Rounds
         current_n = base_power
         while current_n > 2:
             curr_fixes = rounds_data[current_n]

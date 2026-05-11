@@ -61,3 +61,16 @@ class FixtureForm(forms.ModelForm):
         # Only show teams that are in this league
         self.fields['home_team'].queryset = league.teams.all()
         self.fields['away_team'].queryset = league.teams.all()
+
+class KnockoutGenerationForm(forms.Form):
+    """Form to select teams for preliminary round manually."""
+    preliminary_teams = forms.ModelMultipleChoiceField(
+        queryset=None, 
+        required=False, 
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        help_text="Select teams to play in the Preliminary round. Others will receive a BYE to the next round."
+    )
+
+    def __init__(self, league, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['preliminary_teams'].queryset = league.teams.all()

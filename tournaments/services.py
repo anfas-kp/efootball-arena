@@ -4,13 +4,13 @@ class KnockoutGenerator:
     """Proxy service for knockout fixture generation."""
 
     @staticmethod
-    def generate_bracket(league):
+    def generate_bracket(league, preliminary_teams=None):
         """
         Generates a tight bracket using the new modular engine.
-        Supports preliminary rounds for non-power-of-2 team counts.
+        Supports preliminary rounds and manual team selection.
         """
         try:
-            BracketBuilder.generate(league)
+            BracketBuilder.generate(league, preliminary_teams=preliminary_teams)
             return True, "Bracket generated successfully using the Advanced Modular Engine."
         except Exception as e:
             import logging

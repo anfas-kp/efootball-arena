@@ -390,24 +390,38 @@ def admin_remove_team(request, league_pk, team_pk):
 
 @login_required
 def admin_generate_fixtures(request, league_pk):
-    """Generate round-robin fixtures for a league."""
+    """Generate fixtures for a league (Round-robin or Knockout)."""
     if not request.user.is_admin_user:
         messages.error(request, 'Access denied.')
         return redirect('core:home')
 
     league = get_object_or_404(League, pk=league_pk)
+    from .forms import KnockoutGenerationForm
+    from .services import KnockoutGenerator
+
     if league.format == 'knockout':
-        from .services import KnockoutGenerator
-        try:
-            success, message = KnockoutGenerator.generate_bracket(league)
-            if success:
-                messages.success(request, f'🏆 {message}')
-            else:
-                messages.error(request, f'❌ {message}')
-        except Exception as e:
-            messages.error(request, f'⚠️ Error generating knockout bracket: {str(e)}')
-            logging.error(f"Knockout generation failed: {e}", exc_info=True)
-        return redirect('tournaments:league_fixtures', pk=league_pk)
+        if request.method == 'POST':
+            form = KnockoutGenerationForm(league, request.POST)
+            # We don't strictly validate form since we might want automatic generation if empty
+            preliminary_teams = form.cleaned_data.get('preliminary_teams') if form.is_valid() else None
+            
+            try:
+                success, message = KnockoutGenerator.generate_bracket(league, preliminary_teams=preliminary_teams)
+                if success:
+                    messages.success(request, f'🏆 {message}')
+                else:
+                    messages.error(request, f'❌ {message}')
+            except Exception as e:
+                messages.error(request, f'⚠️ Error generating knockout bracket: {str(e)}')
+            return redirect('tournaments:league_fixtures', pk=league_pk)
+        
+        # GET request: Show the team selection form for knockout
+        form = KnockoutGenerationForm(league)
+        return render(request, 'tournaments/admin_generate_knockout_options.html', {
+            'league': league,
+            'form': form,
+            'tournament': league.tournament,
+        })
     
     # Round-robin scheduling algorithm
     teams = list(league.teams.all())

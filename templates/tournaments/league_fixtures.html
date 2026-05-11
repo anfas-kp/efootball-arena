@@ -68,12 +68,25 @@
             <a href="{% url 'tournaments:admin_add_fixture' league.pk %}" class="btn-outline-glow btn-sm">
                 <i class="fas fa-plus me-1"></i> Add Fixture
             </a>
-            <form action="{% url 'tournaments:admin_generate_fixtures' league.pk %}" method="post" onsubmit="return confirm('This will delete all existing fixtures and regenerate them. Continue?');">
-                {% csrf_token %}
-                <button type="submit" class="btn-glow btn-sm">
-                    <i class="fas fa-sync-alt me-1"></i> Regenerate All
-                </button>
-            </form>
+            <div class="d-flex gap-2">
+                {% if league.format == 'knockout' %}
+                    <!-- For Knockout, redirect to selection page -->
+                    <a href="{% url 'tournaments:admin_generate_fixtures' league.pk %}" class="btn-outline-glow btn-sm">
+                        <i class="fas fa-sync-alt me-1"></i> Regenerate All
+                    </a>
+                {% else %}
+                    <!-- For Round Robin, keep direct POST -->
+                    <form action="{% url 'tournaments:admin_generate_fixtures' league.pk %}" method="post" onsubmit="return confirm('This will delete all existing fixtures and regenerate them. Continue?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-outline-glow btn-sm">
+                            <i class="fas fa-sync-alt me-1"></i> Regenerate All
+                        </button>
+                    </form>
+                {% endif %}
+                <a href="{% url 'tournaments:admin_edit_league' league.pk %}" class="btn-glow btn-sm">
+                    <i class="fas fa-edit me-1"></i> Edit League
+                </a>
+            </div>
         </div>
         {% endif %}
     </div>
@@ -279,128 +292,181 @@
 
     <!-- Fixtures Grid (List View) -->
     <div id="list-view" class="view-section">
-    {% for md, fixtures in fixtures_by_matchday.items %}
-    <div class="matchday-section mb-5 stagger-item" style="--i: {{ forloop.counter0 }}; --delay-unit: 0.1s;">
-        <div class="d-flex align-items-center mb-4">
-            <div class="flex-grow-1 bg-divider" style="height: 1px;"></div>
-            <div class="px-3 d-flex align-items-center gap-3">
-                <span class="small fw-bold text-muted text-uppercase letter-spacing-1">Matchday {{ md }}</span>
-                <a href="{% url 'tournaments:download_matchday_fixtures' league.pk md %}" class="text-accent hover-lift" title="Download PDF/Image">
-                    <i class="fas fa-download"></i>
-                </a>
+    {% if is_knockout %}
+        {% for round in bracket_data %}
+        <div class="matchday-section mb-5 stagger-item" style="--i: {{ forloop.counter0 }}; --delay-unit: 0.1s;">
+            <div class="d-flex align-items-center mb-4">
+                <div class="flex-grow-1 bg-divider" style="height: 1px;"></div>
+                <div class="px-3 d-flex align-items-center gap-3">
+                    <span class="small fw-bold text-accent text-uppercase letter-spacing-1">{{ round.round_name }}</span>
+                </div>
+                <div class="flex-grow-1 bg-divider" style="height: 1px;"></div>
             </div>
-            <div class="flex-grow-1 bg-divider" style="height: 1px;"></div>
-        </div>
-        
-        <div class="row g-4">
-            {% for f in fixtures %}
-            <div class="col-lg-6 col-xl-4">
-                <div class="glass-card p-4 hover-lift h-100 d-flex flex-column">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <span class="text-muted x-small fw-bold letter-spacing-1">
-                            {% if f.match_date %}
-                                <i class="far fa-calendar-alt me-1 text-accent"></i> {{ f.match_date|date:"d M, Y" }}
-                            {% else %}
-                                <i class="far fa-clock me-1 text-accent"></i> TBD
-                            {% endif %}
-                        </span>
-                        <span class="badge-status badge-{{ f.status }}" style="font-size: 0.6rem;">{{ f.get_status_display }}</span>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center mb-4 flex-grow-1">
-                        <!-- Home Team -->
-                        <div class="d-flex align-items-center gap-2" style="width: 40%;">
-                            <div class="flex-shrink-0">
-                                {% if f.home_team.logo %}
-                                    <img src="{{ f.home_team.logo.url }}" alt="{{ f.home_team.name }}" class="logo-sm">
-                                {% else %}
-                                    <div class="logo-sm logo-placeholder" style="font-size: 0.7rem;">{{ f.home_team.name|first }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="fw-bold text-white small text-truncate">{{ f.home_team.name }}</div>
+            
+            <div class="row g-4">
+                {% for f in round.fixtures %}
+                <div class="col-lg-6 col-xl-4">
+                    <div class="glass-card p-4 hover-lift h-100 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="text-muted x-small fw-bold letter-spacing-1">
+                                <i class="far fa-clock me-1 text-accent"></i> Match ID: #{{ f.id }}
+                            </span>
+                            <span class="badge-status badge-{{ f.status }}" style="font-size: 0.6rem;">{{ f.get_status_display }}</span>
                         </div>
 
-                        <!-- Score / VS -->
-                        <div class="text-center flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-grow-1">
+                            <!-- Home Team -->
+                            <div class="d-flex align-items-center gap-2" style="width: 40%;">
+                                <div class="flex-shrink-0">
+                                    {% if f.home_team.logo %}
+                                        <img src="{{ f.home_team.logo.url }}" alt="{{ f.home_team.name }}" class="logo-sm">
+                                    {% else %}
+                                        <div class="logo-sm logo-placeholder" style="font-size: 0.7rem;">{{ f.home_team.name|first|default:"?" }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="fw-bold text-white small text-truncate">{{ f.home_team.name|default:"TBD" }}</div>
+                            </div>
+
+                            <!-- Score / VS -->
+                            <div class="text-center flex-grow-1">
+                                {% if f.status == 'completed' and f.result %}
+                                    <div class="font-orbitron fw-bold mb-0 text-white px-2 py-1 bg-secondary rounded" style="font-size: 0.9rem;">
+                                        {{ f.result.home_score }} - {{ f.result.away_score }}
+                                    </div>
+                                {% else %}
+                                    <div class="font-orbitron text-accent fw-bold small opacity-50">VS</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Away Team -->
+                            <div class="d-flex align-items-center gap-2 flex-row-reverse text-end" style="width: 40%;">
+                                <div class="flex-shrink-0">
+                                    {% if f.away_team.logo %}
+                                        <img src="{{ f.away_team.logo.url }}" alt="{{ f.away_team.name }}" class="logo-sm">
+                                    {% else %}
+                                        <div class="logo-sm logo-placeholder" style="font-size: 0.7rem;">{{ f.away_team.name|first|default:"?" }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="fw-bold text-white small text-truncate">{{ f.away_team.name|default:"TBD" }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-top border-white border-opacity-5">
                             {% if f.status == 'completed' and f.result %}
-                                <div class="font-orbitron fw-bold mb-0 text-white px-2 py-1 bg-secondary rounded" style="font-size: 0.9rem;">
-                                    {{ f.result.home_score }} - {{ f.result.away_score }}
-                                </div>
-                            {% elif f.status == 'in_progress' %}
-                                <div class="font-orbitron fw-bold mb-0 text-accent px-2 py-1 bg-secondary rounded live-pulse" style="font-size: 0.9rem;">
-                                    LIVE
-                                </div>
+                                <a href="{% url 'matches:result_detail' f.result.pk %}" class="btn-outline-glow w-100 justify-content-center py-2" style="font-size: 0.8rem;">
+                                    <i class="fas fa-info-circle me-1"></i> Match Details
+                                </a>
                             {% else %}
-                                <div class="font-orbitron text-accent fw-bold small opacity-50">VS</div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Away Team -->
-                        <div class="d-flex align-items-center gap-2 flex-row-reverse text-end" style="width: 40%;">
-                            <div class="flex-shrink-0">
-                                {% if f.away_team.logo %}
-                                    <img src="{{ f.away_team.logo.url }}" alt="{{ f.away_team.name }}" class="logo-sm">
-                                {% else %}
-                                    <div class="logo-sm logo-placeholder" style="font-size: 0.7rem;">{{ f.away_team.name|first }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="fw-bold text-white small text-truncate">{{ f.away_team.name }}</div>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 pt-3 border-top border-white border-opacity-5">
-                        <!-- H2H Stats -->
-                        {% with h2h=f.h2h_stats %}
-                        {% if h2h.total > 0 %}
-                        <div class="h2h-box mb-3 p-2 rounded" style="background: rgba(0,0,0,0.2); font-size: 0.7rem; text-align: center;">
-                            <div class="text-accent fw-bold text-uppercase mb-1" style="letter-spacing: 1px;"><i class="fas fa-history me-1"></i> Head-to-Head (Last {{ h2h.total }})</div>
-                            <div class="d-flex justify-content-between text-muted px-3">
-                                <span>{{ f.home_team.name|truncatechars:8 }} W: <strong class="text-white">{{ h2h.home_wins }}</strong></span>
-                                <span>Draws: <strong class="text-white">{{ h2h.draws }}</strong></span>
-                                <span>{{ f.away_team.name|truncatechars:8 }} W: <strong class="text-white">{{ h2h.away_wins }}</strong></span>
-                            </div>
-                        </div>
-                        {% endif %}
-                        {% endwith %}
-                        
-                        {% if f.status == 'completed' and f.result %}
-                            <a href="{% url 'matches:result_detail' f.result.pk %}" class="btn-outline-glow w-100 justify-content-center py-2" style="font-size: 0.8rem;">
-                                <i class="fas fa-info-circle me-1"></i> Match Details
-                            </a>
-                        {% else %}
-                            {% if user.is_authenticated %}
-                                {% with user_team=user.team %}
-                                    {% if user_team == f.home_team or user_team == f.away_team or user.is_admin_user %}
+                                {% if user.is_authenticated and f.home_team and f.away_team %}
+                                    {% if user.team == f.home_team or user.team == f.away_team or user.is_admin_user %}
                                         <a href="{% url 'matches:submit_result' f.pk %}" class="btn-glow w-100 justify-content-center py-2" style="font-size: 0.8rem;">
                                             <i class="fas fa-upload me-1"></i> Submit Result
                                         </a>
-                                    {% else %}
-                                        <button class="btn-disabled w-100 py-2" disabled style="font-size: 0.8rem;">
-                                            <i class="fas fa-lock me-1"></i> Restricted
-                                        </button>
                                     {% endif %}
-                                {% endwith %}
+                                {% endif %}
                             {% endif %}
-                        {% endif %}
+                        </div>
                     </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
-    </div>
-    {% empty %}
-    <div class="text-center py-5">
-        <div class="glass-card d-inline-block px-5 py-4">
-            <i class="fas fa-calendar-times fa-3x mb-3 text-muted opacity-20"></i>
-            <h4 class="text-white fw-bold">No fixtures yet.</h4>
-            {% if user.is_admin_user %}
-                <p class="text-muted small mb-4">Generate fixtures to start the league.</p>
-                <a href="{% url 'tournaments:admin_assign_teams' league.pk %}" class="btn-glow">Assign Teams</a>
-            {% endif %}
+        {% endfor %}
+    {% else %}
+        {% for md, fixtures in fixtures_by_matchday.items %}
+        <div class="matchday-section mb-5 stagger-item" style="--i: {{ forloop.counter0 }}; --delay-unit: 0.1s;">
+            <div class="d-flex align-items-center mb-4">
+                <div class="flex-grow-1 bg-divider" style="height: 1px;"></div>
+                <div class="px-3 d-flex align-items-center gap-3">
+                    <span class="small fw-bold text-muted text-uppercase letter-spacing-1">Matchday {{ md }}</span>
+                    <a href="{% url 'tournaments:download_matchday_fixtures' league.pk md %}" class="text-accent hover-lift" title="Download PDF/Image">
+                        <i class="fas fa-download"></i>
+                    </a>
+                </div>
+                <div class="flex-grow-1 bg-divider" style="height: 1px;"></div>
+            </div>
+            
+            <div class="row g-4">
+                {% for f in fixtures %}
+                <div class="col-lg-6 col-xl-4">
+                    <div class="glass-card p-4 hover-lift h-100 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="text-muted x-small fw-bold letter-spacing-1">
+                                {% if f.match_date %}
+                                    <i class="far fa-calendar-alt me-1 text-accent"></i> {{ f.match_date|date:"d M, Y" }}
+                                {% else %}
+                                    <i class="far fa-clock me-1 text-accent"></i> TBD
+                                {% endif %}
+                            </span>
+                            <span class="badge-status badge-{{ f.status }}" style="font-size: 0.6rem;">{{ f.get_status_display }}</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-grow-1">
+                            <!-- Home Team -->
+                            <div class="d-flex align-items-center gap-2" style="width: 40%;">
+                                <div class="flex-shrink-0">
+                                    {% if f.home_team.logo %}
+                                        <img src="{{ f.home_team.logo.url }}" alt="{{ f.home_team.name }}" class="logo-sm">
+                                    {% else %}
+                                        <div class="logo-sm logo-placeholder" style="font-size: 0.7rem;">{{ f.home_team.name|first }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="fw-bold text-white small text-truncate">{{ f.home_team.name }}</div>
+                            </div>
+
+                            <!-- Score / VS -->
+                            <div class="text-center flex-grow-1">
+                                {% if f.status == 'completed' and f.result %}
+                                    <div class="font-orbitron fw-bold mb-0 text-white px-2 py-1 bg-secondary rounded" style="font-size: 0.9rem;">
+                                        {{ f.result.home_score }} - {{ f.result.away_score }}
+                                    </div>
+                                {% elif f.status == 'in_progress' %}
+                                    <div class="font-orbitron fw-bold mb-0 text-accent px-2 py-1 bg-secondary rounded live-pulse" style="font-size: 0.9rem;">
+                                        LIVE
+                                    </div>
+                                {% else %}
+                                    <div class="font-orbitron text-accent fw-bold small opacity-50">VS</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Away Team -->
+                            <div class="d-flex align-items-center gap-2 flex-row-reverse text-end" style="width: 40%;">
+                                <div class="flex-shrink-0">
+                                    {% if f.away_team.logo %}
+                                        <img src="{{ f.away_team.logo.url }}" alt="{{ f.away_team.name }}" class="logo-sm">
+                                    {% else %}
+                                        <div class="logo-sm logo-placeholder" style="font-size: 0.7rem;">{{ f.away_team.name|first }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="fw-bold text-white small text-truncate">{{ f.away_team.name }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-top border-white border-opacity-5">
+                            {% if f.status == 'completed' and f.result %}
+                                <a href="{% url 'matches:result_detail' f.result.pk %}" class="btn-outline-glow w-100 justify-content-center py-2" style="font-size: 0.8rem;">
+                                    <i class="fas fa-info-circle me-1"></i> Match Details
+                                </a>
+                            {% else %}
+                                {% if user.is_authenticated %}
+                                    {% with user_team=user.team %}
+                                        {% if user_team == f.home_team or user_team == f.away_team or user.is_admin_user %}
+                                            <a href="{% url 'matches:submit_result' f.pk %}" class="btn-glow w-100 justify-content-center py-2" style="font-size: 0.8rem;">
+                                                <i class="fas fa-upload me-1"></i> Submit Result
+                                            </a>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
+        {% endfor %}
+    {% endif %}
     </div>
-    {% endfor %}
-</div>
 
 <script>
 function showView(view) {
