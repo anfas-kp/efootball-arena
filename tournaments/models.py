@@ -204,3 +204,47 @@ class Fixture(models.Model):
             'draws': draws,
             'total': past_results.count(),
         }
+
+class LeagueStanding(models.Model):
+    """Computed snapshot of a team's performance in a league."""
+    league = models.ForeignKey(League, on_delete=models.CASCADE, related_name='computed_standings')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    
+    played = models.PositiveIntegerField(default=0)
+    won = models.PositiveIntegerField(default=0)
+    drawn = models.PositiveIntegerField(default=0)
+    lost = models.PositiveIntegerField(default=0)
+    gf = models.PositiveIntegerField(default=0, verbose_name='Goals For')
+    ga = models.PositiveIntegerField(default=0, verbose_name='Goals Against')
+    gd = models.IntegerField(default=0, verbose_name='Goal Difference')
+    points = models.PositiveIntegerField(default=0)
+    form = models.CharField(max_length=10, default='', help_text='Last 5 matches e.g. WLDWW')
+    
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['league', 'team']
+        ordering = ['-points', '-gd', '-gf']
+
+    def __str__(self):
+        return f"{self.team.name} Stats in {self.league.name}"
+
+
+class PlayerTournamentStats(models.Model):
+    """Computed snapshot of a player's performance in a league/tournament."""
+    league = models.ForeignKey(League, on_delete=models.CASCADE, related_name='player_stats')
+    player = models.ForeignKey('teams.Player', on_delete=models.CASCADE, related_name='tournament_stats')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    
+    goals = models.PositiveIntegerField(default=0)
+    assists = models.PositiveIntegerField(default=0)
+    yellow_cards = models.PositiveIntegerField(default=0)
+    red_cards = models.PositiveIntegerField(default=0)
+    matches_played = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ['league', 'player']
+        ordering = ['-goals', '-assists']
+
+    def __str__(self):
+        return f"{self.player.name} - {self.goals}G {self.assists}A"

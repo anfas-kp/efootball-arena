@@ -207,7 +207,10 @@ def league_fixtures(request, pk):
     if is_knockout:
         # Group knockout fixtures by round type
         # Order: Final, Semi, Quarter, Round 16, Round 32
-        round_order = ['round_32', 'round_16', 'quarter_final', 'semi_final', 'final']
+        round_order = ['preliminary', 'round_64', 'round_32', 'round_16', 'quarter_final', 'semi_final', 'final']
+        
+        # Prefetch team and result data to avoid N+1 queries
+        fixtures = fixtures.select_related('home_team', 'away_team', 'winner', 'result')
         
         for rt in round_order:
             round_fixes = fixtures.filter(round_type=rt).order_by('bracket_index')

@@ -82,7 +82,26 @@ Because free hosts delete files every time the server sleeps, we need Cloudinary
 
 ---
 
-### Step 6: You're Live! 🚀
+### Step 7: Windows Development Workarounds
+If you are developing on Windows, Celery may encounter `Access Denied` errors with the default pool. Use this command to run your worker:
+```bash
+celery -A efootball_project worker --loglevel=info -P solo
+```
+
+### 📈 Production Scaling & Stats
+With the new **Computed Stats System**, your server will handle 1,000+ teams easily.
+- **Standings**: Are pre-computed in the `LeagueStanding` table.
+- **Auto-Sync**: When you approve a result in the dashboard, a Django Signal automatically triggers a background refresh. No manual action is needed.
+
+### 🔐 Security & HTTPS
+When `DEBUG` is set to `False` on Render:
+- The site will automatically redirect all traffic to **HTTPS**.
+- Session and CSRF cookies are set to `SECURE=True`.
+- **HSTS** is enabled for 1 year to ensure browser-level security.
+
+---
+
+### Step 8: You're Live! 🚀
 Render will now read your `build.sh` file, install all the packages, connect to Neon and Cloudinary, and start the server. 
 
 **Wait 3-5 minutes**, and Render will give you a live URL at the top left (e.g., `https://efootball-arena.onrender.com`). 

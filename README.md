@@ -21,13 +21,13 @@ A comprehensive Django web application for organizing and managing e-football to
 - **Open-for-all Toggle** — Enable `is_open` flag to allow teams to self-apply
 - **Application Management** — Accept or reject tournament applications and instantly assign accepted teams to specific leagues
 - **Multi-League Support** — Add multiple leagues under a single tournament (each with specific formats: Round Robin, 2-Leg, Knockout, etc.)
-- **Fixture Generation** — Auto-generate round-robin fixtures with a single click
+- **Advanced Knockout Engine** — Intelligent preliminary "Play-in" round logic for odd-numbered team counts (e.g., 9 teams reduced to 8)
 - **Result Verification** — Review and approve submitted match results with screenshots (auto-updates player aggregates)
 
 ### Platform Highlights
 - 🎮 **Proof-Based System** — Mandatory screenshots eliminate result disputes
-- 📊 **Auto-Calculated Standings** — Points, goal difference, and rankings update instantly
-- 🏆 **Round-Robin Scheduling** — Smart fixture generation algorithm with no conflicts
+- 🚀 **High-Performance Scaling** — Pre-computed stats tables (Computed Standings) ensure leaderboards load in milliseconds, regardless of size
+- 🏆 **Modular Tournament Logic** — Isolated engines for seeding, progression, and bracket balancing
 - 🔐 **Role-Based Access** — Separate admin and captain permissions
 - 🌙 **Premium Dark UI** — Gaming-themed design with glassmorphism and neon accents
 
@@ -38,12 +38,11 @@ A comprehensive Django web application for organizing and managing e-football to
 | Layer       | Technology                          |
 |-------------|-------------------------------------|
 | Backend     | Django 5.x, Python 3.11+            |
+| Tasks       | Celery + Redis (Background Processing)|
 | Database    | SQLite (dev) / PostgreSQL (prod)     |
 | Frontend    | Django Templates, Bootstrap 5       |
 | Styling     | Custom CSS (dark gaming theme)       |
-| Fonts       | Orbitron, Inter (Google Fonts)        |
-| Icons       | Font Awesome 6                       |
-| Image Handling | Pillow                            |
+| Image Storage| Cloudinary (Permanent storage)      |
 
 ---
 
@@ -53,52 +52,29 @@ A comprehensive Django web application for organizing and managing e-football to
 efootball/
 ├── manage.py                  # Django CLI entry point
 ├── requirements.txt           # Python dependencies
-├── .gitignore
 │
 ├── efootball_project/         # Project configuration
-│   ├── settings.py            # Django settings
-│   ├── urls.py                # Root URL routing
-│   └── wsgi.py                # WSGI entry point
-│
-├── accounts/                  # Authentication & user management
-│   ├── models.py              # Custom User model (admin/captain roles)
-│   ├── forms.py               # Register & login forms
-│   ├── views.py               # Auth views
-│   └── urls.py
-│
-├── teams/                     # Team & player management
-│   ├── models.py              # Team, Player models
-│   ├── forms.py               # Team registration & player forms
-│   ├── views.py               # CRUD + admin verification
-│   └── urls.py
+│   ├── settings.py            # Production-ready settings (Security+, Logging)
+│   └── celery.py              # Background task configuration
 │
 ├── tournaments/               # Tournament, league & fixture management
-│   ├── models.py              # Tournament, League, Fixture models
-│   ├── forms.py               # Tournament & league forms
-│   ├── views.py               # CRUD + fixture generation + standings
+│   ├── knockout/              # Modularized Knockout Engine (The Brain)
+│   │   ├── bracket_builder.py # Play-in & tree logic
+│   │   ├── progression_engine.py # Winner advancement
+│   │   └── aggregate_engine.py # 2-leg scoring math
+│   ├── models.py              # Tournament, League + Computed Stats models
+│   ├── utils.py               # Background stats refresh system
+│   ├── views.py               # High-speed optimized views
 │   └── urls.py
 │
 ├── matches/                   # Match results & verification
-│   ├── models.py              # MatchResult, Goal, Card models
-│   ├── forms.py               # Result & goal submission forms
-│   ├── views.py               # Submission + admin approval
-│   └── urls.py
+│   ├── models.py              # MatchResult + Stats Refresh Signals
+│   └── views.py               # Submission + admin approval
 │
 ├── core/                      # Landing page & shared utilities
-│   ├── views.py
-│   └── urls.py
-│
-├── templates/                 # All HTML templates
-│   ├── base.html              # Base layout (navbar, footer, messages)
-│   ├── core/                  # Home page
-│   ├── accounts/              # Login, register, profile
-│   ├── teams/                 # Team CRUD, admin verification
-│   ├── tournaments/           # Tournament CRUD, standings, fixtures
-│   └── matches/               # Result submission, verification
-│
-└── static/
-    └── css/
-        └── style.css          # Premium dark theme stylesheet
+├── teams/                     # Team & player management
+├── static/                    # Dark gaming theme assets
+└── templates/                 # Glassmorphic UI templates
 ```
 
 ---

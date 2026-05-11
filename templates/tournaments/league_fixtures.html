@@ -109,8 +109,15 @@
                         <div class="text-accent x-small text-uppercase fw-bold mb-1 letter-spacing-1">Bracket Balancing (BYEs)</div>
                         <p class="text-muted small mb-0">
                             {% if league.format == 'knockout' %}
-                                Tournament has <strong>{{ league.teams.count }}</strong> teams. Brackets require a power of 2 ({{ bracket_data|length|multiply:2 }} slots). 
-                                <strong>{{ bracket_data.0.fixtures|length|multiply:2|subtract:league.teams.count }}</strong> teams received automatic BYEs to balance the tree.
+                                {% with first_round=bracket_data|first %}
+                                    Tournament has <strong>{{ league.teams.count }}</strong> teams.
+                                    {% if first_round.round_type == 'preliminary' %}
+                                        <strong>{{ first_round.fixtures|length }} Play-in match{{ first_round.fixtures|length|pluralize:"es" }}</strong> scheduled to reach a balanced <strong>{{ bracket_data.1.round_name }}</strong> stage.
+                                    {% else %}
+                                        Standard <strong>{{ first_round.round_name }}</strong> structure with 
+                                        <strong>{{ first_round.fixtures|length|multiply:2|subtract:league.teams.count }}</strong> BYE advancements to balance the tree.
+                                    {% endif %}
+                                {% endwith %}
                             {% else %}
                                 All teams play in a single group phase.
                             {% endif %}

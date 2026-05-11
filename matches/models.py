@@ -141,3 +141,16 @@ class CleanSheet(models.Model):
     def __str__(self):
         return f"🧤 {self.player.name} — Clean Sheet"
 
+
+# Signals to refresh computed stats
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from tournaments.utils import refresh_league_standings
+
+@receiver(post_save, sender=MatchResult)
+def handle_match_result_update(sender, instance, created, **kwargs):
+    """
+    Triggers a standings refresh when a result is approved or updated.
+    """
+    if instance.status == 'approved':
+        refresh_league_standings(instance.fixture.league)

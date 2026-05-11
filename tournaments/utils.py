@@ -1,89 +1,66 @@
 from django.db.models import Count, Sum, Q, F
 from matches.models import MatchResult
+from .models import LeagueStanding, PlayerTournamentStats
 
-def get_league_standings(league):
+def refresh_league_standings(league):
     """
-    Calculates standings for a league.
-    Uses a robust approach to avoid Cartesian product issues in single-query aggregates.
-    Strictly counts only 'approved' match results.
+    Calculates standings for a league and saves them to the computed table.
     """
     pts_win = league.tournament.points_win
     pts_draw = league.tournament.points_draw
     pts_loss = league.tournament.points_loss
 
     teams = league.teams.all()
-    results_list = []
-
+    
     for team in teams:
-        # Home Stats (Approved results only)
-        home_results = MatchResult.objects.filter(
-            fixture__league=league,
-            fixture__home_team=team,
-            status='approved'
-        ).aggregate(
-            played=Count('id'),
-            gf=Sum('home_score'),
-            ga=Sum('away_score'),
-            wins=Count('id', filter=Q(home_score__gt=F('away_score'))),
-            draws=Count('id', filter=Q(home_score=F('away_score'))),
-            losses=Count('id', filter=Q(home_score__lt=F('away_score')))
+        home_res = MatchResult.objects.filter(fixture__league=league, fixture__home_team=team, status='approved').aggregate(
+            p=Count('id'), gf=Sum('home_score'), ga=Sum('away_score'),
+            w=Count('id', filter=Q(home_score__gt=F('away_score'))),
+            d=Count('id', filter=Q(home_score=F('away_score'))),
+            l=Count('id', filter=Q(home_score__lt=F('away_score')))
+        )
+        away_res = MatchResult.objects.filter(fixture__league=league, fixture__away_team=team, status='approved').aggregate(
+            p=Count('id'), gf=Sum('away_score'), ga=Sum('home_score'),
+            w=Count('id', filter=Q(away_score__gt=F('home_score'))),
+            d=Count('id', filter=Q(away_score=F('home_score'))),
+            l=Count('id', filter=Q(away_score__lt=F('home_score')))
         )
 
-        # Away Stats (Approved results only)
-        away_results = MatchResult.objects.filter(
-            fixture__league=league,
-            fixture__away_team=team,
-            status='approved'
-        ).aggregate(
-            played=Count('id'),
-            gf=Sum('away_score'),
-            ga=Sum('home_score'),
-            wins=Count('id', filter=Q(away_score__gt=F('home_score'))),
-            draws=Count('id', filter=Q(away_score=F('home_score'))),
-            losses=Count('id', filter=Q(away_score__lt=F('home_score')))
-        )
-
-        # Combine
-        played = (home_results['played'] or 0) + (away_results['played'] or 0)
-        won = (home_results['wins'] or 0) + (away_results['wins'] or 0)
-        drawn = (home_results['draws'] or 0) + (away_results['draws'] or 0)
-        lost = (home_results['losses'] or 0) + (away_results['losses'] or 0)
-        gf = (home_results['gf'] or 0) + (away_results['gf'] or 0)
-        ga = (home_results['ga'] or 0) + (away_results['ga'] or 0)
-        gd = gf - ga
-        points = (won * pts_win) + (drawn * pts_draw) + (lost * pts_loss)
-
-        # Fetch last 5 results for form (Approved only)
-        last_results = MatchResult.objects.filter(
+        played = (home_res['p'] or 0) + (away_res['p'] or 0)
+        won = (home_res['w'] or 0) + (away_res['w'] or 0)
+        drawn = (home_res['d'] or 0) + (away_res['d'] or 0)
+        lost = (home_res['l'] or 0) + (away_res['l'] or 0)
+        gf = (home_res['gf'] or 0) + (away_res['gf'] or 0)
+        ga = (home_res['ga'] or 0) + (away_res['ga'] or 0)
+        
+        last_5 = MatchResult.objects.filter(
             Q(fixture__home_team=team) | Q(fixture__away_team=team),
-            fixture__league=league,
-            status='approved'
+            fixture__league=league, status='approved'
         ).order_by('-fixture__matchday')[:5]
         
-        form = []
-        for r in reversed(last_results):
-            if r.home_score == r.away_score: 
-                form.append('D')
+        form_str = ""
+        for r in reversed(last_5):
+            if r.home_score == r.away_score: form_str += 'D'
             elif (r.fixture.home_team == team and r.home_score > r.away_score) or \
-                 (r.fixture.away_team == team and r.home_score < r.away_score):
-                # Note: r.winner == team logic is safer
-                form.append('W')
-            else:
-                form.append('L')
+                 (r.fixture.away_team == team and r.home_score < r.away_score): form_str += 'W'
+            else: form_str += 'L'
 
-        results_list.append({
-            'team': team,
-            'played': played,
-            'won': won,
-            'drawn': drawn,
-            'lost': lost,
-            'gf': gf,
-            'ga': ga,
-            'gd': gd,
-            'points': points,
-            'form': form
-        })
+        LeagueStanding.objects.update_or_create(
+            league=league, team=team,
+            defaults={
+                'played': played, 'won': won, 'drawn': drawn, 'lost': lost,
+                'gf': gf, 'ga': ga, 'gd': gf - ga,
+                'points': (won * pts_win) + (drawn * pts_draw) + (lost * pts_loss),
+                'form': form_str
+            }
+        )
 
-    # Sort by points, then GD, then GF
-    results_list.sort(key=lambda x: (x['points'], x['gd'], x['gf']), reverse=True)
-    return results_list
+def get_league_standings(league):
+    """
+    Returns standings from the computed table. Triggers refresh if empty.
+    """
+    standings = LeagueStanding.objects.filter(league=league).select_related('team')
+    if not standings.exists() and league.fixtures.filter(status='completed').exists():
+        refresh_league_standings(league)
+        standings = LeagueStanding.objects.filter(league=league).select_related('team')
+    return standings
