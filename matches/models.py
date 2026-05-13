@@ -42,6 +42,14 @@ class MatchResult(models.Model):
             return self.fixture.home_team
         elif self.away_score > self.home_score:
             return self.fixture.away_team
+        
+        # Check penalties if scores are equal
+        if self.home_penalties is not None and self.away_penalties is not None:
+            if self.home_penalties > self.away_penalties:
+                return self.fixture.home_team
+            elif self.away_penalties > self.home_penalties:
+                return self.fixture.away_team
+                
         return None
 
     @property

@@ -28,10 +28,12 @@ class AdminEditScoreForm(forms.ModelForm):
     """Admin-only form to manually override the score (for corrections)."""
     class Meta:
         model = MatchResult
-        fields = ['home_score', 'away_score', 'screenshot']
+        fields = ['home_score', 'away_score', 'home_penalties', 'away_penalties', 'screenshot']
         widgets = {
             'home_score': forms.NumberInput(attrs={'class': 'form-control score-input', 'min': 0}),
             'away_score': forms.NumberInput(attrs={'class': 'form-control score-input', 'min': 0}),
+            'home_penalties': forms.NumberInput(attrs={'class': 'form-control score-input', 'min': 0, 'placeholder': 'Pens'}),
+            'away_penalties': forms.NumberInput(attrs={'class': 'form-control score-input', 'min': 0, 'placeholder': 'Pens'}),
             'screenshot': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 

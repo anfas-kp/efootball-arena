@@ -26,6 +26,7 @@ urlpatterns = [
     path('admin/league/<int:league_pk>/remove-team/<int:team_pk>/', views.admin_remove_team, name='admin_remove_team'),
     path('admin/league/<int:league_pk>/generate-fixtures/', views.admin_generate_fixtures, name='admin_generate_fixtures'),
     path('admin/league/<int:league_pk>/add-fixture/', views.admin_add_fixture, name='admin_add_fixture'),
+    path('admin/fixture/<int:pk>/edit/', views.admin_edit_fixture, name='admin_edit_fixture'),
     path('admin/league/<int:pk>/download-standings/', views.download_league_standings_pdf, name='download_league_standings_pdf'),
     path('admin/league/<int:pk>/download-teams/', views.download_league_teams_pdf, name='download_league_teams_pdf'),
     path('league/<int:league_pk>/download-bracket/', views.download_league_bracket_pdf, name='download_league_bracket_pdf'),

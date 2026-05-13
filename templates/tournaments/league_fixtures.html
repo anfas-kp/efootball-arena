@@ -339,6 +339,12 @@
                                         {% if not f.winner and f.home_team and f.away_team %}
                                             <a href="{% url 'matches:submit_result' f.pk %}" class="text-accent ms-2 text-decoration-none">Play</a>
                                         {% endif %}
+                                        
+                                        {% if user.is_admin_user %}
+                                            <a href="{% url 'tournaments:admin_edit_fixture' f.pk %}" class="text-accent ms-2 text-decoration-none" title="Edit Fixture">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        {% endif %}
                                     </div>
                                     {% endwith %}
                                 </div>
@@ -433,19 +439,25 @@
                             </div>
                         </div>
 
-                        <div class="mt-4 pt-3 border-top border-white border-opacity-5">
+                        <div class="mt-4 pt-3 border-top border-white border-opacity-5 d-flex gap-2">
                             {% if f.status == 'completed' and f.result %}
-                                <a href="{% url 'matches:result_detail' f.result.pk %}" class="btn-outline-glow w-100 justify-content-center py-2" style="font-size: 0.8rem;">
-                                    <i class="fas fa-info-circle me-1"></i> Match Details
+                                <a href="{% url 'matches:result_detail' f.result.pk %}" class="btn-outline-glow flex-grow-1 justify-content-center py-2" style="font-size: 0.8rem;">
+                                    <i class="fas fa-info-circle me-1"></i> Details
                                 </a>
                             {% else %}
                                 {% if user.is_authenticated and f.home_team and f.away_team %}
                                     {% if user.team == f.home_team or user.team == f.away_team or user.is_admin_user %}
-                                        <a href="{% url 'matches:submit_result' f.pk %}" class="btn-glow w-100 justify-content-center py-2" style="font-size: 0.8rem;">
+                                        <a href="{% url 'matches:submit_result' f.pk %}" class="btn-glow flex-grow-1 justify-content-center py-2" style="font-size: 0.8rem;">
                                             <i class="fas fa-upload me-1"></i> Submit Result
                                         </a>
                                     {% endif %}
                                 {% endif %}
+                            {% endif %}
+
+                            {% if user.is_admin_user %}
+                                <a href="{% url 'tournaments:admin_edit_fixture' f.pk %}" class="btn-outline-glow px-3 py-2" title="Edit Fixture">
+                                    <i class="fas fa-edit"></i>
+                                </a>
                             {% endif %}
                         </div>
                     </div>
@@ -524,21 +536,27 @@
                             </div>
                         </div>
 
-                        <div class="mt-4 pt-3 border-top border-white border-opacity-5">
+                        <div class="mt-4 pt-3 border-top border-white border-opacity-5 d-flex gap-2">
                             {% if f.status == 'completed' and f.result %}
-                                <a href="{% url 'matches:result_detail' f.result.pk %}" class="btn-outline-glow w-100 justify-content-center py-2" style="font-size: 0.8rem;">
-                                    <i class="fas fa-info-circle me-1"></i> Match Details
+                                <a href="{% url 'matches:result_detail' f.result.pk %}" class="btn-outline-glow flex-grow-1 justify-content-center py-2" style="font-size: 0.8rem;">
+                                    <i class="fas fa-info-circle me-1"></i> Details
                                 </a>
                             {% else %}
                                 {% if user.is_authenticated %}
                                     {% with user_team=user.team %}
                                         {% if user_team == f.home_team or user_team == f.away_team or user.is_admin_user %}
-                                            <a href="{% url 'matches:submit_result' f.pk %}" class="btn-glow w-100 justify-content-center py-2" style="font-size: 0.8rem;">
+                                            <a href="{% url 'matches:submit_result' f.pk %}" class="btn-glow flex-grow-1 justify-content-center py-2" style="font-size: 0.8rem;">
                                                 <i class="fas fa-upload me-1"></i> Submit Result
                                             </a>
                                         {% endif %}
                                     {% endwith %}
                                 {% endif %}
+                            {% endif %}
+                            
+                            {% if user.is_admin_user %}
+                                <a href="{% url 'tournaments:admin_edit_fixture' f.pk %}" class="btn-outline-glow px-3 py-2" title="Edit Fixture">
+                                    <i class="fas fa-edit"></i>
+                                </a>
                             {% endif %}
                         </div>
                     </div>

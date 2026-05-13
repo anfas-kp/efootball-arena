@@ -693,3 +693,29 @@ def admin_add_fixture(request, league_pk):
         'form': form,
         'tournament': league.tournament,
     })
+@login_required
+def admin_edit_fixture(request, pk):
+    """Admin manually edits a fixture."""
+    if not request.user.is_admin_user:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    fixture = get_object_or_404(Fixture, pk=pk)
+    league = fixture.league
+    from .forms import FixtureForm
+    
+    if request.method == 'POST':
+        form = FixtureForm(league, request.POST, instance=fixture)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'✅ Fixture MD{fixture.matchday} updated.')
+            return redirect('tournaments:league_fixtures', pk=league.pk)
+    else:
+        form = FixtureForm(league, instance=fixture)
+
+    return render(request, 'tournaments/admin_edit_fixture.html', {
+        'fixture': fixture,
+        'league': league,
+        'form': form,
+        'tournament': league.tournament,
+    })

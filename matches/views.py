@@ -85,6 +85,11 @@ def submit_result(request, fixture_pk):
             if is_admin:
                 _sync_player_stats(result)
                 _sync_clean_sheet_stats(result)
+                
+                # Trigger Knockout Progression
+                from tournaments.services import ProgressionManager
+                ProgressionManager.handle_result_approval(result)
+                
                 messages.success(request, '✅ Result created and auto-approved! Now add goals — score will be calculated automatically.')
             else:
                 messages.success(request, '📸 Result submitted! Now add goals, cards, and top rated players. Score will update automatically.')
@@ -130,6 +135,11 @@ def edit_result(request, pk):
             if is_admin and updated_result.status == 'approved':
                 _sync_player_stats(updated_result)
                 _sync_clean_sheet_stats(updated_result)
+                
+                # Trigger Knockout Progression
+                from tournaments.services import ProgressionManager
+                ProgressionManager.handle_result_approval(updated_result)
+                
             messages.success(request, 'Result updated!')
             return redirect('matches:result_detail', pk=pk)
     else:

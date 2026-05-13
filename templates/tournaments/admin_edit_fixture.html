@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Fixture - {{ league.name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 100px; padding-bottom: 100px;">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'tournaments:tournament_detail' tournament.pk %}" class="text-accent text-decoration-none">{{ tournament.name }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'tournaments:league_fixtures' league.pk %}" class="text-accent text-decoration-none">Fixtures</a></li>
+            <li class="breadcrumb-item active text-white" aria-current="page">Edit Fixture</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="glass-card p-4 p-md-5">
+                <h2 class="font-orbitron text-accent mb-4">Edit Fixture</h2>
+                <p class="text-muted mb-5">Modifying MD{{ fixture.matchday }}: {{ fixture.home_team.name }} vs {{ fixture.away_team.name }}</p>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="row g-4">
+                        <!-- Home Team -->
+                        <div class="col-md-6">
+                            <label class="form-label small text-uppercase letter-spacing-1 text-accent">Home Team</label>
+                            {{ form.home_team }}
+                            {% if form.home_team.errors %}
+                                <div class="text-danger small mt-1">{{ form.home_team.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Away Team -->
+                        <div class="col-md-6">
+                            <label class="form-label small text-uppercase letter-spacing-1 text-accent">Away Team</label>
+                            {{ form.away_team }}
+                            {% if form.away_team.errors %}
+                                <div class="text-danger small mt-1">{{ form.away_team.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Matchday -->
+                        <div class="col-md-4">
+                            <label class="form-label small text-uppercase letter-spacing-1 text-accent">Matchday</label>
+                            {{ form.matchday }}
+                        </div>
+
+                        <!-- Round Type (For Knockouts) -->
+                        <div class="col-md-4">
+                            <label class="form-label small text-uppercase letter-spacing-1 text-accent">Round Type</label>
+                            {{ form.round_type }}
+                            <div class="form-text x-small">Required for bracket display</div>
+                        </div>
+
+                        <!-- Bracket Index -->
+                        <div class="col-md-4">
+                            <label class="form-label small text-uppercase letter-spacing-1 text-accent">Bracket Index</label>
+                            {{ form.bracket_index }}
+                            <div class="form-text x-small">0=Top, 1=Second, etc.</div>
+                        </div>
+
+                        <!-- Match Date -->
+                        <div class="col-md-6">
+                            <label class="form-label small text-uppercase letter-spacing-1 text-accent">Match Date</label>
+                            {{ form.match_date }}
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-md-6">
+                            <label class="form-label small text-uppercase letter-spacing-1 text-accent">Status</label>
+                            {{ form.status }}
+                        </div>
+                    </div>
+
+                    <div class="mt-5 d-flex gap-3">
+                        <button type="submit" class="btn-primary-custom px-5">Save Changes</button>
+                        <a href="{% url 'tournaments:league_fixtures' league.pk %}" class="btn-glass px-4 text-decoration-none d-flex align-items-center">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .font-orbitron { font-family: 'Orbitron', sans-serif; }
+    .letter-spacing-1 { letter-spacing: 1.5px; }
+    .x-small { font-size: 0.7rem; color: rgba(255,255,255,0.4); }
+    
+    .form-control, .form-select {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: white;
+        padding: 12px;
+        border-radius: 10px;
+    }
+    .form-control:focus, .form-select:focus {
+        background: rgba(255,255,255,0.1);
+        border-color: var(--accent);
+        color: white;
+        box-shadow: none;
+    }
+    .form-select option {
+        background: #1a1a1a;
+        color: white;
+    }
+</style>
+{% endblock %}

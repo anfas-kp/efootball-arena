@@ -66,6 +66,25 @@
                             <input type="number" name="away_score" class="form-control text-center fw-bold" style="font-size: 2rem; font-family: 'Orbitron', sans-serif;" value="{{ result.away_score }}" min="0" required>
                         </div>
                     </div>
+
+                    {% if fixture.league.format == 'knockout' %}
+                    <!-- Penalty Shootout Section -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <i class="fas fa-futbol text-accent" style="font-size: 0.75rem;"></i>
+                            <small class="text-accent text-uppercase letter-spacing-1">Penalty Shootout (If Draw)</small>
+                        </div>
+                        <div class="row justify-content-center align-items-center bg-white bg-opacity-5 rounded p-3 g-3">
+                            <div class="col-5">
+                                <input type="number" name="home_penalties" class="form-control text-center" placeholder="Home Pens" value="{{ result.home_penalties|default:'' }}" min="0">
+                            </div>
+                            <div class="col-2 text-center text-muted small">PKs</div>
+                            <div class="col-5">
+                                <input type="number" name="away_penalties" class="form-control text-center" placeholder="Away Pens" value="{{ result.away_penalties|default:'' }}" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                     {% else %}
                     <!-- Team: score info (read-only, auto-calculated) -->
                     <div class="glass-card text-center mb-4 py-3" style="background: rgba(0,210,255,0.04);">
