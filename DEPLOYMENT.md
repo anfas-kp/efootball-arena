@@ -93,6 +93,13 @@ With the new **Computed Stats System**, your server will handle 1,000+ teams eas
 - **Standings**: Are pre-computed in the `LeagueStanding` table.
 - **Auto-Sync**: When you approve a result in the dashboard, a Django Signal automatically triggers a background refresh. No manual action is needed.
 
+### 🛡️ Render Security & Session Protection
+Render acts as a reverse proxy which can sometimes cache authenticated HTML pages, leading to catastrophic session leakage between users. 
+To prevent this, the deployment includes:
+- **NoCacheAuthenticatedMiddleware**: Automatically detects authenticated users and forces Render to drop any cached HTML pages, preventing cross-user session overlap.
+- **SessionContaminationDebugger**: A middleware that traces the exact Gunicorn thread handling the request to detect if any identity-flipping occurs.
+- **Thread-Safe Gunicorn**: `run.sh` is hardcoded to use `gthread` workers, strictly isolating memory and database cursors per request to prevent ASGI bleed.
+
 ### 🔐 Security & HTTPS
 When `DEBUG` is set to `False` on Render:
 - The site will automatically redirect all traffic to **HTTPS**.
