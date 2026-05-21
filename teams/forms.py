@@ -31,3 +31,32 @@ class PlayerForm(forms.ModelForm):
             'position': forms.Select(attrs={'class': 'form-select'}),
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
+
+
+class AdminPlayerForm(PlayerForm):
+    class Meta(PlayerForm.Meta):
+        fields = ['name', 'photo', 'gaming_id', 'jersey_number', 'position', 'date_of_birth', 'value', 'is_active']
+        widgets = PlayerForm.Meta.widgets.copy()
+        widgets.update({
+            'value': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Market value ($)'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        })
+
+
+class AdminTeamForm(forms.ModelForm):
+    class Meta:
+        model = Team
+        fields = ['name', 'logo', 'captain_phone', 'platform', 'game', 'description', 'discord', 'instagram', 'status', 'budget']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'logo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'captain_phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'platform': forms.Select(attrs={'class': 'form-select'}),
+            'game': forms.Select(attrs={'class': 'form-select'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'discord': forms.URLInput(attrs={'class': 'form-control'}),
+            'instagram': forms.TextInput(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'budget': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Budget ($)'}),
+        }
+

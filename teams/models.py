@@ -1,5 +1,7 @@
 from django.db import models, transaction
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 
 class Team(models.Model):
@@ -100,6 +102,17 @@ class Player(models.Model):
     date_of_birth = models.DateField(null=True, blank=True)
     value = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text='Market value of the player')
     is_active = models.BooleanField(default=True)
+
+    # Transfer-related fields
+    is_transfer_listed = models.BooleanField(default=False, help_text='Player is available on the transfer market')
+    parent_club = models.ForeignKey(
+        Team, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='loaned_out_players',
+        help_text='Original club if player is currently on loan'
+    )
+    is_on_loan = models.BooleanField(default=False)
+    loan_expires = models.DateField(null=True, blank=True, help_text='Date the loan period ends')
+
     # Aggregated stats (updated on result approval)
     total_goals = models.PositiveIntegerField(default=0)
     total_assists = models.PositiveIntegerField(default=0)
@@ -110,6 +123,17 @@ class Player(models.Model):
     avg_rating = models.DecimalField(max_digits=3, decimal_places=1, default=0.0)
     total_rating = models.DecimalField(max_digits=6, decimal_places=1, default=0.0)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        """Validate loan-related field consistency."""
+        super().clean()
+        if self.is_on_loan:
+            if not self.parent_club:
+                raise ValidationError({'parent_club': 'A loaned player must have a parent club.'})
+            if not self.loan_expires:
+                raise ValidationError({'loan_expires': 'A loaned player must have a loan expiry date.'})
+        if not self.is_on_loan and (self.parent_club or self.loan_expires):
+            raise ValidationError('Parent club and loan expiry should only be set for loaned players.')
 
     class Meta:
         ordering = ['jersey_number', 'name']
@@ -190,47 +214,176 @@ class Trophy(models.Model):
         return self.name
 
 class TransferWindow(models.Model):
+    """Manages transfer window periods with configurable rules.
+    
+    A transfer window defines when player transfers can occur,
+    what types are allowed, and per-team limits.
+    """
+
     season = models.CharField(max_length=100)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(
+        default=False,
+        help_text='Manual override. Window is only open if active AND within date range.'
+    )
+    allowed_types = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='List of allowed transfer types, e.g. ["permanent", "loan", "free_agent"]. Empty = all allowed.'
+    )
+    max_transfers_per_team = models.PositiveIntegerField(
+        default=5,
+        help_text='Maximum transfers a single team can make in this window.'
+    )
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.season} ({'Open' if self.is_active else 'Closed'})"
+        status = 'Open' if self.is_open else 'Closed'
+        return f"{self.season} ({status})"
+
+    @property
+    def is_open(self):
+        """True if manually active AND current time is within the date range."""
+        now = timezone.now()
+        return self.is_active and self.start_date <= now <= self.end_date
+
+    @property
+    def time_remaining(self):
+        """Returns timedelta until window closes, or None if closed."""
+        if not self.is_open:
+            return None
+        return self.end_date - timezone.now()
+
+    def clean(self):
+        """Validate date ordering."""
+        super().clean()
+        if self.start_date and self.end_date and self.start_date >= self.end_date:
+            raise ValidationError({'end_date': 'End date must be after start date.'})
+
 
 class TransferRequest(models.Model):
-    STATUS_CHOICES = [
-        ('PENDING', 'Pending'),
-        ('CURRENT_CAPTAIN_APPROVED', 'Current Captain Approved'),
-        ('NEW_CAPTAIN_APPROVED', 'New Captain Approved'),
-        ('ADMIN_APPROVED', 'Admin Approved'),
-        ('REJECTED', 'Rejected'),
-        ('COMPLETED', 'Completed'),
+    """Core transfer request with strict state machine.
+    
+    State Machine:
+        PENDING -> SELLING_APPROVED -> ADMIN_REVIEW -> COMPLETED
+                                                   -> REJECTED
+                -> REJECTED
+                -> CANCELLED
+    """
+
+    TRANSFER_TYPES = [
+        ('permanent', 'Permanent Transfer'),
+        ('loan', 'Loan'),
+        ('free_agent', 'Free Agent'),
     ]
 
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending Selling Club Approval'),
+        ('SELLING_APPROVED', 'Selling Club Approved'),
+        ('ADMIN_REVIEW', 'Awaiting Admin Review'),
+        ('COMPLETED', 'Completed'),
+        ('REJECTED', 'Rejected'),
+        ('CANCELLED', 'Cancelled'),
+    ]
+
+    # Strict state transition map
+    VALID_TRANSITIONS = {
+        'PENDING': ['SELLING_APPROVED', 'REJECTED', 'CANCELLED'],
+        'SELLING_APPROVED': ['ADMIN_REVIEW', 'REJECTED', 'CANCELLED'],
+        'ADMIN_REVIEW': ['COMPLETED', 'REJECTED'],
+    }
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='transfer_requests')
     from_team = models.ForeignKey(Team, related_name='outgoing_transfers', on_delete=models.CASCADE)
     to_team = models.ForeignKey(Team, related_name='incoming_transfers', on_delete=models.CASCADE)
     requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    window = models.ForeignKey(
+        'TransferWindow', on_delete=models.CASCADE,
+        related_name='requests', null=True, blank=True
+    )
+
+    transfer_type = models.CharField(max_length=20, choices=TRANSFER_TYPES, default='permanent')
+    transfer_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text='Agreed transfer fee')
+    loan_end_date = models.DateField(null=True, blank=True, help_text='Required for loan transfers')
+
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='PENDING')
+    rejection_reason = models.TextField(blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.get_transfer_type_display()}] {self.player.name}: {self.from_team.name} -> {self.to_team.name}"
+
+    def clean(self):
+        """Validate transfer request field consistency."""
+        super().clean()
+        if self.transfer_type == 'loan' and not self.loan_end_date:
+            raise ValidationError({'loan_end_date': 'Loan transfers must have an end date.'})
+        if self.from_team_id and self.to_team_id and self.from_team_id == self.to_team_id:
+            raise ValidationError('Cannot transfer a player to the same team.')
+
+    def can_transition_to(self, new_status):
+        """Check if transitioning from current status to new_status is valid."""
+        allowed = self.VALID_TRANSITIONS.get(self.status, [])
+        return new_status in allowed
+
+
+class PlayerRegistration(models.Model):
+    """Tracks player tournament eligibility per league.
     
-    transfer_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Agreed transfer fee")
+    When a player transfers mid-season, the old registration is deactivated
+    and a new one is created for the new team.
+    """
 
-    current_captain_approved = models.BooleanField(default=False)
-    new_captain_approved = models.BooleanField(default=False)
-    admin_approved = models.BooleanField(default=False)
-
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='PENDING')
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='registrations')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='player_registrations')
+    league = models.ForeignKey(
+        'tournaments.League', on_delete=models.CASCADE,
+        related_name='player_registrations'
+    )
+    eligible_from = models.DateField(help_text='Date from which the player is eligible to play')
+    is_active = models.BooleanField(default=True)
+    matches_played = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        unique_together = ['player', 'league', 'team']
+        ordering = ['-created_at']
+
     def __str__(self):
-        return f"{self.player.name}: {self.from_team.name} -> {self.to_team.name}"
+        status = 'Active' if self.is_active else 'Inactive'
+        return f"{self.player.name} @ {self.team.name} in {self.league.name} ({status})"
+
 
 class TransferHistory(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    """Immutable audit log of completed transfers."""
+
+    TRANSFER_TYPES = TransferRequest.TRANSFER_TYPES
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='transfer_history')
     from_team = models.ForeignKey(Team, related_name='history_from', on_delete=models.CASCADE)
     to_team = models.ForeignKey(Team, related_name='history_to', on_delete=models.CASCADE)
+    transfer_type = models.CharField(max_length=20, choices=TRANSFER_TYPES, default='permanent')
     transfer_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    window = models.ForeignKey(
+        TransferWindow, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='history_entries'
+    )
+    notes = models.TextField(blank=True)
     transfer_date = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name_plural = 'Transfer histories'
+        ordering = ['-transfer_date']
+
     def __str__(self):
-        return f"{self.player.name} to {self.to_team.name} on {self.transfer_date}"
+        return f"[{self.get_transfer_type_display()}] {self.player.name} -> {self.to_team.name} ({self.transfer_date:%Y-%m-%d})"

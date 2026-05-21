@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Manage Finances - {{ team.name }}{% endblock %}
+{% block content %}
+
+<div class="container" style="margin-top: 100px; padding-bottom: 50px;">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h1 class="display-6 fw-bold mb-1 font-orbitron text-accent">MANAGE <span class="text-white">FINANCES</span></h1>
+            <p class="text-muted mb-0 small text-uppercase fw-bold letter-spacing-1">Squad Valuation & Budgeting: {{ team.name }}</p>
+        </div>
+        <div>
+            <a href="{% url 'teams:team_detail' team.pk %}" class="btn-outline-glow btn-sm"><i class="fas fa-arrow-left me-1"></i> Back to Profile</a>
+        </div>
+    </div>
+
+    <!-- Quick Stats Grid -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="glass-card text-center py-3 border-accent border-opacity-10 h-100">
+                <span class="text-muted small text-uppercase fw-bold d-block mb-1">Total Budget</span>
+                <span class="h2 fw-bold font-orbitron text-white mb-0">${{ team.budget|floatformat:0|intcomma }}</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="glass-card text-center py-3 border-accent border-opacity-10 h-100">
+                <span class="text-muted small text-uppercase fw-bold d-block mb-1">Squad Value</span>
+                <span class="h2 fw-bold font-orbitron text-accent mb-0">${{ team.total_player_value|floatformat:0|intcomma }}</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="glass-card text-center py-3 h-100 {% if team.remaining_budget < 0 %}border-danger border-opacity-35{% else %}border-success border-opacity-35{% endif %}">
+                <span class="text-muted small text-uppercase fw-bold d-block mb-1">Remaining Balance</span>
+                <span class="h2 fw-bold font-orbitron mb-0 {% if team.remaining_budget < 0 %}text-danger{% else %}text-success{% endif %}">${{ team.remaining_budget|floatformat:0|intcomma }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Valuation Form -->
+        <div class="col-lg-8">
+            <div class="glass-card mb-4">
+                <h5 class="section-title mb-4 font-orbitron"><i class="fas fa-users-cog me-2 text-accent"></i>SQUAD VALUATION</h5>
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Team settings section inside form -->
+                    <div class="row g-3 mb-4 pb-4 border-bottom border-white border-opacity-10">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Team Budget ($)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-accent fw-bold">$</span>
+                                <input type="number" name="budget" class="form-control bg-dark text-white border-secondary" value="{{ team.budget|floatformat:0 }}" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Verification Status</label>
+                            <select name="status" class="form-select bg-dark text-white border-secondary">
+                                <option value="pending" {% if team.status == 'pending' %}selected{% endif %}>Pending Verification</option>
+                                <option value="approved" {% if team.status == 'approved' %}selected{% endif %}>Approved</option>
+                                <option value="rejected" {% if team.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Players Table -->
+                    {% if players %}
+                    <div class="table-responsive mb-4">
+                        <table class="table table-dark-custom align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width: 70px;">#</th>
+                                    <th>Player Name</th>
+                                    <th>Position</th>
+                                    <th>Current Value</th>
+                                    <th style="width: 200px;">New Market Value ($)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in players %}
+                                <tr>
+                                    <td class="font-orbitron text-accent fw-bold">{{ p.jersey_number|default:"-" }}</td>
+                                    <td>
+                                        <div class="fw-bold text-white">{{ p.name }}</div>
+                                        <div class="x-small text-muted">{{ p.gaming_id }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary bg-opacity-25 text-white small" style="font-size: 0.65rem;">{{ p.get_position_display|default:"-" }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted font-orbitron small">${{ p.value|floatformat:0|intcomma }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-dark border-secondary text-muted">$</span>
+                                            <input type="number" name="player_value_{{ p.pk }}" class="form-control bg-dark text-white border-secondary text-end font-orbitron" value="{{ p.value|floatformat:0 }}" min="0" required>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted border border-white border-opacity-5 rounded mb-4">
+                        <i class="fas fa-users-slash fa-3x mb-3 opacity-25"></i>
+                        <p class="mb-0">No players registered in the squad yet.</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Action buttons -->
+                    <div class="d-flex gap-3 justify-content-end">
+                        <a href="{% url 'teams:team_detail' team.pk %}" class="btn-outline-glow py-2 px-4">Cancel</a>
+                        <button type="submit" class="btn-glow py-2 px-4"><i class="fas fa-save me-2"></i>Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sidebar (Auto-Setup & Tools) -->
+        <div class="col-lg-4">
+            <div class="glass-card mb-4">
+                <h5 class="section-title mb-4 font-orbitron text-warning"><i class="fas fa-magic me-2"></i>AUTO-SETUP UTILITIES</h5>
+                <p class="text-muted small">Use these quick setup functions to automatically recalculate and populate player values based on simple distribution rules.</p>
+                
+                <div class="d-grid gap-3 mt-4">
+                    <form method="post" onsubmit="return confirm('Are you sure you want to distribute the team budget of ${{ team.budget|floatformat:0 }} equally among all players? This will overwrite all player values.')">
+                        {% csrf_token %}
+                        <input type="hidden" name="auto_setup" value="equal">
+                        <button type="submit" class="btn btn-outline-accent btn-sm w-100 text-start py-3 px-3 d-flex align-items-center justify-content-between hover-glow">
+                            <div>
+                                <div class="fw-bold text-white small"><i class="fas fa-divide me-2 text-accent"></i>Distribute Budget Equally</div>
+                                <div class="x-small text-muted mt-1">Divides ${{ team.budget|floatformat:0 }} by {{ players|length }} players</div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted opacity-50"></i>
+                        </button>
+                    </form>
+
+                    <form method="post" onsubmit="return confirm('Are you sure you want to set all player values to $1,000,000?')">
+                        {% csrf_token %}
+                        <input type="hidden" name="auto_setup" value="flat_1m">
+                        <button type="submit" class="btn btn-outline-accent btn-sm w-100 text-start py-3 px-3 d-flex align-items-center justify-content-between hover-glow">
+                            <div>
+                                <div class="fw-bold text-white small"><i class="fas fa-coins me-2 text-warning"></i>Set Flat Value ($1,000,000)</div>
+                                <div class="x-small text-muted mt-1">Assigns $1,000,000 to every player</div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted opacity-50"></i>
+                        </button>
+                    </form>
+
+                    <form method="post" onsubmit="return confirm('Are you sure you want to set all player values to $100,000?')">
+                        {% csrf_token %}
+                        <input type="hidden" name="auto_setup" value="flat_100k">
+                        <button type="submit" class="btn btn-outline-accent btn-sm w-100 text-start py-3 px-3 d-flex align-items-center justify-content-between hover-glow">
+                            <div>
+                                <div class="fw-bold text-white small"><i class="fas fa-coins me-2 text-info"></i>Set Flat Value ($100,000)</div>
+                                <div class="x-small text-muted mt-1">Assigns $100,000 to every player</div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted opacity-50"></i>
+                        </button>
+                    </form>
+
+                    <form method="post" onsubmit="return confirm('Are you sure you want to reset all player values to $0?')">
+                        {% csrf_token %}
+                        <input type="hidden" name="auto_setup" value="reset">
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100 text-start py-3 px-3 d-flex align-items-center justify-content-between hover-glow-danger">
+                            <div>
+                                <div class="fw-bold text-danger small"><i class="fas fa-undo me-2 text-danger"></i>Reset Values to $0</div>
+                                <div class="x-small text-muted mt-1">Clears all player market values</div>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted opacity-50"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Notes & Rules Card -->
+            <div class="glass-card border-info border-opacity-10">
+                <h5 class="section-title mb-3 font-orbitron text-info"><i class="fas fa-info-circle me-2"></i>FINANCE RULES</h5>
+                <ul class="text-muted small ps-3 mb-0" style="line-height: 1.6;">
+                    <li class="mb-2"><strong>Squad Value:</strong> The sum of all active players' values.</li>
+                    <li class="mb-2"><strong>Remaining Balance:</strong> Calculated dynamically as <code>Total Budget - Squad Value</code>.</li>
+                    <li class="mb-2"><strong>Negative Balance:</strong> Red color alerts that the team's player values exceed the budget.</li>
+                    <li><strong>Market Values:</strong> Affect transfer negotiations; starting bid fees defaults to the player's market value.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .font-orbitron { font-family: 'Orbitron', sans-serif; }
+    .letter-spacing-1 { letter-spacing: 1.5px; }
+    .x-small { font-size: 0.7rem; }
+    
+    /* Interactive Hover Glows for side buttons */
+    .hover-glow:hover {
+        background: rgba(var(--accent-rgb), 0.1) !important;
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .hover-glow-danger:hover {
+        background: rgba(220, 53, 69, 0.1) !important;
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 10px rgba(220, 53, 69, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .hover-glow, .hover-glow-danger {
+        transition: all 0.2s ease-in-out;
+    }
+</style>
+
+{% endblock %}

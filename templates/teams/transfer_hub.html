@@ -36,110 +36,46 @@ body { overflow: hidden; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script>
-    // WebGL Fluid & Three.js Core Experience
     const canvas = document.getElementById('webgl-canvas');
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x050510, 0.002);
-
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 30;
-
-    // Centerpiece
     const geometry = new THREE.IcosahedronGeometry(10, 1);
-    const material = new THREE.MeshStandardMaterial({
-        color: 0x00ffff,
-        wireframe: true,
-        transparent: true,
-        opacity: 0.8,
-        emissive: 0x0088ff,
-        emissiveIntensity: 0.5
-    });
-    
+    const material = new THREE.MeshStandardMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.8, emissive: 0x0088ff, emissiveIntensity: 0.5 });
     const coreGeo = new THREE.IcosahedronGeometry(7, 2);
-    const coreMat = new THREE.MeshPhongMaterial({
-        color: 0x0055ff,
-        emissive: 0x002288,
-        shininess: 100
-    });
-
+    const coreMat = new THREE.MeshPhongMaterial({ color: 0x0055ff, emissive: 0x002288, shininess: 100 });
     const outerMesh = new THREE.Mesh(geometry, material);
     const innerMesh = new THREE.Mesh(coreGeo, coreMat);
-    scene.add(outerMesh);
-    scene.add(innerMesh);
-
-    // Lighting
+    scene.add(outerMesh); scene.add(innerMesh);
     scene.add(new THREE.AmbientLight(0x111122));
     const pointLight = new THREE.PointLight(0x00ffff, 2, 100);
-    pointLight.position.set(0, 0, 0);
     scene.add(pointLight);
-
-    // Particle System
     const particlesGeo = new THREE.BufferGeometry();
-    const particlesCount = 2000;
-    const posArray = new Float32Array(particlesCount * 3);
-    for(let i=0; i < particlesCount * 3; i++) {
-        posArray[i] = (Math.random() - 0.5) * 100;
-    }
+    const posArray = new Float32Array(2000 * 3);
+    for(let i=0; i < 2000 * 3; i++) posArray[i] = (Math.random() - 0.5) * 100;
     particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-    const particlesMat = new THREE.PointsMaterial({
-        size: 0.2,
-        color: 0x00ffff,
-        transparent: true,
-        opacity: 0.6,
-        blending: THREE.AdditiveBlending
-    });
-    const particlesMesh = new THREE.Points(particlesGeo, particlesMat);
+    const particlesMesh = new THREE.Points(particlesGeo, new THREE.PointsMaterial({ size: 0.2, color: 0x00ffff, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending }));
     scene.add(particlesMesh);
-
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetX = 0;
-    let targetY = 0;
-
-    document.addEventListener('mousemove', (event) => {
-        mouseX = (event.clientX - window.innerWidth / 2);
-        mouseY = (event.clientY - window.innerHeight / 2);
-    });
-
+    let mouseX=0, mouseY=0;
+    document.addEventListener('mousemove', (e) => { mouseX = (e.clientX - window.innerWidth/2); mouseY = (e.clientY - window.innerHeight/2); });
     const clock = new THREE.Clock();
-
     function animate() {
         requestAnimationFrame(animate);
-        const elapsedTime = clock.getElapsedTime();
-
-        targetX = mouseX * 0.001;
-        targetY = mouseY * 0.001;
-        
-        outerMesh.rotation.y += 0.005;
-        outerMesh.rotation.x += 0.002;
-        
-        innerMesh.rotation.y -= 0.01;
-        innerMesh.rotation.z += 0.005;
-
+        const t = clock.getElapsedTime();
+        outerMesh.rotation.y += 0.005; outerMesh.rotation.x += 0.002;
+        innerMesh.rotation.y -= 0.01; innerMesh.rotation.z += 0.005;
         particlesMesh.rotation.y += 0.001;
-        particlesMesh.rotation.x += 0.0005;
-        
-        outerMesh.position.y = Math.sin(elapsedTime) * 1.5;
-        innerMesh.position.y = Math.sin(elapsedTime) * 1.5;
-
-        scene.rotation.x += 0.05 * (targetY - scene.rotation.x);
-        scene.rotation.y += 0.05 * (targetX - scene.rotation.y);
-
+        outerMesh.position.y = Math.sin(t) * 1.5; innerMesh.position.y = Math.sin(t) * 1.5;
+        scene.rotation.x += 0.05 * (mouseY*0.001 - scene.rotation.x);
+        scene.rotation.y += 0.05 * (mouseX*0.001 - scene.rotation.y);
         renderer.render(scene, camera);
     }
     animate();
-
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    // GSAP Reveal
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
     gsap.to("#premium-card", { y: 0, opacity: 1, duration: 1.5, ease: "power3.out", delay: 0.5 });
     gsap.to("#premium-btn", { opacity: 1, duration: 1, ease: "power2.inOut", delay: 1.5 });
 </script>
@@ -147,76 +83,177 @@ body { overflow: hidden; }
 {% else %}
 
 <div class="container" style="padding-bottom: 50px;">
-    <!-- Transfer Window Status -->
-    <div class="glass-card mb-5 text-center p-5 border-success border-opacity-50">
-        <h1 class="display-5 fw-bold font-orbitron mb-2 text-success">
-            TRANSFER WINDOW OPEN
-        </h1>
-        <p class="text-white mb-0">Season: <span class="text-accent">{{ window.season }}</span></p>
-        <p class="text-muted small">Closes: {{ window.end_date|date:"F j, Y, g:i a" }}</p>
+
+    <!-- ===== Window Status Widget ===== -->
+    <div class="glass-card mb-5 p-4 position-relative overflow-hidden" id="windowStatusWidget">
+        <div class="row align-items-center">
+            <div class="col-lg-5">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="live-pulse" style="width: 12px; height: 12px; background: #0FFCBE; border-radius: 50%; box-shadow: 0 0 15px #0FFCBE;"></div>
+                    <span class="text-uppercase fw-bold small" style="letter-spacing: 2px; color: #0FFCBE;">Transfer Window Open</span>
+                </div>
+                <h2 class="font-orbitron fw-bold text-white mb-2" style="font-size: 1.6rem;">{{ window.season }}</h2>
+                <p class="text-muted small mb-0">Closes: {{ window.end_date|date:"F j, Y, g:i a" }}</p>
+                {% if window.allowed_types %}
+                <div class="mt-2 d-flex gap-2 flex-wrap">
+                    {% for t in window.allowed_types %}
+                    <span class="badge-status badge-ongoing">{{ t }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-lg-4 text-center my-3 my-lg-0">
+                <!-- Countdown Timer -->
+                <div id="countdownTimer" class="d-flex justify-content-center gap-3">
+                    <div class="text-center">
+                        <div class="font-orbitron fw-bold text-white" style="font-size: 2rem;" id="cd-days">--</div>
+                        <div class="text-muted" style="font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase;">Days</div>
+                    </div>
+                    <div class="font-orbitron text-accent" style="font-size: 2rem;">:</div>
+                    <div class="text-center">
+                        <div class="font-orbitron fw-bold text-white" style="font-size: 2rem;" id="cd-hours">--</div>
+                        <div class="text-muted" style="font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase;">Hours</div>
+                    </div>
+                    <div class="font-orbitron text-accent" style="font-size: 2rem;">:</div>
+                    <div class="text-center">
+                        <div class="font-orbitron fw-bold text-white" style="font-size: 2rem;" id="cd-mins">--</div>
+                        <div class="text-muted" style="font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase;">Mins</div>
+                    </div>
+                    <div class="font-orbitron text-accent" style="font-size: 2rem;">:</div>
+                    <div class="text-center">
+                        <div class="font-orbitron fw-bold text-accent" style="font-size: 2rem;" id="cd-secs">--</div>
+                        <div class="text-muted" style="font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase;">Secs</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 text-end">
+                <div class="d-flex flex-column gap-2">
+                    <div class="stat-box p-2" style="background: rgba(15,252,190,0.05); border-color: rgba(15,252,190,0.15);">
+                        <span class="number" style="font-size: 1.2rem;">{{ window.max_transfers_per_team }}</span>
+                        <span class="label" style="font-size: 0.55rem;">Max Per Team</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Decorative gradient bar -->
+        <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #106EBE, #0FFCBE, #106EBE); opacity: 0.6;"></div>
     </div>
 
-    <!-- Active Requests for user -->
+    <!-- ===== Approval Dashboard ===== -->
     {% if user_team and window %}
     <div class="row g-4 mb-5">
+        <!-- Outgoing Requests -->
         <div class="col-md-6">
             <div class="glass-card h-100 border-info border-opacity-25">
-                <h5 class="section-title mb-4"><i class="fas fa-arrow-right me-2 text-info"></i>OUTGOING REQUESTS</h5>
+                <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-paper-plane me-2 text-info"></i>OUTGOING <span class="text-white">OFFERS</span></h5>
                 {% for req in outgoing_requests %}
-                <div class="p-3 mb-2 bg-secondary bg-opacity-10 border border-white border-opacity-10 rounded">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <strong class="text-white">{{ req.player.name }}</strong>
+                <div class="p-3 mb-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <strong class="text-white">{{ req.player.name }}</strong>
+                            <span class="badge-status badge-{{ req.transfer_type }} ms-2" style="font-size: 0.55rem;">{{ req.get_transfer_type_display }}</span>
+                        </div>
                         <span class="badge-status badge-{{ req.status|lower }}">{{ req.get_status_display }}</span>
                     </div>
-                    <div class="small text-muted mb-2">Target Team: <span class="text-white">{{ req.to_team.name }}</span></div>
-                    <div class="small text-muted mb-2">Fee: <span class="text-success font-orbitron fw-bold">${{ req.transfer_fee|floatformat:0 }}</span></div>
+                    <div class="small text-muted mb-2">To: <span class="text-white">{{ req.to_team.name }}</span></div>
+                    <div class="small text-muted mb-3">Fee: <span class="text-success font-orbitron fw-bold">${{ req.transfer_fee|floatformat:0 }}</span></div>
                     
+                    <!-- Approval Progress Bar -->
+                    <div class="progress-pipeline mb-2">
+                        <div class="d-flex justify-content-between position-relative" style="z-index: 2;">
+                            <div class="pipeline-step {% if req.status != 'REJECTED' and req.status != 'CANCELLED' %}active{% endif %}">
+                                <div class="pipeline-dot"></div>
+                                <span>Initiated</span>
+                            </div>
+                            <div class="pipeline-step {% if req.status == 'SELLING_APPROVED' or req.status == 'ADMIN_REVIEW' or req.status == 'COMPLETED' %}active{% endif %}">
+                                <div class="pipeline-dot"></div>
+                                <span>Selling OK</span>
+                            </div>
+                            <div class="pipeline-step {% if req.status == 'ADMIN_REVIEW' or req.status == 'COMPLETED' %}active{% endif %}">
+                                <div class="pipeline-dot"></div>
+                                <span>Admin</span>
+                            </div>
+                            <div class="pipeline-step {% if req.status == 'COMPLETED' %}active completed{% endif %}">
+                                <div class="pipeline-dot"></div>
+                                <span>Done</span>
+                            </div>
+                        </div>
+                        <div class="pipeline-track">
+                            <div class="pipeline-fill" style="width: {% if req.status == 'COMPLETED' %}100{% elif req.status == 'ADMIN_REVIEW' %}75{% elif req.status == 'SELLING_APPROVED' %}50{% elif req.status == 'PENDING' %}15{% else %}0{% endif %}%;"></div>
+                        </div>
+                    </div>
+
                     {% if req.status == 'PENDING' %}
-                    <div class="d-flex gap-2 mt-2">
+                    <div class="d-flex gap-2 mt-3">
                         <form method="post" action="{% url 'teams:transfer_action' req.id 'approve' %}" class="flex-grow-1">
                             {% csrf_token %}
-                            <button type="submit" class="btn-glow btn-sm w-100">Approve</button>
+                            <button type="submit" class="btn-glow btn-sm w-100 py-2" style="font-size: 0.75rem;">Approve Release</button>
                         </form>
                         <form method="post" action="{% url 'teams:transfer_action' req.id 'reject' %}" class="flex-grow-1">
                             {% csrf_token %}
-                            <button type="submit" class="btn-danger-glow btn-sm w-100">Reject</button>
+                            <button type="submit" class="btn-danger-glow btn-sm w-100 py-2" style="font-size: 0.75rem;">Reject</button>
                         </form>
                     </div>
                     {% endif %}
                 </div>
                 {% empty %}
-                <div class="empty-state-container py-5">
-                    <i class="fas fa-paper-plane empty-state-icon"></i>
-                    <h6 class="empty-state-title">No Outgoing Offers</h6>
-                    <p class="empty-state-text mb-0">You haven't made any transfer offers yet. Browse the market below to find talent.</p>
+                <div class="empty-state-container py-4">
+                    <i class="fas fa-paper-plane empty-state-icon" style="font-size: 2.5rem;"></i>
+                    <h6 class="empty-state-title" style="font-size: 1rem;">No Outgoing Offers</h6>
+                    <p class="empty-state-text mb-0" style="font-size: 0.85rem;">Browse the market below to scout talent.</p>
                 </div>
                 {% endfor %}
             </div>
         </div>
 
+        <!-- Incoming Requests -->
         <div class="col-md-6">
             <div class="glass-card h-100 border-warning border-opacity-25">
-                <h5 class="section-title mb-4"><i class="fas fa-arrow-left me-2 text-warning"></i>INCOMING REQUESTS</h5>
+                <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-inbox me-2 text-warning"></i>INCOMING <span class="text-white">BIDS</span></h5>
                 {% for req in incoming_requests %}
-                <div class="p-3 mb-2 bg-secondary bg-opacity-10 border border-white border-opacity-10 rounded">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <strong class="text-white">{{ req.player.name }}</strong>
+                <div class="p-3 mb-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <strong class="text-white">{{ req.player.name }}</strong>
+                            <span class="badge-status badge-{{ req.transfer_type }} ms-2" style="font-size: 0.55rem;">{{ req.get_transfer_type_display }}</span>
+                        </div>
                         <span class="badge-status badge-{{ req.status|lower }}">{{ req.get_status_display }}</span>
                     </div>
-                    <div class="small text-muted mb-2">From Team: <span class="text-white">{{ req.from_team.name }}</span></div>
-                    <div class="small text-muted">Fee Offered: <span class="text-success font-orbitron fw-bold">${{ req.transfer_fee|floatformat:0 }}</span></div>
-                    
+                    <div class="small text-muted mb-2">From: <span class="text-white">{{ req.from_team.name }}</span> &rarr; <span class="text-white">{{ req.to_team.name }}</span></div>
+                    <div class="small text-muted mb-2">Fee: <span class="text-success font-orbitron fw-bold">${{ req.transfer_fee|floatformat:0 }}</span></div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress-pipeline mb-2">
+                        <div class="d-flex justify-content-between position-relative" style="z-index: 2;">
+                            <div class="pipeline-step {% if req.status != 'REJECTED' and req.status != 'CANCELLED' %}active{% endif %}">
+                                <div class="pipeline-dot"></div><span>Initiated</span>
+                            </div>
+                            <div class="pipeline-step {% if req.status == 'SELLING_APPROVED' or req.status == 'ADMIN_REVIEW' or req.status == 'COMPLETED' %}active{% endif %}">
+                                <div class="pipeline-dot"></div><span>Selling OK</span>
+                            </div>
+                            <div class="pipeline-step {% if req.status == 'ADMIN_REVIEW' or req.status == 'COMPLETED' %}active{% endif %}">
+                                <div class="pipeline-dot"></div><span>Admin</span>
+                            </div>
+                            <div class="pipeline-step {% if req.status == 'COMPLETED' %}active completed{% endif %}">
+                                <div class="pipeline-dot"></div><span>Done</span>
+                            </div>
+                        </div>
+                        <div class="pipeline-track">
+                            <div class="pipeline-fill" style="width: {% if req.status == 'COMPLETED' %}100{% elif req.status == 'ADMIN_REVIEW' %}75{% elif req.status == 'SELLING_APPROVED' %}50{% elif req.status == 'PENDING' %}15{% else %}0{% endif %}%;"></div>
+                        </div>
+                    </div>
+
                     {% if req.status == 'PENDING' %}
-                        <div class="text-warning small mt-2"><i class="fas fa-hourglass-half me-1"></i>Awaiting Current Captain's Approval</div>
-                    {% elif req.status == 'CURRENT_CAPTAIN_APPROVED' %}
-                        <div class="text-info small mt-2"><i class="fas fa-check-circle me-1"></i>Awaiting Admin Final Approval</div>
+                    <div class="text-warning small mt-2"><i class="fas fa-hourglass-half me-1"></i>Awaiting Selling Club Approval</div>
+                    {% elif req.status == 'SELLING_APPROVED' %}
+                    <div class="text-info small mt-2"><i class="fas fa-check-circle me-1"></i>Awaiting Admin Final Approval</div>
                     {% endif %}
                 </div>
                 {% empty %}
-                <div class="empty-state-container py-5">
-                    <i class="fas fa-inbox empty-state-icon"></i>
-                    <h6 class="empty-state-title">No Incoming Bids</h6>
-                    <p class="empty-state-text mb-0">No teams have placed a bid for your players.</p>
+                <div class="empty-state-container py-4">
+                    <i class="fas fa-inbox empty-state-icon" style="font-size: 2.5rem;"></i>
+                    <h6 class="empty-state-title" style="font-size: 1rem;">No Incoming Bids</h6>
+                    <p class="empty-state-text mb-0" style="font-size: 0.85rem;">No teams have placed a bid for your players.</p>
                 </div>
                 {% endfor %}
             </div>
@@ -224,10 +261,177 @@ body { overflow: hidden; }
     </div>
     {% endif %}
 
-    <!-- Admin Center -->
+    <!-- ===== Admin Approval Center ===== -->
     {% if user.is_admin_user and admin_pending %}
-    <div class="glass-card mb-5 border-danger border-opacity-50">
-        <h5 class="section-title mb-4"><i class="fas fa-gavel me-2 text-danger"></i>ADMIN APPROVAL CENTER</h5>
+    <div class="glass-card mb-5 border-danger border-opacity-25">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="section-title mb-0" style="font-size: 1rem;"><i class="fas fa-gavel me-2 text-danger"></i>ADMIN <span class="text-white">APPROVAL CENTER</span></h5>
+            <span class="badge-status badge-pending">{{ admin_pending|length }} Pending</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-dark-custom" id="adminApprovalTable">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Type</th>
+                        <th>Fee</th>
+                        <th>Requested</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in admin_pending %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if req.player.photo_no_bg %}<img src="{{ req.player.photo_no_bg.url }}" style="height:32px; border-radius: 4px;">{% endif %}
+                                <div>
+                                    <div class="fw-bold text-white small">{{ req.player.name }}</div>
+                                    <div class="text-muted" style="font-size: 0.65rem;">{{ req.player.position|default:"-" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="small">{{ req.from_team.name }}</td>
+                        <td class="small">{{ req.to_team.name }}</td>
+                        <td><span class="badge-status badge-{{ req.transfer_type }}" style="font-size: 0.55rem;">{{ req.get_transfer_type_display }}</span></td>
+                        <td class="text-success font-orbitron fw-bold small">${{ req.transfer_fee|floatformat:0 }}</td>
+                        <td class="small text-muted">{{ req.created_at|timesince }} ago</td>
+                        <td class="text-end">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <form method="post" action="{% url 'teams:transfer_action' req.id 'approve' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-glow btn-sm py-1 px-3" style="font-size: 0.7rem;">Finalize</button>
+                                </form>
+                                <form method="post" action="{% url 'teams:transfer_action' req.id 'reject' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-danger-glow btn-sm py-1 px-3" style="font-size: 0.7rem;">Reject</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ===== Transfer Market ===== -->
+    <div class="glass-card mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <h2 class="section-title mb-0" style="font-size: 1.2rem;"><i class="fas fa-store me-2 text-accent"></i>TRANSFER <span class="text-white">MARKET</span></h2>
+            <!-- Search & Filters -->
+            <div class="d-flex gap-2 flex-wrap">
+                <input type="text" id="marketSearch" class="form-control form-control-sm" placeholder="Search player..." style="max-width: 200px; font-size: 0.8rem; padding: 6px 12px !important;">
+                <select id="marketPositionFilter" class="form-select form-select-sm" style="max-width: 140px; font-size: 0.8rem; padding: 6px 12px !important;">
+                    <option value="">All Positions</option>
+                    <option value="GK">Goalkeeper</option>
+                    <option value="DEF">Defender</option>
+                    <option value="MID">Midfielder</option>
+                    <option value="FWD">Forward</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-dark-custom" id="marketTable">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Position</th>
+                        <th>Value</th>
+                        <th>Stats</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in players %}
+                    <tr class="market-row" data-name="{{ p.name|lower }}" data-position="{{ p.position }}">
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if p.photo_no_bg %}<img src="{{ p.photo_no_bg.url }}" style="height:36px; border-radius: 4px;">{% endif %}
+                                <div>
+                                    <div class="fw-bold text-white small">{{ p.name }}</div>
+                                    {% if p.is_on_loan %}<span class="badge-status badge-loan" style="font-size: 0.5rem;">ON LOAN</span>{% endif %}
+                                    {% if p.is_transfer_listed %}<span class="badge-status badge-registration" style="font-size: 0.5rem;">LISTED</span>{% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="small">{{ p.team.name }}</td>
+                        <td><span class="badge-status badge-completed">{{ p.position|default:"-" }}</span></td>
+                        <td class="text-success font-orbitron fw-bold small">${{ p.value|floatformat:0 }}</td>
+                        <td class="small text-muted">{{ p.total_goals }}G · {{ p.total_assists }}A · {{ p.matches_played }}MP</td>
+                        <td class="text-end">
+                            {% if window and user_team and p.team != user_team %}
+                                <button class="btn-glow btn-sm py-1 px-3" style="font-size: 0.7rem;" data-bs-toggle="modal" data-bs-target="#buyModal{{ p.id }}">Make Offer</button>
+                            {% elif p.team == user_team %}
+                                <span class="text-muted small"><i class="fas fa-shield-alt me-1"></i>Your Player</span>
+                            {% else %}
+                                <button class="btn-outline-glow btn-sm py-1 px-3" style="font-size: 0.7rem;" disabled>Unavailable</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    <!-- Buy Modal with Transfer Type -->
+                    {% if window and user_team and p.team != user_team %}
+                    <div class="modal fade" id="buyModal{{ p.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content glass-card border-accent border-opacity-25">
+                                <div class="modal-header border-0 pb-0">
+                                    <h5 class="modal-title font-orbitron text-white" style="font-size: 0.95rem;">Transfer: {{ p.name }}</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="post" action="{% url 'teams:request_transfer' p.id %}">
+                                    {% csrf_token %}
+                                    <div class="modal-body text-start">
+                                        <p class="text-muted small mb-4">Initiating transfer from <strong class="text-white">{{ p.team.name }}</strong> for <strong class="text-white">{{ p.name }}</strong>.</p>
+                                        
+                                        <!-- Transfer Type -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Transfer Type</label>
+                                            <select name="transfer_type" class="form-select" id="transferType{{ p.id }}" onchange="toggleLoanDate({{ p.id }})">
+                                                <option value="permanent">Permanent Transfer</option>
+                                                <option value="loan">Loan</option>
+                                                <option value="free_agent">Free Agent</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Transfer Fee -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Transfer Fee ($)</label>
+                                            <input type="number" name="fee" class="form-control" value="{{ p.value|floatformat:0 }}" min="0" required>
+                                            {% if user_team %}
+                                            <div class="form-text text-muted small mt-1">Budget: <span class="text-success font-orbitron">${{ user_team.remaining_budget|floatformat:0 }}</span></div>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Loan End Date (conditional) -->
+                                        <div class="mb-3" id="loanDateGroup{{ p.id }}" style="display: none;">
+                                            <label class="form-label">Loan End Date</label>
+                                            <input type="date" name="loan_end_date" class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-0 pt-0">
+                                        <button type="submit" class="btn-glow w-100">Submit Offer</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== Recent Transfer History ===== -->
+    {% if transfer_history %}
+    <div class="glass-card">
+        <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-history me-2 text-muted"></i>RECENT <span class="text-white">TRANSFERS</span></h5>
         <div class="table-responsive">
             <table class="table table-dark-custom">
                 <thead>
@@ -235,27 +439,20 @@ body { overflow: hidden; }
                         <th>Player</th>
                         <th>From</th>
                         <th>To</th>
+                        <th>Type</th>
                         <th>Fee</th>
-                        <th class="text-end">Actions</th>
+                        <th>Date</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for req in admin_pending %}
+                    {% for h in transfer_history %}
                     <tr>
-                        <td class="fw-bold">{{ req.player.name }}</td>
-                        <td>{{ req.from_team.name }}</td>
-                        <td>{{ req.to_team.name }}</td>
-                        <td class="text-success font-orbitron fw-bold">${{ req.transfer_fee|floatformat:0 }}</td>
-                        <td class="text-end">
-                            <form method="post" action="{% url 'teams:transfer_action' req.id 'approve' %}" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn-glow btn-sm py-1 px-3">Finalize</button>
-                            </form>
-                            <form method="post" action="{% url 'teams:transfer_action' req.id 'reject' %}" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn-danger-glow btn-sm py-1 px-3">Reject</button>
-                            </form>
-                        </td>
+                        <td class="fw-bold text-white small">{{ h.player.name }}</td>
+                        <td class="small">{{ h.from_team.name }}</td>
+                        <td class="small">{{ h.to_team.name }}</td>
+                        <td><span class="badge-status badge-{{ h.transfer_type }}" style="font-size: 0.55rem;">{{ h.get_transfer_type_display }}</span></td>
+                        <td class="text-success font-orbitron fw-bold small">${{ h.transfer_fee|floatformat:0 }}</td>
+                        <td class="small text-muted">{{ h.transfer_date|date:"M d, Y" }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -264,76 +461,109 @@ body { overflow: hidden; }
     </div>
     {% endif %}
 
-    <!-- Transfer Market -->
-    <div class="glass-card">
-        <h2 class="section-title mb-4"><i class="fas fa-store me-2 text-accent"></i>TRANSFER <span class="text-white">MARKET</span></h2>
-        
-        <div class="table-responsive">
-            <table class="table table-dark-custom">
-                <thead>
-                    <tr>
-                        <th>Player</th>
-                        <th>Current Team</th>
-                        <th>Position</th>
-                        <th>Market Value</th>
-                        <th class="text-end">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for p in players %}
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                {% if p.photo_no_bg %}<img src="{{ p.photo_no_bg.url }}" style="height:40px;">{% endif %}
-                                <div class="fw-bold text-white">{{ p.name }}</div>
-                            </div>
-                        </td>
-                        <td>{{ p.team.name }}</td>
-                        <td><span class="badge-status badge-completed">{{ p.position|default:"-" }}</span></td>
-                        <td class="text-success font-orbitron fw-bold">${{ p.value|floatformat:0 }}</td>
-                        <td class="text-end">
-                            {% if window and user_team and p.team != user_team %}
-                                <button class="btn-glow btn-sm py-1 px-3" data-bs-toggle="modal" data-bs-target="#buyModal{{ p.id }}">Make Offer</button>
-                            {% else %}
-                                <button class="btn-outline-glow btn-sm py-1 px-3" disabled>Unavailable</button>
-                            {% endif %}
-                        </td>
-                    </tr>
-
-                    <!-- Buy Modal -->
-                    <div class="modal fade" id="buyModal{{ p.id }}" tabindex="-1">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content glass-card border-accent border-opacity-25">
-                                <div class="modal-header border-0">
-                                    <h5 class="modal-title font-orbitron text-white">Transfer Request: {{ p.name }}</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                </div>
-                                <form method="post" action="{% url 'teams:request_transfer' p.id %}">
-                                    {% csrf_token %}
-                                    <div class="modal-body text-start">
-                                        <p class="text-muted small mb-4">You are initiating a transfer request to <strong class="text-white">{{ p.team.name }}</strong> for <strong class="text-white">{{ p.name }}</strong>.</p>
-                                        
-                                        <div class="mb-3">
-                                            <label class="form-label text-accent small fw-bold">Transfer Fee Offer ($)</label>
-                                            <input type="number" name="fee" class="form-control bg-dark text-white border-secondary" value="{{ p.value|floatformat:0 }}" min="0" {% if user_team %}max="{{ user_team.remaining_budget }}"{% endif %} required>
-                                            {% if user_team %}
-                                            <div class="form-text text-muted small mt-1">Your remaining budget: <span class="text-success font-orbitron">${{ user_team.remaining_budget|floatformat:0 }}</span></div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer border-0">
-                                        <button type="submit" class="btn-glow w-100">Send Offer</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
 </div>
+
+<!-- ===== Transfer Hub Styles ===== -->
+<style>
+/* Transfer Type Badges */
+.badge-permanent { background: rgba(16, 110, 190, 0.15); color: #4da6ff; border: 1px solid rgba(16, 110, 190, 0.3); }
+.badge-loan { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+.badge-free_agent { background: rgba(15, 252, 190, 0.15); color: #0FFCBE; border: 1px solid rgba(15, 252, 190, 0.3); }
+
+/* Status Badges */
+.badge-selling_approved { background: rgba(16, 110, 190, 0.15); color: #4da6ff; border: 1px solid rgba(16, 110, 190, 0.3); }
+.badge-admin_review { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+.badge-cancelled { background: rgba(156, 163, 175, 0.15); color: #9CA3AF; border: 1px solid rgba(156, 163, 175, 0.3); }
+
+/* Approval Pipeline */
+.progress-pipeline { position: relative; padding: 0 8px; }
+.pipeline-track {
+    position: absolute; top: 8px; left: 24px; right: 24px; height: 3px;
+    background: rgba(255,255,255,0.08); border-radius: 2px; z-index: 1;
+}
+.pipeline-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, #106EBE, #0FFCBE);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 8px rgba(15, 252, 190, 0.4);
+}
+.pipeline-step {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    position: relative; z-index: 2;
+}
+.pipeline-step span {
+    font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px;
+    color: rgba(255,255,255,0.3); font-weight: 700;
+}
+.pipeline-dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15);
+    transition: all 0.3s ease;
+}
+.pipeline-step.active .pipeline-dot {
+    background: #106EBE; border-color: #0FFCBE;
+    box-shadow: 0 0 10px rgba(15, 252, 190, 0.4);
+}
+.pipeline-step.active span { color: #0FFCBE; }
+.pipeline-step.completed .pipeline-dot {
+    background: #0FFCBE; border-color: #0FFCBE;
+}
+</style>
+
+<!-- ===== Transfer Hub Scripts ===== -->
+<script>
+// Countdown Timer
+(function() {
+    const endDate = new Date("{{ window.end_date|date:'c' }}").getTime();
+    function updateCountdown() {
+        const now = Date.now();
+        const diff = endDate - now;
+        if (diff <= 0) {
+            document.getElementById('cd-days').textContent = '00';
+            document.getElementById('cd-hours').textContent = '00';
+            document.getElementById('cd-mins').textContent = '00';
+            document.getElementById('cd-secs').textContent = '00';
+            return;
+        }
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        document.getElementById('cd-days').textContent = String(d).padStart(2,'0');
+        document.getElementById('cd-hours').textContent = String(h).padStart(2,'0');
+        document.getElementById('cd-mins').textContent = String(m).padStart(2,'0');
+        document.getElementById('cd-secs').textContent = String(s).padStart(2,'0');
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+})();
+
+// Toggle Loan Date field
+function toggleLoanDate(playerId) {
+    const select = document.getElementById('transferType' + playerId);
+    const group = document.getElementById('loanDateGroup' + playerId);
+    group.style.display = select.value === 'loan' ? 'block' : 'none';
+}
+
+// Market Search & Filter
+(function() {
+    const searchInput = document.getElementById('marketSearch');
+    const posFilter = document.getElementById('marketPositionFilter');
+    const rows = document.querySelectorAll('.market-row');
+
+    function filterMarket() {
+        const q = searchInput.value.toLowerCase().trim();
+        const pos = posFilter.value;
+        rows.forEach(row => {
+            const nameMatch = !q || row.dataset.name.includes(q);
+            const posMatch = !pos || row.dataset.position === pos;
+            row.style.display = (nameMatch && posMatch) ? '' : 'none';
+        });
+    }
+    searchInput.addEventListener('input', filterMarket);
+    posFilter.addEventListener('change', filterMarket);
+})();
+</script>
 
 {% endif %}
 {% endblock %}

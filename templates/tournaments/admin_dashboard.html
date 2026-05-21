@@ -95,31 +95,63 @@
 
         <!-- Activity Feed / Secondary Stats -->
         <div class="col-lg-4">
-            <!-- Transfer Window Toggle -->
-            <div class="glass-card mb-4 border-{% if transfer_window and transfer_window.is_active %}success{% else %}danger{% endif %} border-opacity-25 text-center">
-                <h5 class="section-title mb-3" style="font-size: 1rem;"><i class="fas fa-store me-2"></i>TRANSFER WINDOW</h5>
+            <!-- Transfer Window Control Panel -->
+            <div class="glass-card mb-4 border-{% if transfer_window and transfer_window.is_open %}success{% else %}danger{% endif %} border-opacity-25 text-center">
+                <h5 class="section-title mb-3" style="font-size: 1rem;"><i class="fas fa-store me-2 text-{% if transfer_window and transfer_window.is_open %}success{% else %}danger{% endif %}"></i>TRANSFER WINDOW</h5>
+                
                 {% if transfer_window %}
                     <div class="mb-3">
-                        <span class="badge bg-{% if transfer_window.is_active %}success{% else %}danger{% endif %} bg-opacity-25 text-{% if transfer_window.is_active %}success{% else %}danger{% endif %} border border-{% if transfer_window.is_active %}success{% else %}danger{% endif %} px-3 py-2">
-                            STATUS: {% if transfer_window.is_active %}OPEN{% else %}CLOSED{% endif %}
+                        <span class="badge bg-{% if transfer_window.is_open %}success{% else %}danger{% endif %} bg-opacity-25 text-{% if transfer_window.is_open %}success{% else %}danger{% endif %} border border-{% if transfer_window.is_open %}success{% else %}danger{% endif %} px-3 py-2" style="font-size: 0.8rem;">
+                            STATUS: {% if transfer_window.is_open %}OPEN{% else %}CLOSED{% endif %}
                         </span>
-                        <div class="small text-muted mt-2">{{ transfer_window.season }}</div>
+                        <div class="font-orbitron fw-bold mt-2 text-white">{{ transfer_window.season }}</div>
                     </div>
-                    <form method="post" action="{% url 'teams:admin_toggle_transfer_window' %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn-{% if transfer_window.is_active %}danger-glow{% else %}glow{% endif %} btn-sm w-100">
-                            {% if transfer_window.is_active %}Close Window{% else %}Open Window{% endif %}
-                        </button>
-                    </form>
+                    
+                    {% if transfer_window.is_open %}
+                    <div class="bg-dark bg-opacity-50 rounded p-2 mb-3 border border-success border-opacity-10">
+                        <div class="small text-muted mb-1" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px;">Time Remaining</div>
+                        <div class="font-orbitron fw-bold text-success" id="admin-countdown" style="font-size: 1.1rem;">
+                            Calculating...
+                        </div>
+                    </div>
+                    <script>
+                        (function() {
+                            const endDate = new Date("{{ transfer_window.end_date|date:'c' }}").getTime();
+                            function updateAdminCountdown() {
+                                const diff = endDate - Date.now();
+                                if (diff <= 0) {
+                                    document.getElementById('admin-countdown').textContent = 'EXPIRED';
+                                    return;
+                                }
+                                const d = Math.floor(diff / 86400000);
+                                const h = Math.floor((diff % 86400000) / 3600000);
+                                const m = Math.floor((diff % 3600000) / 60000);
+                                document.getElementById('admin-countdown').textContent = `${d}d ${h}h ${m}m`;
+                            }
+                            updateAdminCountdown();
+                            setInterval(updateAdminCountdown, 60000);
+                        })();
+                    </script>
+                    {% endif %}
+                    
+                    <div class="d-flex gap-2">
+                        <form method="post" action="{% url 'teams:admin_toggle_transfer_window' %}" class="flex-grow-1">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-{% if transfer_window.is_active %}danger-glow{% else %}success-glow{% endif %} btn-sm w-100 py-2">
+                                {% if transfer_window.is_active %}<i class="fas fa-lock me-1"></i> Force Close{% else %}<i class="fas fa-unlock me-1"></i> Force Open{% endif %}
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Link to Admin configuration panel -->
+                    <a href="{% url 'admin:teams_transferwindow_change' transfer_window.id %}" class="btn-outline-glow btn-sm w-100 py-2 mt-2">
+                        <i class="fas fa-cog me-1"></i> Configure Rules
+                    </a>
                 {% else %}
                     <p class="text-muted small mb-3">No transfer window created.</p>
-                    <form method="post" action="{% url 'teams:admin_initialize_transfer_window' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="season" value="Season 1">
-                        <button type="submit" class="btn-glow btn-sm w-100">
-                            <i class="fas fa-plus-circle me-2"></i>Initialize Window
-                        </button>
-                    </form>
+                    <a href="{% url 'admin:teams_transferwindow_add' %}" class="btn-glow btn-sm w-100 py-2">
+                        <i class="fas fa-plus-circle me-1"></i> Create Transfer Window
+                    </a>
                 {% endif %}
             </div>
 

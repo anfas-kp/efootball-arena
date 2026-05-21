@@ -18,6 +18,7 @@ urlpatterns = [
     path('admin/reject/<int:pk>/', views.admin_reject_team, name='admin_reject'),
     path('admin/<int:pk>/download-roster/', views.download_team_roster_pdf, name='download_team_roster_pdf'),
     path('admin/team/<int:team_pk>/add-player/', views.admin_add_player, name='admin_add_player'),
+    path('admin/team/<int:pk>/finances/', views.admin_manage_team_finances, name='admin_manage_team_finances'),
     
     # Transfers
     path('transfers/', views.transfer_hub, name='transfer_hub'),
@@ -28,4 +29,11 @@ urlpatterns = [
     
     # API
     path('api/notifications/', views.api_notifications, name='api_notifications'),
+    
+    # Transfer REST API
+    path('api/transfers/initiate/', views.api_transfer_initiate, name='api_transfer_initiate'),
+    path('api/transfers/<int:pk>/approve/', views.api_transfer_approve, name='api_transfer_approve'),
+    path('api/transfers/<int:pk>/reject/', views.api_transfer_reject, name='api_transfer_reject'),
+    path('api/transfers/pending/', views.api_transfer_pending, name='api_transfer_pending'),
+    path('api/transfers/window/', views.api_transfer_window_status, name='api_transfer_window_status'),
 ]

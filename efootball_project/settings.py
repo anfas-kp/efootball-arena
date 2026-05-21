@@ -42,6 +42,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'core.middleware.security.SessionContaminationDebugger',  # Tracks identity flipping
+    'core.middleware.security.NoCacheAuthenticatedMiddleware', # Prevents CDN cache poisoning
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -122,9 +124,9 @@ CLOUDINARY_STORAGE = {
 # 2. ACTIVATE CLOUDINARY IF KEYS EXIST
 if CLOUDINARY_STORAGE['CLOUD_NAME'] and CLOUDINARY_STORAGE['API_KEY']:
     STORAGES["default"]["BACKEND"] = "cloudinary_storage.storage.MediaCloudinaryStorage"
-    print("🟢 Cloudinary Storage Active") # Helpful for debugging Render logs
+    print("Cloudinary Storage Active") # Helpful for debugging Render logs
 else:
-    print("🟡 Using Local File Storage (Missing Cloudinary Keys)")
+    print("Using Local File Storage (Missing Cloudinary Keys)")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

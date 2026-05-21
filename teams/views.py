@@ -5,11 +5,14 @@ from django.contrib import messages
 from django.db import IntegrityError
 from django.db.models import Sum, Max, Q
 from django.utils.text import slugify
+from django.utils import timezone
 from django.http import HttpResponse, JsonResponse
 import random
 import string
-from .models import Team, Player, Trophy, TransferWindow, TransferRequest, TransferHistory
-from .forms import TeamForm, PlayerForm
+from .models import Team, Player, Trophy, TransferWindow, TransferRequest, TransferHistory, PlayerRegistration
+from .forms import TeamForm, PlayerForm, AdminPlayerForm, AdminTeamForm
+from .services import TransferService
+from .exceptions import TransferError
 
 def player_card(request, pk):
     """View to generate an E-Sports style Player Card."""
@@ -197,8 +200,10 @@ def edit_player(request, pk):
     """Edit a player. Allowed for team captain or admin."""
     if request.user.is_admin_user:
         player = get_object_or_404(Player, pk=pk)
+        form_class = AdminPlayerForm
     else:
         player = get_object_or_404(Player, pk=pk, team__captain=request.user)
+        form_class = PlayerForm
 
     # Roster lock check (Admins can bypass lock)
     if player.team.is_roster_locked and not request.user.is_admin_user:
@@ -206,7 +211,7 @@ def edit_player(request, pk):
         return redirect('teams:my_team')
 
     if request.method == 'POST':
-        form = PlayerForm(request.POST, request.FILES, instance=player)
+        form = form_class(request.POST, request.FILES, instance=player)
         if form.is_valid():
             form.save()
             messages.success(request, f'✅ {player.name} updated!')
@@ -215,7 +220,7 @@ def edit_player(request, pk):
                 return redirect(next_url)
             return redirect('teams:my_team')
     else:
-        form = PlayerForm(instance=player)
+        form = form_class(instance=player)
 
     return render(request, 'teams/edit_player.html', {'form': form, 'player': player})
 
@@ -331,7 +336,7 @@ def admin_add_player(request, team_pk):
     team = get_object_or_404(Team, pk=team_pk)
 
     if request.method == 'POST':
-        form = PlayerForm(request.POST, request.FILES)
+        form = AdminPlayerForm(request.POST, request.FILES)
         if form.is_valid():
             player = form.save(commit=False)
             player.team = team
@@ -347,9 +352,9 @@ def admin_add_player(request, team_pk):
                 
             player.save()
             messages.success(request, f'✅ {player.name} added to {team.name} roster!')
-            return redirect('teams:admin_verify')
+            return redirect('teams:team_detail', pk=team.pk)
     else:
-        form = PlayerForm()
+        form = AdminPlayerForm()
 
     return render(request, 'teams/add_player.html', {
         'form': form, 
@@ -361,112 +366,119 @@ def admin_add_player(request, team_pk):
 
 @login_required
 def transfer_hub(request):
-    """Transfer Market Dashboard"""
+    """Transfer Market Dashboard."""
     window = TransferWindow.objects.filter(is_active=True).first()
     
-    # All players
-    players = Player.objects.filter(is_active=True).select_related('team')
+    # Use is_open property for accurate window status
+    effective_window = window if (window and window.is_open) else None
+
+    # All active players with optimized queries
+    players = Player.objects.filter(
+        is_active=True
+    ).select_related('team').order_by('team__name', 'name')
     
     incoming_requests = []
     outgoing_requests = []
     user_team = getattr(request.user, 'team', None)
+    transfer_history = []
     
     if user_team:
-        incoming_requests = user_team.incoming_transfers.all()
-        outgoing_requests = user_team.outgoing_transfers.all()
-        
-    admin_pending = TransferRequest.objects.filter(status='CURRENT_CAPTAIN_APPROVED') if request.user.is_admin_user else []
+        incoming_requests = user_team.incoming_transfers.select_related(
+            'player', 'from_team', 'to_team', 'window'
+        ).exclude(status__in=['COMPLETED', 'REJECTED', 'CANCELLED'])
+        outgoing_requests = user_team.outgoing_transfers.select_related(
+            'player', 'from_team', 'to_team', 'window'
+        ).exclude(status__in=['COMPLETED', 'REJECTED', 'CANCELLED'])
+        transfer_history = TransferHistory.objects.filter(
+            from_team=user_team
+        ).select_related('player', 'from_team', 'to_team')[:10]
+    
+    admin_pending = []
+    if request.user.is_admin_user:
+        admin_pending = TransferRequest.objects.filter(
+            status='SELLING_APPROVED'
+        ).select_related('player', 'from_team', 'to_team', 'window')
         
     return render(request, 'teams/transfer_hub.html', {
-        'window': window,
+        'window': effective_window,
         'players': players,
         'user_team': user_team,
         'incoming_requests': incoming_requests,
         'outgoing_requests': outgoing_requests,
         'admin_pending': admin_pending,
+        'transfer_history': transfer_history,
     })
 
 @login_required
 def request_transfer(request, player_id):
-    """Initiate a transfer request."""
+    """Initiate a transfer request via the service layer."""
     if request.method != 'POST':
         return redirect('teams:transfer_hub')
         
     window = TransferWindow.objects.filter(is_active=True).first()
-    if not window:
-        messages.error(request, 'Transfer window is closed.')
-        return redirect('teams:transfer_hub')
-        
     user_team = getattr(request.user, 'team', None)
+    
     if not user_team:
         messages.error(request, 'Only team captains can request transfers.')
         return redirect('teams:transfer_hub')
         
     player = get_object_or_404(Player, pk=player_id)
-    if player.team == user_team:
-        messages.error(request, 'Player is already on your team.')
-        return redirect('teams:transfer_hub')
-        
     fee = request.POST.get('fee', 0)
+    transfer_type = request.POST.get('transfer_type', 'permanent')
+    loan_end_date = request.POST.get('loan_end_date') or None
     
-    # Check for active request
-    if TransferRequest.objects.filter(player=player, to_team=user_team, status__in=['PENDING', 'CURRENT_CAPTAIN_APPROVED']).exists():
-        messages.warning(request, 'You already have an active request for this player.')
-        return redirect('teams:transfer_hub')
-        
-    TransferRequest.objects.create(
-        player=player,
-        from_team=player.team,
-        to_team=user_team,
-        requested_by=request.user,
-        transfer_fee=fee,
-        new_captain_approved=True
-    )
+    # Parse loan_end_date if provided
+    if loan_end_date:
+        from datetime import datetime
+        try:
+            loan_end_date = datetime.strptime(loan_end_date, '%Y-%m-%d').date()
+        except ValueError:
+            messages.error(request, 'Invalid loan end date format.')
+            return redirect('teams:transfer_hub')
     
-    messages.success(request, f'Transfer request sent for {player.name}!')
+    try:
+        TransferService.initiate_transfer(
+            player=player,
+            from_team=player.team,
+            to_team=user_team,
+            requested_by=request.user,
+            window=window,
+            transfer_type=transfer_type,
+            fee=fee,
+            loan_end_date=loan_end_date,
+        )
+        messages.success(request, f'Transfer request sent for {player.name}!')
+    except TransferError as e:
+        messages.error(request, str(e))
+    
     return redirect('teams:transfer_hub')
 
 @login_required
 def transfer_action(request, request_id, action):
-    """Approve or reject transfer."""
-    transfer = get_object_or_404(TransferRequest, pk=request_id)
-    user_team = getattr(request.user, 'team', None)
+    """Approve, reject, or cancel a transfer via the service layer."""
+    transfer = get_object_or_404(
+        TransferRequest.objects.select_related(
+            'player', 'from_team', 'to_team', 'window'
+        ),
+        pk=request_id,
+    )
     
-    if action == 'reject':
-        if request.user.is_admin_user or user_team == transfer.from_team or user_team == transfer.to_team:
-            transfer.status = 'REJECTED'
-            transfer.save()
-            messages.info(request, 'Transfer request rejected.')
-        return redirect('teams:transfer_hub')
-        
-    if action == 'approve':
-        if user_team == transfer.from_team and transfer.status == 'PENDING':
-            transfer.current_captain_approved = True
-            transfer.status = 'CURRENT_CAPTAIN_APPROVED'
-            transfer.save()
-            messages.success(request, 'You approved the transfer. Awaiting Admin final approval.')
-            
-        elif request.user.is_admin_user and transfer.status == 'CURRENT_CAPTAIN_APPROVED':
-            buyer = transfer.to_team
-            seller = transfer.from_team
-            fee = transfer.transfer_fee
-            
-            buyer.budget -= fee
-            seller.budget += fee
-            buyer.save()
-            seller.save()
-            
-            player = transfer.player
-            player.team = buyer
-            player.save()
-            
-            transfer.admin_approved = True
-            transfer.status = 'COMPLETED'
-            transfer.save()
-            
-            TransferHistory.objects.create(player=player, from_team=seller, to_team=buyer, transfer_fee=fee)
-            messages.success(request, f'Transfer of {player.name} completed successfully.')
-            
+    reason = request.POST.get('reason', '') if request.method == 'POST' else ''
+    
+    try:
+        result = TransferService.process_approval(
+            transfer_request=transfer,
+            user=request.user,
+            action=action,
+            reason=reason,
+        )
+        if action == 'reject':
+            messages.info(request, result)
+        else:
+            messages.success(request, result)
+    except TransferError as e:
+        messages.error(request, str(e))
+    
     return redirect('teams:transfer_hub')
 
 @login_required
@@ -541,3 +553,313 @@ def api_notifications(request):
     # We can also check pending match results that require approval if needed.
     
     return JsonResponse(data)
+
+
+@login_required
+def admin_manage_team_finances(request, pk):
+    """Admin view to manage team budget, status, and player values in bulk."""
+    if not request.user.is_admin_user:
+        messages.error(request, 'Access denied.')
+        return redirect('core:home')
+
+    team = get_object_or_404(Team, pk=pk)
+    players = team.players.all()
+
+    if request.method == 'POST':
+        # 1. Update Team details (Budget and Status)
+        budget = request.POST.get('budget', team.budget)
+        status = request.POST.get('status', team.status)
+        
+        try:
+            team.budget = budget
+            team.status = status
+            team.save()
+        except Exception as e:
+            messages.error(request, f'Error saving team finances: {str(e)}')
+            return redirect('teams:admin_manage_team_finances', pk=pk)
+
+        # 2. Check for Auto-Setup actions
+        auto_setup = request.POST.get('auto_setup')
+        if auto_setup:
+            count = players.count()
+            if count > 0:
+                from decimal import Decimal
+                if auto_setup == 'equal':
+                    # Distribute budget equally
+                    equal_value = Decimal(str(team.budget)) / count
+                    for player in players:
+                        player.value = equal_value
+                        player.save()
+                    messages.success(request, f'Distributed budget of ${team.budget:,.0f} equally among {count} players (${equal_value:,.0f} each).')
+                elif auto_setup == 'flat_1m':
+                    for player in players:
+                        player.value = Decimal('1000000')
+                        player.save()
+                    messages.success(request, f'Set value of all {count} players to $1,000,000.')
+                elif auto_setup == 'flat_100k':
+                    for player in players:
+                        player.value = Decimal('100000')
+                        player.save()
+                    messages.success(request, f'Set value of all {count} players to $100,000.')
+                elif auto_setup == 'reset':
+                    for player in players:
+                        player.value = Decimal('0')
+                        player.save()
+                    messages.success(request, f'Reset value of all {count} players to $0.')
+            else:
+                messages.warning(request, 'No players in squad to set up.')
+            return redirect('teams:admin_manage_team_finances', pk=pk)
+
+        # 3. Update Individual Player Values
+        updated_count = 0
+        for player in players:
+            val_input = request.POST.get(f'player_value_{player.pk}')
+            if val_input is not None:
+                try:
+                    from decimal import Decimal
+                    new_val = Decimal(val_input)
+                    if player.value != new_val:
+                        player.value = new_val
+                        player.save()
+                        updated_count += 1
+                except (ValueError, TypeError, ArithmeticError):
+                    pass
+
+        messages.success(request, f'Successfully updated team finances and {updated_count} player values.')
+        return redirect('teams:team_detail', pk=pk)
+
+    return render(request, 'teams/admin_manage_finances.html', {
+        'team': team,
+        'players': players,
+    })
+
+
+# ===== Transfer REST API =====
+
+import json
+from django.views.decorators.http import require_http_methods, require_GET, require_POST
+from .serializers import (
+    serialize_transfer_request,
+    serialize_transfer_window,
+    serialize_transfer_history,
+    validate_initiate_payload,
+)
+
+
+def _json_error(message, status=400):
+    """Helper to return a standardized JSON error response."""
+    return JsonResponse({'success': False, 'error': str(message)}, status=status)
+
+
+def _json_success(data=None, message='OK', status=200):
+    """Helper to return a standardized JSON success response."""
+    payload = {'success': True, 'message': message}
+    if data is not None:
+        payload['data'] = data
+    return JsonResponse(payload, status=status)
+
+
+@login_required
+@require_POST
+def api_transfer_initiate(request):
+    """POST /api/transfers/initiate/
+
+    Create a new transfer request.
+
+    Body (JSON or form-encoded):
+        player_id: int (required)
+        transfer_type: str ('permanent', 'loan', 'free_agent') — default 'permanent'
+        fee: number — default 0
+        loan_end_date: str 'YYYY-MM-DD' (required if type is 'loan')
+
+    Returns:
+        201: { success: true, data: <transfer_request> }
+        400: { success: false, error: <message> }
+    """
+    # Parse body (support JSON or form POST)
+    if request.content_type and 'json' in request.content_type:
+        try:
+            body = json.loads(request.body)
+        except json.JSONDecodeError:
+            return _json_error('Invalid JSON body.')
+    else:
+        body = request.POST.dict()
+
+    user_team = getattr(request.user, 'team', None)
+    if not user_team:
+        return _json_error('Only team captains can initiate transfers.', 403)
+
+    try:
+        validated = validate_initiate_payload(body)
+    except ValueError as e:
+        return _json_error(str(e))
+
+    player = Player.objects.filter(pk=validated['player_id']).select_related('team').first()
+    if not player:
+        return _json_error(f"Player with id {validated['player_id']} not found.", 404)
+
+    window = TransferWindow.objects.filter(is_active=True).first()
+
+    try:
+        transfer_request = TransferService.initiate_transfer(
+            player=player,
+            from_team=player.team,
+            to_team=user_team,
+            requested_by=request.user,
+            window=window,
+            transfer_type=validated['transfer_type'],
+            fee=validated['fee'],
+            loan_end_date=validated['loan_end_date'],
+        )
+        return _json_success(
+            data=serialize_transfer_request(transfer_request),
+            message=f'Transfer request for {player.name} created.',
+            status=201,
+        )
+    except TransferError as e:
+        return _json_error(str(e))
+
+
+@login_required
+@require_POST
+def api_transfer_approve(request, pk):
+    """POST /api/transfers/<id>/approve/
+
+    Approve a transfer request (role-aware).
+
+    Returns:
+        200: { success: true, message: <result> }
+        400: { success: false, error: <message> }
+    """
+    transfer = TransferRequest.objects.select_related(
+        'player', 'from_team', 'to_team', 'window'
+    ).filter(pk=pk).first()
+
+    if not transfer:
+        return _json_error('Transfer request not found.', 404)
+
+    try:
+        result = TransferService.process_approval(
+            transfer_request=transfer,
+            user=request.user,
+            action='approve',
+        )
+        return _json_success(
+            data=serialize_transfer_request(
+                TransferRequest.objects.select_related(
+                    'player', 'from_team', 'to_team', 'window'
+                ).get(pk=pk)
+            ),
+            message=result,
+        )
+    except TransferError as e:
+        return _json_error(str(e))
+
+
+@login_required
+@require_POST
+def api_transfer_reject(request, pk):
+    """POST /api/transfers/<id>/reject/
+
+    Reject a transfer request.
+
+    Body (optional):
+        reason: str — rejection reason text.
+
+    Returns:
+        200: { success: true, message: <result> }
+        400: { success: false, error: <message> }
+    """
+    transfer = TransferRequest.objects.select_related(
+        'player', 'from_team', 'to_team', 'window'
+    ).filter(pk=pk).first()
+
+    if not transfer:
+        return _json_error('Transfer request not found.', 404)
+
+    # Parse reason
+    if request.content_type and 'json' in request.content_type:
+        try:
+            body = json.loads(request.body)
+        except json.JSONDecodeError:
+            body = {}
+    else:
+        body = request.POST.dict()
+
+    reason = body.get('reason', '')
+
+    try:
+        result = TransferService.process_approval(
+            transfer_request=transfer,
+            user=request.user,
+            action='reject',
+            reason=reason,
+        )
+        return _json_success(message=result)
+    except TransferError as e:
+        return _json_error(str(e))
+
+
+@login_required
+@require_GET
+def api_transfer_pending(request):
+    """GET /api/transfers/pending/
+
+    List pending transfer requests filtered by the requesting user's role.
+
+    - Team captains: see their incoming (as selling club) pending transfers.
+    - Admins: see all transfers awaiting admin review (SELLING_APPROVED).
+
+    Query params:
+        status: filter by status (optional, default shows active only)
+
+    Returns:
+        200: { success: true, data: [<transfer_request>, ...] }
+    """
+    user_team = getattr(request.user, 'team', None)
+    is_admin = getattr(request.user, 'is_admin_user', False)
+
+    qs = TransferRequest.objects.select_related(
+        'player', 'player__team', 'from_team', 'to_team', 'window',
+    ).order_by('-created_at')
+
+    status_filter = request.GET.get('status')
+
+    if is_admin:
+        # Admins see transfers awaiting their review
+        if status_filter:
+            qs = qs.filter(status=status_filter.upper())
+        else:
+            qs = qs.filter(status='SELLING_APPROVED')
+    elif user_team:
+        # Captains see their team's pending incoming transfers
+        if status_filter:
+            qs = qs.filter(from_team=user_team, status=status_filter.upper())
+        else:
+            qs = qs.filter(
+                from_team=user_team,
+                status__in=['PENDING', 'SELLING_APPROVED'],
+            )
+    else:
+        return _json_success(data=[], message='No team associated.')
+
+    transfers = [serialize_transfer_request(tr) for tr in qs[:50]]
+    return _json_success(data=transfers)
+
+
+@login_required
+@require_GET
+def api_transfer_window_status(request):
+    """GET /api/transfers/window/
+
+    Return the current transfer window status.
+
+    Returns:
+        200: { success: true, data: <window> | null }
+    """
+    window = TransferWindow.objects.filter(is_active=True).first()
+    return _json_success(
+        data=serialize_transfer_window(window),
+        message='Open' if (window and window.is_open) else 'Closed',
+    )
+

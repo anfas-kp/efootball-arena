@@ -53,7 +53,10 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="section-title mb-0">TEAM <span class="text-accent">SQUAD</span></h2>
             {% if user.is_admin_user %}
-            <a href="{% url 'teams:admin_add_player' team.pk %}" class="btn-glow btn-sm"><i class="fas fa-plus me-1"></i> Add Player</a>
+            <div class="d-flex gap-2">
+                <a href="{% url 'teams:admin_manage_team_finances' team.pk %}" class="btn-outline-glow btn-sm"><i class="fas fa-wallet me-1"></i> Manage Finances</a>
+                <a href="{% url 'teams:admin_add_player' team.pk %}" class="btn-glow btn-sm"><i class="fas fa-plus me-1"></i> Add Player</a>
+            </div>
             {% endif %}
         </div>
         
@@ -67,7 +70,11 @@
                         <th>Gaming ID</th>
                         <th>Position</th>
                         <th>Value</th>
+                        {% if user.is_admin_user %}
+                        <th class="text-end" style="width: 180px;">Actions</th>
+                        {% else %}
                         <th class="text-end">Stats</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -84,9 +91,22 @@
                         <td>
                             <span class="text-success fw-bold font-orbitron">${{ p.value|floatformat:0 }}</span>
                         </td>
+                        {% if user.is_admin_user %}
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{% url 'teams:edit_player' p.pk %}?next={{ request.path|urlencode }}" class="btn-outline-glow btn-sm py-0 px-2" style="font-size: 0.65rem;"><i class="fas fa-edit me-1"></i>Edit</a>
+                                <form method="post" action="{% url 'teams:delete_player' p.pk %}" class="d-inline" onsubmit="return confirm('Are you sure you want to remove {{ p.name }} from the roster?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.path }}">
+                                    <button type="submit" class="btn-danger-glow btn-sm py-0 px-2" style="font-size: 0.65rem;"><i class="fas fa-trash me-1"></i>Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                        {% else %}
                         <td class="text-end">
                             <span class="text-accent small fw-bold">{{ p.total_goals }} Goals</span>
                         </td>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </tbody>
