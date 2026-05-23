@@ -20,6 +20,8 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+    <meta name="htmx-config" content='{"globalViewTransitions":"true"}'>
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -177,58 +179,78 @@
         {% endif %}
     </nav>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Smooth scroll for anchors
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
+        if (!window.appInitialized) {
+            window.appInitialized = true;
+
+            // HTMX Loading States and Bootstrap Modal Cleanup
+            document.addEventListener('htmx:beforeRequest', function (evt) {
+                document.body.classList.add('htmx-requesting');
             });
-        });
+            document.addEventListener('htmx:afterRequest', function (evt) {
+                document.body.classList.remove('htmx-requesting');
+            });
+            document.addEventListener('htmx:beforeSwap', function (evt) {
+                // Clean up Bootstrap modal state before swapping body
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                backdrops.forEach(backdrop => backdrop.remove());
+            });
 
-        // HTMX Loading States
-        document.body.addEventListener('htmx:beforeRequest', function (evt) {
-            document.body.classList.add('htmx-requesting');
-        });
-        document.body.addEventListener('htmx:afterRequest', function (evt) {
-            document.body.classList.remove('htmx-requesting');
-        });
-
-        const body = document.body;
-        const isAuthenticated = body.dataset.isAuthenticated === "true";
-        const notificationUrl = body.dataset.notificationUrl;
-
-        if (isAuthenticated && notificationUrl) {
-            // Lightweight Polling Engine for Real-Time notifications
-            let lastTransferCount = null;
-
-            function checkNotifications() {
-                fetch(notificationUrl)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (lastTransferCount === null) {
-                            lastTransferCount = data.transfers;
-                        } else if (data.transfers > lastTransferCount) {
-                            // New transfer received
-                            document.getElementById('toastMessage').innerText = "New Transfer Activity! You have " + data.transfers + " pending incoming transfer requests.";
-                            const toastElement = document.getElementById('liveToast');
-                            const toast = new bootstrap.Toast(toastElement);
-                            toast.show();
-                            lastTransferCount = data.transfers;
-                        } else if (data.transfers < lastTransferCount) {
-                            // Transfer resolved
-                            lastTransferCount = data.transfers;
-                        }
-                    })
-                    .catch(error => console.log('Polling error:', error));
+            // Smooth scroll setup
+            function initSmoothScroll() {
+                document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                    anchor.removeEventListener('click', handleSmoothScroll);
+                    anchor.addEventListener('click', handleSmoothScroll);
+                });
             }
 
-            // Poll every 15 seconds
-            setInterval(checkNotifications, 15000);
-            setTimeout(checkNotifications, 2000);
+            function handleSmoothScroll(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId && targetId !== '#') {
+                    const target = document.querySelector(targetId);
+                    if(target) target.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+
+            document.addEventListener('htmx:load', initSmoothScroll);
+            initSmoothScroll();
+
+            const isAuthenticated = document.body.dataset.isAuthenticated === "true";
+            const notificationUrl = document.body.dataset.notificationUrl;
+
+            if (isAuthenticated && notificationUrl) {
+                // Lightweight Polling Engine for Real-Time notifications
+                let lastTransferCount = null;
+
+                function checkNotifications() {
+                    fetch(notificationUrl)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (lastTransferCount === null) {
+                                lastTransferCount = data.transfers;
+                            } else if (data.transfers > lastTransferCount) {
+                                // New transfer received
+                                document.getElementById('toastMessage').innerText = "New Transfer Activity! You have " + data.transfers + " pending incoming transfer requests.";
+                                const toastElement = document.getElementById('liveToast');
+                                const toast = new bootstrap.Toast(toastElement);
+                                toast.show();
+                                lastTransferCount = data.transfers;
+                            } else if (data.transfers < lastTransferCount) {
+                                // Transfer resolved
+                                lastTransferCount = data.transfers;
+                            }
+                        })
+                        .catch(error => console.log('Polling error:', error));
+                }
+
+                // Poll every 15 seconds
+                setInterval(checkNotifications, 15000);
+                setTimeout(checkNotifications, 2000);
+            }
         }
     </script>
     {% block extra_js %}{% endblock %}

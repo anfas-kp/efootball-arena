@@ -185,11 +185,11 @@ body { overflow: hidden; }
 
                     {% if req.status == 'PENDING' %}
                     <div class="d-flex gap-2 mt-3">
-                        <form method="post" action="{% url 'teams:transfer_action' req.id 'approve' %}" class="flex-grow-1">
+                        <form method="post" action="{% url 'teams:transfer_action' req.id 'approve' %}" class="flex-grow-1" hx-boost="false">
                             {% csrf_token %}
                             <button type="submit" class="btn-glow btn-sm w-100 py-2" style="font-size: 0.75rem;">Approve Release</button>
                         </form>
-                        <form method="post" action="{% url 'teams:transfer_action' req.id 'reject' %}" class="flex-grow-1">
+                        <form method="post" action="{% url 'teams:transfer_action' req.id 'reject' %}" class="flex-grow-1" hx-boost="false">
                             {% csrf_token %}
                             <button type="submit" class="btn-danger-glow btn-sm w-100 py-2" style="font-size: 0.75rem;">Reject</button>
                         </form>
@@ -300,11 +300,11 @@ body { overflow: hidden; }
                         <td class="small text-muted">{{ req.created_at|timesince }} ago</td>
                         <td class="text-end">
                             <div class="d-flex gap-2 justify-content-end">
-                                <form method="post" action="{% url 'teams:transfer_action' req.id 'approve' %}" class="d-inline">
+                                <form method="post" action="{% url 'teams:transfer_action' req.id 'approve' %}" class="d-inline" hx-boost="false">
                                     {% csrf_token %}
                                     <button type="submit" class="btn-glow btn-sm py-1 px-3" style="font-size: 0.7rem;">Finalize</button>
                                 </form>
-                                <form method="post" action="{% url 'teams:transfer_action' req.id 'reject' %}" class="d-inline">
+                                <form method="post" action="{% url 'teams:transfer_action' req.id 'reject' %}" class="d-inline" hx-boost="false">
                                     {% csrf_token %}
                                     <button type="submit" class="btn-danger-glow btn-sm py-1 px-3" style="font-size: 0.7rem;">Reject</button>
                                 </form>
@@ -324,7 +324,7 @@ body { overflow: hidden; }
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
             <h5 class="section-title mb-0" style="font-size: 1rem;"><i class="fas fa-history me-2 text-muted"></i>TRANSFER <span class="text-white">HISTORY</span></h5>
             <div class="d-flex gap-2">
-                <a href="{% url 'teams:export_transfers_pdf' %}" class="btn-outline-glow btn-sm py-1 px-3" style="font-size: 0.75rem;"><i class="fas fa-file-pdf me-1 text-danger"></i>Export PDF</a>
+                <a href="{% url 'teams:export_transfers_pdf' %}" target="_blank" hx-boost="false" class="btn-outline-glow btn-sm py-1 px-3" style="font-size: 0.75rem;"><i class="fas fa-file-pdf me-1 text-danger"></i>Export PDF</a>
                 <a href="{% url 'teams:all_transfers' %}" class="btn-glow btn-sm py-1 px-3" style="font-size: 0.75rem;">See More</a>
             </div>
         </div>
@@ -453,7 +453,7 @@ body { overflow: hidden; }
                                     <h5 class="modal-title font-orbitron text-white" style="font-size: 0.95rem;">Transfer: {{ p.name }}</h5>
                                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                 </div>
-                                <form method="post" action="{% url 'teams:request_transfer' p.id %}">
+                                <form method="post" action="{% url 'teams:request_transfer' p.id %}" hx-boost="false">
                                     {% csrf_token %}
                                     <div class="modal-body text-start">
                                         <p class="text-muted small mb-4">Initiating transfer from <strong class="text-white">{{ p.team.name }}</strong> for <strong class="text-white">{{ p.name }}</strong>.</p>
@@ -734,7 +734,8 @@ body { overflow: hidden; }
         document.getElementById('cd-secs').textContent = String(s).padStart(2,'0');
     }
     updateCountdown();
-    setInterval(updateCountdown, 1000);
+    if (window.transferCountdownInterval) clearInterval(window.transferCountdownInterval);
+    window.transferCountdownInterval = setInterval(updateCountdown, 1000);
 })();
 
 // Toggle Loan Date field
@@ -763,6 +764,4 @@ function toggleLoanDate(playerId) {
     posFilter.addEventListener('change', filterMarket);
 })();
 </script>
-
-{% endif %}
 {% endblock %}
