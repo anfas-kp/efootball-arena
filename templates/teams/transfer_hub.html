@@ -128,15 +128,15 @@ body { overflow: hidden; }
             </div>
             <div class="col-lg-3 text-end">
                 <div class="d-flex flex-column gap-2">
-                    <div class="stat-box p-2" style="background: rgba(15,252,190,0.05); border-color: rgba(15,252,190,0.15);">
-                        <span class="number" style="font-size: 1.2rem;">{{ window.max_transfers_per_team }}</span>
+                    <div class="stat-box p-2 stat-box-accent-2">
+                        <span class="number text-lg">{{ window.max_transfers_per_team }}</span>
                         <span class="label" style="font-size: 0.55rem;">Max Per Team</span>
                     </div>
                 </div>
             </div>
         </div>
         <!-- Decorative gradient bar -->
-        <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #106EBE, #0FFCBE, #106EBE); opacity: 0.6;"></div>
+        <div class="gradient-bottom-bar"></div>
     </div>
 
     <!-- ===== Approval Dashboard ===== -->
@@ -145,9 +145,9 @@ body { overflow: hidden; }
         <!-- Outgoing Requests -->
         <div class="col-md-6">
             <div class="glass-card h-100 border-info border-opacity-25">
-                <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-paper-plane me-2 text-info"></i>OUTGOING <span class="text-white">OFFERS</span></h5>
+                <h5 class="section-title mb-4 text-md"><i class="fas fa-paper-plane me-2 text-info"></i>OUTGOING <span class="text-white">OFFERS</span></h5>
                 {% for req in outgoing_requests %}
-                <div class="p-3 mb-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
+                <div class="p-3 mb-3 rounded-3 bg-glass-subtle">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <strong class="text-white">{{ req.player.name }}</strong>
@@ -187,11 +187,11 @@ body { overflow: hidden; }
                     <div class="d-flex gap-2 mt-3">
                         <form method="post" action="{% url 'teams:transfer_action' req.id 'approve' %}" class="flex-grow-1" hx-boost="false">
                             {% csrf_token %}
-                            <button type="submit" class="btn-glow btn-sm w-100 py-2" style="font-size: 0.75rem;">Approve Release</button>
+                            <button type="submit" class="btn-glow btn-sm w-100 py-2 text-xs">Approve Release</button>
                         </form>
                         <form method="post" action="{% url 'teams:transfer_action' req.id 'reject' %}" class="flex-grow-1" hx-boost="false">
                             {% csrf_token %}
-                            <button type="submit" class="btn-danger-glow btn-sm w-100 py-2" style="font-size: 0.75rem;">Reject</button>
+                            <button type="submit" class="btn-danger-glow btn-sm w-100 py-2 text-xs">Reject</button>
                         </form>
                     </div>
                     {% endif %}
@@ -199,8 +199,8 @@ body { overflow: hidden; }
                 {% empty %}
                 <div class="empty-state-container py-4">
                     <i class="fas fa-paper-plane empty-state-icon" style="font-size: 2.5rem;"></i>
-                    <h6 class="empty-state-title" style="font-size: 1rem;">No Outgoing Offers</h6>
-                    <p class="empty-state-text mb-0" style="font-size: 0.85rem;">Browse the market below to scout talent.</p>
+                    <h6 class="empty-state-title text-md">No Outgoing Offers</h6>
+                    <p class="empty-state-text mb-0 text-sm">Browse the market below to scout talent.</p>
                 </div>
                 {% endfor %}
             </div>
@@ -209,9 +209,9 @@ body { overflow: hidden; }
         <!-- Incoming Requests -->
         <div class="col-md-6">
             <div class="glass-card h-100 border-warning border-opacity-25">
-                <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-inbox me-2 text-warning"></i>INCOMING <span class="text-white">BIDS</span></h5>
+                <h5 class="section-title mb-4 text-md"><i class="fas fa-inbox me-2 text-warning"></i>INCOMING <span class="text-white">BIDS</span></h5>
                 {% for req in incoming_requests %}
-                <div class="p-3 mb-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
+                <div class="p-3 mb-3 rounded-3 bg-glass-subtle">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <strong class="text-white">{{ req.player.name }}</strong>
@@ -252,8 +252,8 @@ body { overflow: hidden; }
                 {% empty %}
                 <div class="empty-state-container py-4">
                     <i class="fas fa-inbox empty-state-icon" style="font-size: 2.5rem;"></i>
-                    <h6 class="empty-state-title" style="font-size: 1rem;">No Incoming Bids</h6>
-                    <p class="empty-state-text mb-0" style="font-size: 0.85rem;">No teams have placed a bid for your players.</p>
+                    <h6 class="empty-state-title text-md">No Incoming Bids</h6>
+                    <p class="empty-state-text mb-0 text-sm">No teams have placed a bid for your players.</p>
                 </div>
                 {% endfor %}
             </div>
@@ -265,7 +265,7 @@ body { overflow: hidden; }
     {% if user.is_admin_user and admin_pending %}
     <div class="glass-card mb-5 border-danger border-opacity-25">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="section-title mb-0" style="font-size: 1rem;"><i class="fas fa-gavel me-2 text-danger"></i>ADMIN <span class="text-white">APPROVAL CENTER</span></h5>
+            <h5 class="section-title mb-0 text-md"><i class="fas fa-gavel me-2 text-danger"></i>ADMIN <span class="text-white">APPROVAL CENTER</span></h5>
             <span class="badge-status badge-pending">{{ admin_pending|length }} Pending</span>
         </div>
         <div class="table-responsive">
@@ -322,10 +322,10 @@ body { overflow: hidden; }
     {% if transfer_history %}
     <div class="glass-card mb-5">
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-            <h5 class="section-title mb-0" style="font-size: 1rem;"><i class="fas fa-history me-2 text-muted"></i>TRANSFER <span class="text-white">HISTORY</span></h5>
+            <h5 class="section-title mb-0 text-md"><i class="fas fa-history me-2 text-muted"></i>TRANSFER <span class="text-white">HISTORY</span></h5>
             <div class="d-flex gap-2">
-                <a href="{% url 'teams:export_transfers_pdf' %}" target="_blank" hx-boost="false" class="btn-outline-glow btn-sm py-1 px-3" style="font-size: 0.75rem;"><i class="fas fa-file-pdf me-1 text-danger"></i>Export PDF</a>
-                <a href="{% url 'teams:all_transfers' %}" class="btn-glow btn-sm py-1 px-3" style="font-size: 0.75rem;">See More</a>
+                <a href="{% url 'teams:export_transfers_pdf' %}" target="_blank" hx-boost="false" class="btn-outline-glow btn-sm py-1 px-3 text-xs"><i class="fas fa-file-pdf me-1 text-danger"></i>Export PDF</a>
+                <a href="{% url 'teams:all_transfers' %}" class="btn-glow btn-sm py-1 px-3 text-xs">See More</a>
             </div>
         </div>
 
@@ -435,11 +435,11 @@ body { overflow: hidden; }
                         <td class="small text-muted">{{ p.total_goals }}G · {{ p.total_assists }}A · {{ p.matches_played }}MP</td>
                         <td class="text-end">
                             {% if window and user_team and p.team != user_team %}
-                                <button class="btn-glow btn-sm py-1 px-3" style="font-size: 0.7rem;" data-bs-toggle="modal" data-bs-target="#buyModal{{ p.id }}">Make Offer</button>
+                                <button class="btn-glow btn-sm py-1 px-3 text-xs" data-bs-toggle="modal" data-bs-target="#buyModal{{ p.id }}">Make Offer</button>
                             {% elif p.team == user_team %}
                                 <span class="text-muted small"><i class="fas fa-shield-alt me-1"></i>Your Player</span>
                             {% else %}
-                                <button class="btn-outline-glow btn-sm py-1 px-3" style="font-size: 0.7rem;" disabled>Unavailable</button>
+                                <button class="btn-outline-glow btn-sm py-1 px-3 text-xs" disabled>Unavailable</button>
                             {% endif %}
                         </td>
                     </tr>

@@ -2,7 +2,7 @@
 {% block title %}Match Results - eFootball Arena{% endblock %}
 {% block content %}
 
-<div class="container" style="margin-top: 100px; padding-bottom: 50px;">
+<div class="container pb-5">
     <!-- Header -->
     <div class="mb-5">
         <h1 class="display-5 fw-bold mb-1 font-orbitron text-accent">MATCH <span class="text-white">RESULTS</span></h1>
@@ -30,12 +30,12 @@
                                         {% if r.fixture.home_team.logo %}
                                             <img src="{{ r.fixture.home_team.logo.url }}" class="logo-xs">
                                         {% else %}
-                                            <div class="logo-xs logo-placeholder" style="font-size: 0.6rem;">{{ r.fixture.home_team.name|first }}</div>
+                                            <div class="logo-xs logo-placeholder text-xs">{{ r.fixture.home_team.name|first }}</div>
                                         {% endif %}
                                     </div>
                                 </div>
                                 
-                                <div class="bg-secondary px-3 py-1 rounded font-orbitron fw-bold text-accent" style="min-width: 80px; font-size: 1rem;">
+                                <div class="bg-secondary px-3 py-1 rounded font-orbitron fw-bold text-accent text-md" style="min-width: 80px;">
                                     {{ r.home_score }} - {{ r.away_score }}
                                 </div>
 
@@ -44,7 +44,7 @@
                                         {% if r.fixture.away_team.logo %}
                                             <img src="{{ r.fixture.away_team.logo.url }}" class="logo-xs">
                                         {% else %}
-                                            <div class="logo-xs logo-placeholder" style="font-size: 0.6rem;">{{ r.fixture.away_team.name|first }}</div>
+                                            <div class="logo-xs logo-placeholder text-xs">{{ r.fixture.away_team.name|first }}</div>
                                         {% endif %}
                                     </div>
                                     <div class="fw-bold text-white small text-truncate">{{ r.fixture.away_team.name }}</div>

@@ -83,7 +83,7 @@
             <!-- Performance Trend Chart -->
             {% if performance_data.labels %}
             <div class="glass-card mb-4 border-accent border-opacity-20">
-                <h5 class="section-title mb-4" style="font-size: 1.1rem;"><i class="fas fa-chart-line me-2 text-accent"></i>PERFORMANCE TREND</h5>
+                <h5 class="section-title mb-4 text-md"><i class="fas fa-chart-line me-2 text-accent"></i>PERFORMANCE TREND</h5>
                 <div style="height: 250px; position: relative;">
                     <canvas id="performanceChart"></canvas>
                 </div>
@@ -96,7 +96,7 @@
             <!-- Active Tournaments Visualization -->
             {% if active_tournaments %}
             <div class="glass-card mb-4 border-accent border-opacity-20">
-                <h5 class="section-title mb-4" style="font-size: 1.1rem;"><i class="fas fa-trophy me-2 text-accent"></i>ACTIVE TOURNAMENTS</h5>
+                <h5 class="section-title mb-4 text-md"><i class="fas fa-trophy me-2 text-accent"></i>ACTIVE TOURNAMENTS</h5>
                 <div class="row g-3">
                     {% for item in active_tournaments %}
                     <div class="col-md-6">
@@ -107,7 +107,7 @@
                                     <div class="text-accent small fw-bold font-orbitron">{{ item.league.name }}</div>
                                 </div>
                                 <div class="text-end">
-                                    <span class="badge-status badge-approved" style="font-size: 0.6rem;">Active</span>
+                                    <span class="badge-status badge-approved text-xs">Active</span>
                                 </div>
                             </div>
                             
@@ -149,7 +149,7 @@
                         <div class="col-md-6">
                             <div class="glass-card h-100">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <h5 class="section-title mb-0" style="font-size: 1rem;"><i class="fas fa-calendar-check me-2 text-accent"></i>UPCOMING</h5>
+                                    <h5 class="section-title mb-0 text-md"><i class="fas fa-calendar-check me-2 text-accent"></i>UPCOMING</h5>
                                     {% if active_tournaments %}
                                         <a href="{% url 'tournaments:league_fixtures' active_tournaments.0.league.pk %}" class="small text-accent text-decoration-none hover-accent">View All <i class="fas fa-chevron-right ms-1"></i></a>
                                     {% endif %}
@@ -180,7 +180,7 @@
                         <div class="col-md-6">
                             <div class="glass-card h-100">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <h5 class="section-title mb-0" style="font-size: 1rem;"><i class="fas fa-history me-2 text-info"></i>RECENT RESULTS</h5>
+                                    <h5 class="section-title mb-0 text-md"><i class="fas fa-history me-2 text-info"></i>RECENT RESULTS</h5>
                                     {% if active_tournaments %}
                                         <a href="{% url 'tournaments:league_fixtures' active_tournaments.0.league.pk %}" class="small text-info text-decoration-none hover-accent">View All <i class="fas fa-chevron-right ms-1"></i></a>
                                     {% endif %}
@@ -252,7 +252,7 @@
         <div class="col-lg-4">
             {% if applications %}
             <div class="glass-card mb-4 border-accent" style="border-width: 1px;">
-                <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-trophy me-2 text-accent"></i>TOURNAMENTS</h5>
+                <h5 class="section-title mb-4 text-md"><i class="fas fa-trophy me-2 text-accent"></i>TOURNAMENTS</h5>
                 {% for app in applications %}
                 <div class="mb-3 pb-3 border-bottom border-white border-opacity-10 last-child-no-border">
                     <div class="d-flex justify-content-between align-items-start mb-2">
@@ -272,7 +272,7 @@
 
             {% if team.trophies.exists %}
             <div class="glass-card mb-4 border-warning border-opacity-50" style="border-width: 1px;">
-                <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-medal me-2" style="color: #d4af37;"></i>TROPHY CABINET</h5>
+                <h5 class="section-title mb-4 text-md"><i class="fas fa-medal me-2" style="color: #d4af37;"></i>TROPHY CABINET</h5>
                 <div class="row g-2">
                     {% for trophy in team.trophies.all %}
                     <div class="col-6">
@@ -288,7 +288,7 @@
             {% endif %}
 
             <div class="glass-card">
-                <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-info-circle me-2 text-accent"></i>TEAM DETAILS</h5>
+                <h5 class="section-title mb-4 text-md"><i class="fas fa-info-circle me-2 text-accent"></i>TEAM DETAILS</h5>
                 <div class="small mb-3">
                     <span class="text-muted d-block mb-1">Game Platform</span>
                     <span class="text-white">{{ team.get_game_display }} / {{ team.get_platform_display }}</span>

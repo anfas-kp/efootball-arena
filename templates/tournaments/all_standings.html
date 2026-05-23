@@ -2,7 +2,7 @@
 {% block title %}All Standings - eFootball Arena{% endblock %}
 {% block content %}
 
-<div class="container" style="padding-bottom: 50px;">
+<div class="container pb-5">
     <!-- Header -->
     <div class="text-center mb-4">
         <h1 class="display-5 fw-bold mb-2 font-orbitron text-accent">LEAGUE <span class="text-white">STANDINGS</span></h1>
@@ -69,7 +69,7 @@
                                         {% if s.team.logo %}
                                             <img src="{{ s.team.logo.url }}" class="logo-sm">
                                         {% else %}
-                                            <div class="logo-sm logo-placeholder" style="font-size: 0.7rem;">{{ s.team.name|first }}</div>
+                                            <div class="logo-sm logo-placeholder text-xs">{{ s.team.name|first }}</div>
                                         {% endif %}
                                         <span class="fw-bold text-white">{{ s.team.name }}</span>
                                     </div>

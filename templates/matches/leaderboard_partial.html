@@ -13,8 +13,8 @@
     <div class="col-lg-6">
         <div class="leaderboard-card h-100">
             <div class="leaderboard-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, rgba(255,170,0,0.12), rgba(255,100,0,0.05));">
-                <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;"><i class="fas fa-futbol me-2" style="color: #ffaa00;"></i>Top Goals</h5>
-                <button onclick="downloadGraphic('export-goals', 'top-scorers')" class="btn btn-sm btn-outline-secondary py-0 px-2 border-0 hover-text-white transition-all" style="font-size: 0.75rem;"><i class="fas fa-download me-1"></i> Image</button>
+                <h5 class="mb-0 fw-bold text-md"><i class="fas fa-futbol me-2" style="color: #ffaa00;"></i>Top Goals</h5>
+                <button onclick="downloadGraphic('export-goals', 'top-scorers')" class="btn btn-sm btn-outline-secondary py-0 px-2 border-0 hover-text-white transition-all text-xs"><i class="fas fa-download me-1"></i> Image</button>
             </div>
             <div class="leaderboard-body">
                 {% for p in top_scorers %}
@@ -60,8 +60,8 @@
     <div class="col-lg-6">
         <div class="leaderboard-card h-100">
             <div class="leaderboard-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, rgba(0,180,255,0.12), rgba(0,100,255,0.05));">
-                <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;"><i class="fas fa-hands-helping me-2" style="color: #00b4ff;"></i>Top Assists</h5>
-                <button onclick="downloadGraphic('export-assists', 'top-assists')" class="btn btn-sm btn-outline-secondary py-0 px-2 border-0 hover-text-white transition-all" style="font-size: 0.75rem;"><i class="fas fa-download me-1"></i> Image</button>
+                <h5 class="mb-0 fw-bold text-md"><i class="fas fa-hands-helping me-2" style="color: #00b4ff;"></i>Top Assists</h5>
+                <button onclick="downloadGraphic('export-assists', 'top-assists')" class="btn btn-sm btn-outline-secondary py-0 px-2 border-0 hover-text-white transition-all text-xs"><i class="fas fa-download me-1"></i> Image</button>
             </div>
             <div class="leaderboard-body">
                 {% for p in top_assists %}
@@ -107,8 +107,8 @@
     <div class="col-lg-6">
         <div class="leaderboard-card h-100">
             <div class="leaderboard-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, rgba(255,200,0,0.12), rgba(255,150,0,0.05));">
-                <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;"><i class="fas fa-star me-2" style="color: #ffc800;"></i>Top Rated (Total)</h5>
-                <button onclick="downloadGraphic('export-ratings', 'top-rated')" class="btn btn-sm btn-outline-secondary py-0 px-2 border-0 hover-text-white transition-all" style="font-size: 0.75rem;"><i class="fas fa-download me-1"></i> Image</button>
+                <h5 class="mb-0 fw-bold text-md"><i class="fas fa-star me-2" style="color: #ffc800;"></i>Top Rated (Total)</h5>
+                <button onclick="downloadGraphic('export-ratings', 'top-rated')" class="btn btn-sm btn-outline-secondary py-0 px-2 border-0 hover-text-white transition-all text-xs"><i class="fas fa-download me-1"></i> Image</button>
             </div>
             <div class="leaderboard-body">
                 {% for p in top_rated %}

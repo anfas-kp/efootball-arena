@@ -672,7 +672,7 @@ def leaderboard(request):
             total_clean_sheets__gt=0, position='GK'
         ).order_by('-total_clean_sheets')[:20]
 
-    template_name = 'matches/leaderboard_partial.html' if request.headers.get('HX-Request') else 'matches/leaderboard.html'
+    template_name = 'matches/leaderboard_partial.html' if request.headers.get('HX-Target') == 'leaderboard-results' else 'matches/leaderboard.html'
 
     return render(request, template_name, {
         'top_scorers': top_scorers,

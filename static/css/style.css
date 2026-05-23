@@ -29,6 +29,13 @@
   --radius: 12px;
   --radius-sm: 8px;
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Z-Index Hierarchy */
+  --z-navbar: 1030;
+  --z-mobile-nav: 1035;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-toast: 1060;
 }
 
 /* ===== Base Styles ===== */
@@ -51,12 +58,37 @@ body {
 
 /* Global Navbar Spacing */
 main {
-  padding-top: 100px;
+  padding-top: 120px; /* Default desktop offset */
+  min-height: calc(100vh - 120px - 70px); /* Leave room for footer */
 }
 
 /* Home page hero handles its own spacing */
-body.is-home main {
+main.is-home {
   padding-top: 0;
+}
+
+@media (max-width: 991.98px) {
+  /* On mobile/tablet, navbar might expand. Also prevent bottom-nav overlap. */
+  main {
+    padding-top: 100px; 
+  }
+  body {
+    padding-bottom: 70px; /* Room for mobile-bottom-nav */
+  }
+  
+  /* Navbar Mobile Collapse Fixes */
+  .navbar-collapse {
+    background: rgba(10, 15, 26, 0.98);
+    backdrop-filter: blur(16px);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-top: 0.5rem;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow);
+  }
+  .navbar-nav {
+    gap: 0.5rem;
+  }
 }
 
 h1, h2, h3, h4, h5, h6, .font-orbitron {
@@ -84,7 +116,7 @@ a:hover { color: #fff; }
   padding: 0.75rem 0;
   min-height: 95px;
   transition: var(--transition);
-  z-index: 2000;
+  z-index: var(--z-navbar);
   display: flex;
   align-items: center;
 }
@@ -312,7 +344,34 @@ a:hover { color: #fff; }
 .badge-pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
 .badge-rejected { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
 
-/* ===== Forms ===== */
+/* ===== Utility Classes for Refactoring ===== */
+.text-xs { font-size: 0.75rem !important; }
+.text-sm { font-size: 0.85rem !important; }
+.text-md { font-size: 1rem !important; }
+.text-lg { font-size: 1.25rem !important; }
+.text-xl { font-size: 2rem !important; }
+
+.bg-glass-subtle {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.gradient-bottom-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent));
+  opacity: 0.6;
+}
+
+.stat-box-accent-2 {
+  background: rgba(15,252,190,0.05);
+  border-color: rgba(15,252,190,0.15);
+}
+
+/* ===== Form Controls ===== */
 input, select, textarea, .form-control, .form-select {
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -667,15 +726,14 @@ body {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 65px;
-  background: rgba(10, 15, 25, 0.85);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--glass-border);
   display: flex;
   justify-content: space-around;
-  align-items: center;
-  z-index: 1050;
+  padding: 10px 0;
+  z-index: var(--z-mobile-nav);
+  box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
   padding-bottom: env(safe-area-inset-bottom);
 }
 .mobile-bottom-nav .nav-item {
