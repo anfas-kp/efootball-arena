@@ -380,7 +380,6 @@ def transfer_hub(request):
     incoming_requests = []
     outgoing_requests = []
     user_team = getattr(request.user, 'team', None)
-    transfer_history = []
     
     if user_team:
         incoming_requests = user_team.incoming_transfers.select_related(
@@ -389,9 +388,11 @@ def transfer_hub(request):
         outgoing_requests = user_team.outgoing_transfers.select_related(
             'player', 'from_team', 'to_team', 'window'
         ).exclude(status__in=['COMPLETED', 'REJECTED', 'CANCELLED'])
-        transfer_history = TransferHistory.objects.filter(
-            from_team=user_team
-        ).select_related('player', 'from_team', 'to_team')[:10]
+    
+    # Global transfer history — visible to all users
+    transfer_history = TransferHistory.objects.select_related(
+        'player', 'player__team', 'from_team', 'to_team'
+    ).order_by('-transfer_date')[:20]
     
     admin_pending = []
     if request.user.is_admin_user:

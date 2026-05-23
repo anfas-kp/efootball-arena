@@ -428,35 +428,68 @@ body { overflow: hidden; }
         </div>
     </div>
 
-    <!-- ===== Recent Transfer History ===== -->
+    <!-- ===== Transfer History Feed ===== -->
     {% if transfer_history %}
     <div class="glass-card">
-        <h5 class="section-title mb-4" style="font-size: 1rem;"><i class="fas fa-history me-2 text-muted"></i>RECENT <span class="text-white">TRANSFERS</span></h5>
-        <div class="table-responsive">
-            <table class="table table-dark-custom">
-                <thead>
-                    <tr>
-                        <th>Player</th>
-                        <th>From</th>
-                        <th>To</th>
-                        <th>Type</th>
-                        <th>Fee</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for h in transfer_history %}
-                    <tr>
-                        <td class="fw-bold text-white small">{{ h.player.name }}</td>
-                        <td class="small">{{ h.from_team.name }}</td>
-                        <td class="small">{{ h.to_team.name }}</td>
-                        <td><span class="badge-status badge-{{ h.transfer_type }}" style="font-size: 0.55rem;">{{ h.get_transfer_type_display }}</span></td>
-                        <td class="text-success font-orbitron fw-bold small">${{ h.transfer_fee|floatformat:0 }}</td>
-                        <td class="small text-muted">{{ h.transfer_date|date:"M d, Y" }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="section-title mb-0" style="font-size: 1rem;"><i class="fas fa-history me-2 text-muted"></i>TRANSFER <span class="text-white">HISTORY</span></h5>
+            <span class="badge-status badge-completed">{{ transfer_history|length }} Deals</span>
+        </div>
+
+        <div class="transfer-feed">
+            {% for h in transfer_history %}
+            <div class="transfer-feed-card">
+                <!-- Player Info -->
+                <div class="tfc-player">
+                    {% if h.player.photo_no_bg %}
+                    <img src="{{ h.player.photo_no_bg.url }}" alt="{{ h.player.name }}" class="tfc-player-photo">
+                    {% else %}
+                    <div class="tfc-player-photo tfc-player-placeholder"><i class="fas fa-user"></i></div>
+                    {% endif %}
+                    <div class="tfc-player-info">
+                        <div class="tfc-player-name">{{ h.player.name }}</div>
+                        <div class="tfc-meta-row">
+                            <span class="badge-status badge-{{ h.transfer_type }}" style="font-size: 0.5rem; padding: 2px 6px;">{{ h.get_transfer_type_display }}</span>
+                            <span class="tfc-fee">${{ h.transfer_fee|floatformat:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transfer Flow: From → To -->
+                <div class="tfc-flow">
+                    <!-- From Team -->
+                    <div class="tfc-team">
+                        {% if h.from_team.logo %}
+                        <img src="{{ h.from_team.logo.url }}" alt="{{ h.from_team.name }}" class="tfc-team-logo">
+                        {% else %}
+                        <div class="tfc-team-logo tfc-logo-placeholder">{{ h.from_team.name|first }}</div>
+                        {% endif %}
+                        <span class="tfc-team-name">{{ h.from_team.name }}</span>
+                    </div>
+
+                    <!-- Arrow -->
+                    <div class="tfc-arrow">
+                        <div class="tfc-arrow-line"></div>
+                        <i class="fas fa-chevron-right tfc-arrow-icon"></i>
+                    </div>
+
+                    <!-- To Team -->
+                    <div class="tfc-team tfc-team-to">
+                        {% if h.to_team.logo %}
+                        <img src="{{ h.to_team.logo.url }}" alt="{{ h.to_team.name }}" class="tfc-team-logo">
+                        {% else %}
+                        <div class="tfc-team-logo tfc-logo-placeholder tfc-logo-accent">{{ h.to_team.name|first }}</div>
+                        {% endif %}
+                        <span class="tfc-team-name text-white">{{ h.to_team.name }}</span>
+                    </div>
+                </div>
+
+                <!-- Date -->
+                <div class="tfc-date">
+                    <i class="far fa-calendar-alt me-1"></i>{{ h.transfer_date|date:"M d, Y" }}
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
     {% endif %}
@@ -507,6 +540,167 @@ body { overflow: hidden; }
 .pipeline-step.active span { color: #0FFCBE; }
 .pipeline-step.completed .pipeline-dot {
     background: #0FFCBE; border-color: #0FFCBE;
+}
+
+/* ===== Transfer Feed Cards ===== */
+.transfer-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.transfer-feed-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+.transfer-feed-card:hover {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(15, 252, 190, 0.15);
+}
+
+/* Player Section */
+.tfc-player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 160px;
+    flex-shrink: 0;
+}
+.tfc-player-photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+}
+.tfc-player-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.3);
+    font-size: 1rem;
+}
+.tfc-player-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+.tfc-player-name {
+    font-weight: 700;
+    color: #fff;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tfc-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.tfc-fee {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #0FFCBE;
+}
+
+/* Transfer Flow (From → To) */
+.tfc-flow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+}
+.tfc-team {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+.tfc-team-logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+}
+.tfc-logo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.4);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 900;
+}
+.tfc-logo-accent {
+    background: rgba(15, 252, 190, 0.1);
+    border-color: rgba(15, 252, 190, 0.25);
+    color: #0FFCBE;
+}
+.tfc-team-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+}
+
+/* Arrow */
+.tfc-arrow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+}
+.tfc-arrow-line {
+    width: 24px;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(15, 252, 190, 0.4));
+    border-radius: 1px;
+}
+.tfc-arrow-icon {
+    color: #0FFCBE;
+    font-size: 0.6rem;
+    margin-left: -2px;
+}
+
+/* Date */
+.tfc-date {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.35);
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== Responsive Transfer Feed ===== */
+@media (max-width: 768px) {
+    .transfer-feed-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 14px;
+    }
+    .tfc-player { min-width: unset; width: 100%; }
+    .tfc-flow { width: 100%; justify-content: flex-start; padding-left: 4px; }
+    .tfc-date { text-align: left; }
 }
 </style>
 

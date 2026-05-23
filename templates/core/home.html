@@ -64,6 +64,59 @@
     </div>
 </section>
 
+<!-- Live Feed -->
+{% if feed_items %}
+<section class="py-5" id="live-feed">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h2 class="section-title"><i class="fas fa-bolt text-accent me-2 live-pulse"></i>ARENA <span class="text-white">LIVE FEED</span></h2>
+                <p class="text-secondary mb-0">Real-time updates across the platform</p>
+            </div>
+        </div>
+        
+        <div class="glass-card p-0 overflow-hidden" style="border: 1px solid rgba(15, 252, 190, 0.2);">
+            <div class="feed-container">
+                {% for entry in feed_items %}
+                <div class="feed-item d-flex align-items-center gap-3 p-3 border-bottom border-divider hover-lift-feed">
+                    <!-- Icon based on type -->
+                    <div class="feed-icon flex-shrink-0">
+                        {% if entry.type == 'match' %}
+                            <div class="icon-circle" style="background: rgba(16, 110, 190, 0.2); color: #106EBE;"><i class="fas fa-futbol"></i></div>
+                        {% elif entry.type == 'transfer' %}
+                            <div class="icon-circle" style="background: rgba(15, 252, 190, 0.2); color: #0FFCBE;"><i class="fas fa-exchange-alt"></i></div>
+                        {% elif entry.type == 'team' %}
+                            <div class="icon-circle" style="background: rgba(245, 158, 11, 0.2); color: #F59E0B;"><i class="fas fa-shield-alt"></i></div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="feed-content flex-grow-1">
+                        {% if entry.type == 'match' %}
+                            <p class="mb-0 small text-white">
+                                Match Result: <strong class="text-accent">{{ entry.item.fixture.home_team.name }}</strong> {{ entry.item.home_score }} - {{ entry.item.away_score }} <strong class="text-accent">{{ entry.item.fixture.away_team.name }}</strong>
+                            </p>
+                            <span class="text-muted" style="font-size: 0.65rem;">{{ entry.item.fixture.league.tournament.name }} • {{ entry.timestamp|timesince }} ago</span>
+                        {% elif entry.type == 'transfer' %}
+                            <p class="mb-0 small text-white">
+                                <strong class="text-white">{{ entry.item.player.name }}</strong> transferred from <strong class="text-muted">{{ entry.item.from_team.name }}</strong> to <strong class="text-accent-2">{{ entry.item.to_team.name }}</strong>
+                            </p>
+                            <span class="text-muted" style="font-size: 0.65rem;">Fee: <span class="font-orbitron text-success fw-bold">${{ entry.item.transfer_fee|floatformat:0 }}</span> • {{ entry.timestamp|timesince }} ago</span>
+                        {% elif entry.type == 'team' %}
+                            <p class="mb-0 small text-white">
+                                New Pro Team <strong class="text-warning">{{ entry.item.name }}</strong> has joined the arena!
+                            </p>
+                            <span class="text-muted" style="font-size: 0.65rem;">Registration • {{ entry.timestamp|timesince }} ago</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <!-- Active Tournaments -->
 {% if active_tournaments %}
 <section class="py-5" id="tournaments">
@@ -145,4 +198,40 @@
         </div>
     </div>
 </section>
+
+<style>
+/* ===== Live Feed Styles ===== */
+.icon-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+.border-divider {
+    border-color: rgba(255,255,255,0.05) !important;
+}
+.feed-item:last-child {
+    border-bottom: none !important;
+}
+.hover-lift-feed {
+    transition: background 0.2s ease, padding-left 0.2s ease;
+}
+.hover-lift-feed:hover {
+    background: rgba(255,255,255,0.03);
+    padding-left: 20px !important;
+}
+@keyframes pulseGlow {
+    0% { filter: drop-shadow(0 0 2px var(--accent)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 8px var(--accent)); transform: scale(1.1); }
+    100% { filter: drop-shadow(0 0 2px var(--accent)); transform: scale(1); }
+}
+.live-pulse {
+    display: inline-block;
+    animation: pulseGlow 2s infinite;
+}
+</style>
 {% endblock %}

@@ -18,11 +18,13 @@
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     {% block extra_css %}{% endblock %}
 </head>
 
 <body class="{% if request.resolver_match.url_name == 'home' %}is-home{% endif %}" data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}"
-    data-notification-url="{% url 'teams:api_notifications' %}">
+    data-notification-url="{% url 'teams:api_notifications' %}" hx-boost="true">
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-arena fixed-top" id="mainNavbar">
         <div class="container">
@@ -87,22 +89,29 @@
         </div>
     </nav>
 
-    <!-- Messages -->
+    <!-- Messages via Toastify -->
     {% if messages %}
-    <div class="container" style="position: relative; z-index: 1050;">
+    <script>
         {% for message in messages %}
-        <div class="alert alert-custom alert-{{ message.tags }} alert-dismissible fade show shadow-lg" role="alert">
-            <div class="d-flex align-items-center gap-3">
-                {% if message.tags == 'success' %}<i class="fas fa-check-circle text-accent"></i>
-                {% elif message.tags == 'error' or message.tags == 'danger' %}<i
-                    class="fas fa-exclamation-circle text-accent-3"></i>
-                {% else %}<i class="fas fa-info-circle text-info"></i>{% endif %}
-                <span class="fw-bold small">{{ message }}</span>
-            </div>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
-        </div>
+            Toastify({
+                text: "{{ message|escapejs }}",
+                duration: 4000,
+                gravity: "bottom",
+                position: "right",
+                stopOnFocus: true,
+                style: {
+                    background: "{% if message.tags == 'success' %}linear-gradient(to right, rgba(16, 110, 190, 0.95), rgba(15, 252, 190, 0.95)){% elif message.tags == 'error' or message.tags == 'danger' %}linear-gradient(to right, rgba(239, 68, 68, 0.95), rgba(153, 27, 27, 0.95)){% else %}linear-gradient(to right, rgba(31, 41, 55, 0.95), rgba(17, 24, 39, 0.95)){% endif %}",
+                    color: "#fff",
+                    borderRadius: "8px",
+                    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+                    fontFamily: "'Inter', sans-serif",
+                    fontWeight: "600",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    backdropFilter: "blur(10px)"
+                }
+            }).showToast();
         {% endfor %}
-    </div>
+    </script>
     {% endif %}
 
     <!-- Content -->
