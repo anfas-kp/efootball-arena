@@ -22,6 +22,8 @@ urlpatterns = [
     
     # Transfers
     path('transfers/', views.transfer_hub, name='transfer_hub'),
+    path('transfers/history/', views.all_transfers, name='all_transfers'),
+    path('transfers/export/', views.export_transfers_pdf, name='export_transfers_pdf'),
     path('transfers/request/<int:player_id>/', views.request_transfer, name='request_transfer'),
     path('transfers/action/<int:request_id>/<str:action>/', views.transfer_action, name='transfer_action'),
     path('admin/transfer-window/toggle/', views.admin_toggle_transfer_window, name='admin_toggle_transfer_window'),

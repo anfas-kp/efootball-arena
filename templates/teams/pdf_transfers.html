@@ -1,0 +1,37 @@
+{% extends "pdf_base.html" %}
+
+{% block title %}Transfer History{% endblock %}
+{% block header_title %}E-Football Arena{% endblock %}
+{% block sub_title %}Official Transfer History Log{% endblock %}
+{% block filename %}transfer_history_export.pdf{% endblock %}
+
+{% block content %}
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Player Name</th>
+            <th>From Team</th>
+            <th>To Team</th>
+            <th>Type</th>
+            <th>Fee</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for h in transfer_history %}
+        <tr>
+            <td>{{ h.transfer_date|date:"M d, Y" }}</td>
+            <td><strong>{{ h.player.name }}</strong></td>
+            <td>{{ h.from_team.name }}</td>
+            <td>{{ h.to_team.name }}</td>
+            <td>{{ h.get_transfer_type_display }}</td>
+            <td>${{ h.transfer_fee|floatformat:0 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" style="text-align: center;">No transfers recorded yet.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

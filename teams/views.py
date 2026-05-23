@@ -392,7 +392,7 @@ def transfer_hub(request):
     # Global transfer history — visible to all users
     transfer_history = TransferHistory.objects.select_related(
         'player', 'player__team', 'from_team', 'to_team'
-    ).order_by('-transfer_date')[:20]
+    ).order_by('-transfer_date')[:5]
     
     admin_pending = []
     if request.user.is_admin_user:
@@ -408,6 +408,28 @@ def transfer_hub(request):
         'outgoing_requests': outgoing_requests,
         'admin_pending': admin_pending,
         'transfer_history': transfer_history,
+    })
+
+@login_required
+def all_transfers(request):
+    """View all transfer history."""
+    transfer_history = TransferHistory.objects.select_related(
+        'player', 'player__team', 'from_team', 'to_team'
+    ).order_by('-transfer_date')
+    
+    return render(request, 'teams/all_transfers.html', {
+        'transfer_history': transfer_history,
+    })
+
+@login_required
+def export_transfers_pdf(request):
+    """Download transfer history as PDF."""
+    transfer_history = TransferHistory.objects.select_related(
+        'player', 'player__team', 'from_team', 'to_team'
+    ).order_by('-transfer_date')
+    
+    return render(request, 'teams/pdf_transfers.html', {
+        'transfer_history': transfer_history
     })
 
 @login_required

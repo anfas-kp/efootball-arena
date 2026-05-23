@@ -318,6 +318,75 @@ body { overflow: hidden; }
     </div>
     {% endif %}
 
+    <!-- ===== Transfer History Feed ===== -->
+    {% if transfer_history %}
+    <div class="glass-card mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <h5 class="section-title mb-0" style="font-size: 1rem;"><i class="fas fa-history me-2 text-muted"></i>TRANSFER <span class="text-white">HISTORY</span></h5>
+            <div class="d-flex gap-2">
+                <a href="{% url 'teams:export_transfers_pdf' %}" class="btn-outline-glow btn-sm py-1 px-3" style="font-size: 0.75rem;"><i class="fas fa-file-pdf me-1 text-danger"></i>Export PDF</a>
+                <a href="{% url 'teams:all_transfers' %}" class="btn-glow btn-sm py-1 px-3" style="font-size: 0.75rem;">See More</a>
+            </div>
+        </div>
+
+        <div class="transfer-feed">
+            {% for h in transfer_history|slice:":5" %}
+            <div class="transfer-feed-card">
+                <!-- Player Info -->
+                <div class="tfc-player">
+                    {% if h.player.photo_no_bg %}
+                    <img src="{{ h.player.photo_no_bg.url }}" alt="{{ h.player.name }}" class="tfc-player-photo">
+                    {% else %}
+                    <div class="tfc-player-photo tfc-player-placeholder"><i class="fas fa-user"></i></div>
+                    {% endif %}
+                    <div class="tfc-player-info">
+                        <div class="tfc-player-name">{{ h.player.name }}</div>
+                        <div class="tfc-meta-row">
+                            <span class="badge-status badge-{{ h.transfer_type }}" style="font-size: 0.5rem; padding: 2px 6px;">{{ h.get_transfer_type_display }}</span>
+                            <span class="tfc-fee">${{ h.transfer_fee|floatformat:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transfer Flow: From → To -->
+                <div class="tfc-flow">
+                    <!-- From Team -->
+                    <div class="tfc-team">
+                        {% if h.from_team.logo %}
+                        <img src="{{ h.from_team.logo.url }}" alt="{{ h.from_team.name }}" class="tfc-team-logo">
+                        {% else %}
+                        <div class="tfc-team-logo tfc-logo-placeholder">{{ h.from_team.name|first }}</div>
+                        {% endif %}
+                        <span class="tfc-team-name">{{ h.from_team.name }}</span>
+                    </div>
+
+                    <!-- Arrow -->
+                    <div class="tfc-arrow">
+                        <div class="tfc-arrow-line"></div>
+                        <i class="fas fa-chevron-right tfc-arrow-icon"></i>
+                    </div>
+
+                    <!-- To Team -->
+                    <div class="tfc-team tfc-team-to">
+                        {% if h.to_team.logo %}
+                        <img src="{{ h.to_team.logo.url }}" alt="{{ h.to_team.name }}" class="tfc-team-logo">
+                        {% else %}
+                        <div class="tfc-team-logo tfc-logo-placeholder tfc-logo-accent">{{ h.to_team.name|first }}</div>
+                        {% endif %}
+                        <span class="tfc-team-name text-white">{{ h.to_team.name }}</span>
+                    </div>
+                </div>
+
+                <!-- Date -->
+                <div class="tfc-date">
+                    <i class="far fa-calendar-alt me-1"></i>{{ h.transfer_date|date:"M d, Y" }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- ===== Transfer Market ===== -->
     <div class="glass-card mb-5">
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
@@ -428,71 +497,7 @@ body { overflow: hidden; }
         </div>
     </div>
 
-    <!-- ===== Transfer History Feed ===== -->
-    {% if transfer_history %}
-    <div class="glass-card">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="section-title mb-0" style="font-size: 1rem;"><i class="fas fa-history me-2 text-muted"></i>TRANSFER <span class="text-white">HISTORY</span></h5>
-            <span class="badge-status badge-completed">{{ transfer_history|length }} Deals</span>
-        </div>
 
-        <div class="transfer-feed">
-            {% for h in transfer_history %}
-            <div class="transfer-feed-card">
-                <!-- Player Info -->
-                <div class="tfc-player">
-                    {% if h.player.photo_no_bg %}
-                    <img src="{{ h.player.photo_no_bg.url }}" alt="{{ h.player.name }}" class="tfc-player-photo">
-                    {% else %}
-                    <div class="tfc-player-photo tfc-player-placeholder"><i class="fas fa-user"></i></div>
-                    {% endif %}
-                    <div class="tfc-player-info">
-                        <div class="tfc-player-name">{{ h.player.name }}</div>
-                        <div class="tfc-meta-row">
-                            <span class="badge-status badge-{{ h.transfer_type }}" style="font-size: 0.5rem; padding: 2px 6px;">{{ h.get_transfer_type_display }}</span>
-                            <span class="tfc-fee">${{ h.transfer_fee|floatformat:0 }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Transfer Flow: From → To -->
-                <div class="tfc-flow">
-                    <!-- From Team -->
-                    <div class="tfc-team">
-                        {% if h.from_team.logo %}
-                        <img src="{{ h.from_team.logo.url }}" alt="{{ h.from_team.name }}" class="tfc-team-logo">
-                        {% else %}
-                        <div class="tfc-team-logo tfc-logo-placeholder">{{ h.from_team.name|first }}</div>
-                        {% endif %}
-                        <span class="tfc-team-name">{{ h.from_team.name }}</span>
-                    </div>
-
-                    <!-- Arrow -->
-                    <div class="tfc-arrow">
-                        <div class="tfc-arrow-line"></div>
-                        <i class="fas fa-chevron-right tfc-arrow-icon"></i>
-                    </div>
-
-                    <!-- To Team -->
-                    <div class="tfc-team tfc-team-to">
-                        {% if h.to_team.logo %}
-                        <img src="{{ h.to_team.logo.url }}" alt="{{ h.to_team.name }}" class="tfc-team-logo">
-                        {% else %}
-                        <div class="tfc-team-logo tfc-logo-placeholder tfc-logo-accent">{{ h.to_team.name|first }}</div>
-                        {% endif %}
-                        <span class="tfc-team-name text-white">{{ h.to_team.name }}</span>
-                    </div>
-                </div>
-
-                <!-- Date -->
-                <div class="tfc-date">
-                    <i class="far fa-calendar-alt me-1"></i>{{ h.transfer_date|date:"M d, Y" }}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 
 </div>
 
