@@ -218,6 +218,23 @@
 
             document.addEventListener('htmx:load', initSmoothScroll);
             initSmoothScroll();
+            
+            // Mobile Navbar Stabilization for HTMX
+            document.addEventListener('click', function(e) {
+                const navLink = e.target.closest('.navbar-collapse .nav-link, .navbar-collapse .dropdown-item');
+                if (navLink) {
+                    const navbarCollapse = document.getElementById('navbarNav');
+                    if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+                        // Use Bootstrap collapse API to hide it smoothly
+                        const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
+                        if (bsCollapse) {
+                            bsCollapse.hide();
+                        } else {
+                            navbarCollapse.classList.remove('show');
+                        }
+                    }
+                }
+            });
 
             const isAuthenticated = document.body.dataset.isAuthenticated === "true";
             const notificationUrl = document.body.dataset.notificationUrl;

@@ -119,6 +119,7 @@ a:hover { color: #fff; }
   z-index: var(--z-navbar);
   display: flex;
   align-items: center;
+  view-transition-name: main-navbar;
 }
 
 .navbar-arena.scrolled {
@@ -138,6 +139,7 @@ a:hover { color: #fff; }
   display: flex;
   align-items: center;
   gap: 12px;
+  view-transition-name: main-brand;
 }
 
 .navbar-arena .navbar-brand .logo-icon {

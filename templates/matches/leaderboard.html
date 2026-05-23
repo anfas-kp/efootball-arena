@@ -12,7 +12,7 @@
             </p>
         </div>
         {% if user.is_authenticated and user.is_admin_user %}
-            <a href="{% url 'matches:download_top_scorers_pdf' %}" class="btn-outline-glow btn-sm"><i class="fas fa-file-pdf me-2"></i> Export PDF</a>
+            <a href="{% url 'matches:download_top_scorers_pdf' %}" target="_blank" hx-boost="false" class="btn-outline-glow btn-sm"><i class="fas fa-file-pdf me-2"></i> Export PDF</a>
         {% endif %}
     </div>
 
