@@ -435,7 +435,15 @@ body { overflow: hidden; }
                         <td class="small text-muted">{{ p.total_goals }}G · {{ p.total_assists }}A · {{ p.matches_played }}MP</td>
                         <td class="text-end">
                             {% if window and user_team and p.team != user_team %}
-                                <button class="btn-glow btn-sm py-1 px-3 text-xs" data-bs-toggle="modal" data-bs-target="#buyModal{{ p.id }}">Make Offer</button>
+                                <button class="btn-glow btn-sm py-1 px-3 text-xs make-offer-btn" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#globalBuyModal"
+                                    data-player-id="{{ p.id }}"
+                                    data-player-name="{{ p.name|escapejs }}"
+                                    data-team-name="{{ p.team.name|escapejs }}"
+                                    data-player-value="{{ p.value|floatformat:0 }}">
+                                    Make Offer
+                                </button>
                             {% elif p.team == user_team %}
                                 <span class="text-muted small"><i class="fas fa-shield-alt me-1"></i>Your Player</span>
                             {% else %}
@@ -443,61 +451,57 @@ body { overflow: hidden; }
                             {% endif %}
                         </td>
                     </tr>
-
-                    <!-- Buy Modal with Transfer Type -->
-                    {% if window and user_team and p.team != user_team %}
-                    <div class="modal fade" id="buyModal{{ p.id }}" tabindex="-1">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content glass-card border-accent border-opacity-25">
-                                <div class="modal-header border-0 pb-0">
-                                    <h5 class="modal-title font-orbitron text-white" style="font-size: 0.95rem;">Transfer: {{ p.name }}</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                </div>
-                                <form method="post" action="{% url 'teams:request_transfer' p.id %}" hx-boost="false">
-                                    {% csrf_token %}
-                                    <div class="modal-body text-start">
-                                        <p class="text-muted small mb-4">Initiating transfer from <strong class="text-white">{{ p.team.name }}</strong> for <strong class="text-white">{{ p.name }}</strong>.</p>
-                                        
-                                        <!-- Transfer Type -->
-                                        <div class="mb-3">
-                                            <label class="form-label">Transfer Type</label>
-                                            <select name="transfer_type" class="form-select" id="transferType{{ p.id }}" onchange="toggleLoanDate({{ p.id }})">
-                                                <option value="permanent">Permanent Transfer</option>
-                                                <option value="loan">Loan</option>
-                                                <option value="free_agent">Free Agent</option>
-                                            </select>
-                                        </div>
-
-                                        <!-- Transfer Fee -->
-                                        <div class="mb-3">
-                                            <label class="form-label">Transfer Fee ($)</label>
-                                            <input type="number" name="fee" class="form-control" value="{{ p.value|floatformat:0 }}" min="0" required>
-                                            {% if user_team %}
-                                            <div class="form-text text-muted small mt-1">Budget: <span class="text-success font-orbitron">${{ user_team.remaining_budget|floatformat:0 }}</span></div>
-                                            {% endif %}
-                                        </div>
-
-                                        <!-- Loan End Date (conditional) -->
-                                        <div class="mb-3" id="loanDateGroup{{ p.id }}" style="display: none;">
-                                            <label class="form-label">Loan End Date</label>
-                                            <input type="date" name="loan_end_date" class="form-control">
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer border-0 pt-0">
-                                        <button type="submit" class="btn-glow w-100">Submit Offer</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 
+    <!-- Global Buy Modal -->
+    {% if window and user_team %}
+    <div class="modal fade" id="globalBuyModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card border-accent border-opacity-25">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title font-orbitron text-white" style="font-size: 0.95rem;">Transfer: <span id="globalModalPlayerName"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="globalBuyForm" method="post" action="{% url 'teams:request_transfer' 0 %}" hx-boost="false">
+                    {% csrf_token %}
+                    <div class="modal-body text-start">
+                        <p class="text-muted small mb-4">Initiating transfer from <strong class="text-white" id="globalModalTeamName"></strong> for <strong class="text-white" id="globalModalPlayerName2"></strong>.</p>
+                        
+                        <!-- Transfer Type -->
+                        <div class="mb-3">
+                            <label class="form-label">Transfer Type</label>
+                            <select name="transfer_type" class="form-select" id="globalTransferType" onchange="toggleGlobalLoanDate()">
+                                <option value="permanent">Permanent Transfer</option>
+                                <option value="loan">Loan</option>
+                                <option value="free_agent">Free Agent</option>
+                            </select>
+                        </div>
 
+                        <!-- Transfer Fee -->
+                        <div class="mb-3">
+                            <label class="form-label">Transfer Fee ($)</label>
+                            <input type="number" name="fee" id="globalModalFee" class="form-control" value="0" min="0" required>
+                            <div class="form-text text-muted small mt-1">Budget: <span class="text-success font-orbitron">${{ user_team.remaining_budget|floatformat:0 }}</span></div>
+                        </div>
+
+                        <!-- Loan End Date (conditional) -->
+                        <div class="mb-3" id="globalLoanDateGroup" style="display: none;">
+                            <label class="form-label">Loan End Date</label>
+                            <input type="date" name="loan_end_date" class="form-control">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="submit" class="btn-glow w-100">Submit Offer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
 </div>
 
@@ -738,10 +742,27 @@ body { overflow: hidden; }
     window.transferCountdownInterval = setInterval(updateCountdown, 1000);
 })();
 
-// Toggle Loan Date field
-function toggleLoanDate(playerId) {
-    const select = document.getElementById('transferType' + playerId);
-    const group = document.getElementById('loanDateGroup' + playerId);
+// Global Buy Modal Logic
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.make-offer-btn');
+    if (btn) {
+        document.getElementById('globalModalPlayerName').textContent = btn.dataset.playerName;
+        document.getElementById('globalModalPlayerName2').textContent = btn.dataset.playerName;
+        document.getElementById('globalModalTeamName').textContent = btn.dataset.teamName;
+        document.getElementById('globalModalFee').value = btn.dataset.playerValue;
+        
+        const form = document.getElementById('globalBuyForm');
+        form.action = form.action.replace(/\/request\/\d+\//, '/request/' + btn.dataset.playerId + '/');
+        
+        const typeSelect = document.getElementById('globalTransferType');
+        typeSelect.value = 'permanent';
+        toggleGlobalLoanDate();
+    }
+});
+
+function toggleGlobalLoanDate() {
+    const select = document.getElementById('globalTransferType');
+    const group = document.getElementById('globalLoanDateGroup');
     group.style.display = select.value === 'loan' ? 'block' : 'none';
 }
 
